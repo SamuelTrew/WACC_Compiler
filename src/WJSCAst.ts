@@ -4,12 +4,12 @@ export type typename = baseType | { 'typename': typename[] } | { 'typename': [ty
 type baseType = 'int' | 'bool' | 'char' | 'string'
 
 export interface WJSCAst {
-  parserRule?: WJSCParserRules
-  type?: typename
-  token: string
-  line: number
-  column: number
-  startIndex: number
-  error: string[]
   children?: WJSCAst[]
+  column: number
+  error: string[]
+  line: number
+  parserRule?: WJSCParserRules
+  startIndex: number
+  token: string
+  type?: typename
 }

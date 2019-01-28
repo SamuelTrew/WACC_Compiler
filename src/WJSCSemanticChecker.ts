@@ -48,112 +48,112 @@ export class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> imple
   }
 
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitArrayType = (ctx: ArrayTypeContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitAssignLhs = (ctx: AssignLhsContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitAssignRhs = (ctx: AssignRhsContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitAssignment = (ctx: AssignmentContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitComment = (ctx: CommentContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitExpression = (ctx: ExpressionContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitFunc = (ctx: FuncContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitPairElement = (ctx: PairElementContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitPairElementType = (ctx: PairElementTypeContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitPairType = (ctx: PairTypeContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitParam = (ctx: ParamContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitParamList = (ctx: ParamListContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitProgram = (ctx: ProgramContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitStatement = (ctx: StatementContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitType = (ctx: TypeContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    return this.initWJSCAst(ctx) // result
   }
 
   protected defaultResult(): WJSCAst {
     return {
-      token: '',
-      line: -1,
       column: -1,
-      startIndex: -1,
       error: [],
+      line: -1,
+      startIndex: -1,
+      token: '',
     }
   }
 
   private initWJSCAst = (ctx: ParserRuleContext): WJSCAst => {
     return {
-      token: ctx.start.text || '',
-      line: ctx.start.line,
       column: ctx.start.charPositionInLine,
-      startIndex: ctx.start.startIndex,
       error: [],
+      line: ctx.start.line,
+      startIndex: ctx.start.startIndex,
+      token: ctx.start.text || '',
     }
   }
 }
