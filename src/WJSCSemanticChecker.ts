@@ -16,9 +16,11 @@ import {
   TypeContext,
 } from './grammar/WJSCParser'
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
-import { WJSCAst } from './WJSCAst'
+import { typename, WJSCAst } from './WJSCAst'
 
 export class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
+
+  private identifierMap: Array<{ key: string, type: typename }> = []
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
@@ -28,6 +30,19 @@ export class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> imple
   }
   public visitArrayElement = (ctx: ArrayElementContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
+    const identifier = ctx.IDENTIFIER()
+    const expressions = ctx.expression()
+    const typeEntry = this.identifierMap.find((entry) => entry.key === identifier.toString())
+    const children = expressions.map(this.visitExpression)
+    if (typeEntry === undefined) {
+      result.error.push('no type found')
+    } else {
+      children.forEach((child) => {
+        if (child.type !== typeEntry.type) {
+          result.error.push('expression has type: ' + child.type + ', expected: ' + typeEntry.type)
+        }
+      })
+    }
     return result
   }
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
@@ -113,6 +128,7 @@ export class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> imple
       line: ctx.start.line,
       column: ctx.start.charPositionInLine,
       startIndex: ctx.start.startIndex,
+      error: [],
     }
   }
 }
