@@ -1,0 +1,43 @@
+{
+  "name": "wjsc",
+  "version": "1.0.0",
+  "description": "WACC JavaScript Compiler",
+  "main": "build/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "all": "npm run build:grammar && npm run test:lint && npm run build:grammar && npm test",
+    "clean": "rimraf build",
+    "build": "npm run build:grammar && npm run build:compile",
+    "build:grammar": "cd antlr_config && antlr4ts -visitor WJSCLexer.g4 WJSCParser.g4 -o ../src/grammar",
+    "build:basicgrammar": "cd antlr_config && antlr4ts -visitor BasicLexer.g4 BasicParser.g4 -o ../src/grammar",
+    "build:compile": "webpack",
+    "test:lint": "tslint -p tsconfig.json -c tslint.json",
+    "test": "echo \"Error: no test specified\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.doc.ic.ac.uk/lab1819_spring/wacc_06.git"
+  },
+  "author": "csh4017",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^10.12.18",
+    "antlr4ts-cli": "^0.5.0-alpha.1",
+    "awesome-typescript-loader": "^5.2.1",
+    "rimraf": "^2.6.3",
+    "script-loader": "^0.7.2",
+    "terser-webpack-plugin": "^1.2.1",
+    "tslint": "^5.12.1",
+    "tslint-sonarts": "^1.8.0",
+    "uglifyjs-webpack-plugin": "^2.1.1",
+    "webpack": "^4.28.4",
+    "webpack-cli": "^3.2.1"
+  },
+  "dependencies": {
+    "antlr4ts": "^0.5.0-alpha.1",
+    "json2yaml": "^1.1.0",
+    "typescript": "^3.2.2"
+  }
+}

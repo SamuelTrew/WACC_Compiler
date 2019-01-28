@@ -1,0 +1,25 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+      "tslint:recommended",
+      "tslint-sonarts"
+  ],
+  "linterOptions": {
+      "exclude": [
+          "src/grammar/*.ts"
+      ]
+  }, 
+  "jsRules": {},
+  "rules": {
+      "semicolon": [
+          true,
+          "never"
+      ],
+      "quotemark": [
+          true,
+          "single"
+      ],
+      "object-literal-sort-keys": false
+  },
+  "rulesDirectory": []
+}

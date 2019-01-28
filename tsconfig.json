@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es2015",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
+    "module": "commonjs",
+    "outDir": "./build/",
+    "removeComments": true,
+    "strict": true,                           /* Enable all strict type-checking options. */
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "awesomeTypescriptLoaderOptions": {
+    "useCache": true
+  }
+}
