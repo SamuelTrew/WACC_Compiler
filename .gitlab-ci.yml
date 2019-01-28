@@ -1,4 +1,4 @@
-image: node:latest
+image: openjdk:11-jre
 
 stages:
 - install
@@ -17,6 +17,8 @@ install:
   only:
   - master
   script:
+  - curl -sL https://deb.nodesource.com/setup_11.x | bash -
+  - apt-get install -y nodejs
   - npm install
 
 build:
