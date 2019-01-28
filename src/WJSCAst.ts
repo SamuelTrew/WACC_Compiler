@@ -7,5 +7,5 @@ export interface WJSCAst  {
   column?: number
   startIndex?: number
   error?: string
-  children?: WJSCAst
+  children?: WJSCAst[]
 }

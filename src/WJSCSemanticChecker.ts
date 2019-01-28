@@ -1,5 +1,5 @@
-import {ParserRuleContext} from 'antlr4ts'
-import {AbstractParseTreeVisitor} from 'antlr4ts/tree'
+import { ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor } from 'antlr4ts/tree'
 import {
   ArgListContext, ArrayElementContext,
   ArrayLiteralContext,
@@ -15,10 +15,10 @@ import {
   StatementContext,
   TypeContext,
 } from './grammar/WJSCParser'
-import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
-import {WJSCAst} from './WJSCAst'
+import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
+import { WJSCAst } from './WJSCAst'
 
-class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
+export class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
@@ -115,5 +115,4 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       startIndex: ctx.start.startIndex,
     }
   }
-
 }
