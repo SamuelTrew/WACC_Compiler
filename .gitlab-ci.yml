@@ -6,21 +6,16 @@ stages:
 - test
 - deploy
 
-artifacts:
-  paths:
-  - build/
-
-cache:
-  paths:
-  - node_modules/
-  - .awcache/
-
 install:
   stage: install
   only:
   - master
   script:
   - npm install
+  cache:
+    paths:
+    - node_modules/
+    - .awcache/
 
 build:
   stage: build
@@ -30,10 +25,14 @@ build:
   - master
   script:
   - npm run build:all
+  artifacts:
+    paths:
+    - build/
 
 test:
   stage: test
   dependencies: 
+  - install
   - build
   only:
   - master
@@ -43,7 +42,9 @@ test:
 deploy:
   stage: deploy
   dependencies: 
+  - install
   - test
+  - build
   only:
   - master
   script:
