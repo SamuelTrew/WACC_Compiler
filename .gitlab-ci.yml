@@ -6,16 +6,18 @@ stages:
 - test
 - deploy
 
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+  - node_modules/
+  - .awcache/
+
 install:
   stage: install
   only:
   - master
   script:
   - npm install
-  cache:
-    paths:
-    - node_modules/
-    - .awcache/
 
 build:
   stage: build
