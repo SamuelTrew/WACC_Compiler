@@ -14,7 +14,7 @@
     "build:basicgrammar": "cd antlr_config && antlr4ts -visitor BasicLexer.g4 BasicParser.g4 -o ../src/grammar",
     "build:compile": "webpack",
     "test:lint": "tslint -p tsconfig.json -c tslint.json",
-    "test": "echo \"Error: no test specified\""
+    "test": "npm run test:lint"
   },
   "repository": {
     "type": "git",
