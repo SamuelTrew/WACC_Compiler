@@ -1,4 +1,4 @@
-import { WJSCType } from './WJSCType'
+import { TypeName } from './WJSCType'
 
 type WJSCParserRules = 'arg-list'
 
@@ -10,5 +10,5 @@ export interface WJSCAst {
   parserRule?: WJSCParserRules
   startIndex: number
   token: string
-  type?: WJSCType
+  type?: TypeName
 }

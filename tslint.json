@@ -25,7 +25,8 @@
           2
       ],
       "interface-name": false,
-      "only-arrow-functions": true
+      "only-arrow-functions": true,
+      "no-unnecessary-class": true
   },
   "rulesDirectory": []
 }
