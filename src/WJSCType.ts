@@ -1,4 +1,4 @@
-type TypeName = BaseType | ArrayType | PairType
+type TypeName = BaseType | ArrayType | PairType | undefined
 type BaseType = 'int' | 'bool' | 'char' | 'string' | 'pair'
 
 interface ArrayType {
@@ -26,7 +26,7 @@ const isPairType = (tname: any): tname is PairType =>
   && isBaseType(tname.pairType[0])
   && isBaseType(tname.pairType[1])
 
-const hasSameType = (typeA: TypeName, typeB: TypeName): boolean => {
+const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
   if (isBaseType(typeA)) {
     return isBaseType(typeB) && typeA === typeB
   } else if (isArrayType(typeA)) {
