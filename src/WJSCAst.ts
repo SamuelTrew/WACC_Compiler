@@ -1,7 +1,6 @@
-type WJSCParserRules = 'arg-list'
+import { WJSCType } from './WJSCType'
 
-export type typename = baseType | { 'typename': typename[] } | { 'typename': [typename, typename] }
-type baseType = 'int' | 'bool' | 'char' | 'string'
+type WJSCParserRules = 'arg-list'
 
 export interface WJSCAst {
   children?: WJSCAst[]
@@ -11,5 +10,5 @@ export interface WJSCAst {
   parserRule?: WJSCParserRules
   startIndex: number
   token: string
-  type?: typename
+  type?: WJSCType
 }
