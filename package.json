@@ -17,9 +17,10 @@
     "build:compile": "webpack",
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "test": "npm run lint && npm run test:mocha",
-    "test:mocha": "mocha -w --reporter mochawesome --reporter-options reportDir=test/report",
+    "test:mocha": "mocha",
+    "test:mochaw": "mocha -w --reporter mochawesome --reporter-options reportDir=test/report",
     "test:watch": "live-server --port=9000 --mount=/:test/report/ --entry-file=test/report/mochawesome.html",
-    "start:test": "concurrently --kill-others \"npm run test:mocha\" \"npm run test:watch\" \"npm run build:tscw\""
+    "start:test": "concurrently --kill-others \"npm run test:mochaw\" \"npm run test:watch\" \"npm run build:tscw\""
   },
   "repository": {
     "type": "git",
