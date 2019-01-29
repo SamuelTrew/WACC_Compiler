@@ -1,5 +1,4 @@
-import { typename } from './WJSCAst'
-import { WJSCSymbolTableEntry } from './WJSCSymbolTableEntry'
+import { TypeName } from './WJSCType'
 
 export class WJSCSymbolTable {
 
@@ -17,11 +16,11 @@ export class WJSCSymbolTable {
     return new WJSCSymbolTable(this.currentScopeLevel++, this)
   }
 
-  public insertSymbol = (identifier: string, type: typename) => {
+  public insertSymbol = (identifier: string, type: TypeName) => {
     this.symboltable.push({ identifier, type })
   }
 
-  public localLookup = (identifier: string, type: typename): boolean => {
+  public localLookup = (identifier: string, type: TypeName): boolean => {
     this.symboltable.forEach((entry) => {
       if (entry.identifier === identifier) {
         if (entry.type === type) {
@@ -34,4 +33,9 @@ export class WJSCSymbolTable {
     })
     return false
   }
+}
+
+export interface WJSCSymbolTableEntry {
+  identifier: string
+  type: TypeName
 }
