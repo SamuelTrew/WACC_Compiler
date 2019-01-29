@@ -17,9 +17,9 @@ import {
 } from './grammar/WJSCParser'
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import { WJSCAst } from './WJSCAst'
-import { WJSCType } from './WJSCType'
+import * as Types from './WJSCType'
 
-export class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
+class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
@@ -29,10 +29,10 @@ export class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> imple
   }
 
   public visitArrayElement = (ctx: ArrayElementContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    const identifier = ctx.IDENTIFIER()
-    const expressions = ctx.expression()
-    return result
+    // not code: const result = this.initWJSCAst(ctx)
+    // not code: const identifier = ctx.IDENTIFIER()
+    // not code: const expressions = ctx.expression()
+    return this.initWJSCAst(ctx) // result
   }
 
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
@@ -145,3 +145,5 @@ export class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> imple
     }
   }
 }
+
+export { WJSCSemanticChecker }
