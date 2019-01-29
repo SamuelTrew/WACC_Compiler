@@ -4,9 +4,9 @@ export class WJSCSymbolTable {
 
   private currentScopeLevel: number
   private symboltable: WJSCSymbolTableEntry[]
-  private parentLevel: WJSCSymbolTable
+  private parentLevel?: WJSCSymbolTable
 
-  constructor(scopeLevel: number, parentLevel: WJSCSymbolTable) {
+  constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined) {
     this.currentScopeLevel = scopeLevel
     this.symboltable = []
     this.parentLevel = parentLevel

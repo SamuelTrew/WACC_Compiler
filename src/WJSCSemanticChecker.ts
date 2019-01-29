@@ -17,9 +17,12 @@ import {
 } from './grammar/WJSCParser'
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import { WJSCAst } from './WJSCAst'
-import * as Types from './WJSCType'
+import { WJSCSymbolTable } from './WJSCSymbolTable'
+import { hasSameType } from './WJSCType'
 
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
+
+  private symbolTable = new WJSCSymbolTable(0, undefined)
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
@@ -29,10 +32,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitArrayElement = (ctx: ArrayElementContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    // not code: const identifier = ctx.IDENTIFIER()
-    // not code: const expressions = ctx.expression()
-    return this.initWJSCAst(ctx) // result
+    // co const result = this.initWJSCAst(ctx)
+    // co const identifier = ctx.IDENTIFIER()
+    const expressions = ctx.expression()
+    const children = expressions.map(this.visitExpression)
+    // co const identName = this.visitTerminal(identifier).token
+    children.forEach((child, index) => {
+      return true
+    })
+    return this.initWJSCAst(ctx)
   }
 
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
