@@ -12,5 +12,8 @@ node_modules
 #build
 build
 
-#fucking intellij
+#advertiser friendly content intellij
 .idea
+
+#live test server
+test/report
