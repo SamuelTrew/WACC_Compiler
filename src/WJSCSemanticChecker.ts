@@ -18,7 +18,7 @@ import {
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import { WJSCAst } from './WJSCAst'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
-import { hasSameType } from './WJSCType'
+import {hasSameType, isBaseType} from './WJSCType'
 
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
 
@@ -45,7 +45,23 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const expressions = ctx.expression()
+    const children = expressions.map(this.visitExpression)
+    if (children.length !== 0) {
+      const firstChild = children[1]
+      children.forEach((child, index) => {
+        if (child.type === undefined || firstChild.type === undefined) {
+          result.error.push('Undefined types in Array Literals, at' + result.line + ':' + result.column)
+        } else if (!hasSameType(child.type, firstChild.type)) {
+          result.error.push('Incorrect type in Array Literals, at ' + result.line + ':' + result.column)
+        } else if (!this.symbolTable.lookup(child.token, child.type)) {
+          result.error.push('Different type from ST, at ' + result.line + ':' + result.column)
+        }
+        // We also need to check that the child type matches what's stored
+      })
+    }
+    return result
   }
 
   public visitArrayType = (ctx: ArrayTypeContext): WJSCAst => {
@@ -85,7 +101,37 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitExpression = (ctx: ExpressionContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const intLiter = ctx.INTEGER_LITERAL()
+    const boolLiter = ctx.BOOLEAN_LITERAL()
+    const charLiter = ctx.CHARACTER_LITERAL()
+    const strLiter = ctx.STRING_LITERAL()
+    const pairLiter = ctx.PAIR_LITERAL()
+    const ident = ctx.IDENTIFIER()
+    const arrayElem = ctx.arrayElement()
+    const unOp = ctx.UNARY_OPERATOR()
+    const binOp = ctx.BINARY_OPERATOR()
+    const bracket = ctx.LPAREN()
+    if (intLiter === undefined && boolLiter === undefined && charLiter === undefined
+    && strLiter === undefined && pairLiter === undefined && ident === undefined
+    && arrayElem === undefined && unOp === undefined && binOp === undefined
+    && bracket === undefined) {
+      result.error.push('Expressions are invalid ' + result.line + ':' + result.column)
+    } else {
+      if (arrayElem !== undefined) {
+        this.visitArrayElement(arrayElem)
+      }
+      if (unOp !== undefined || binOp !== undefined || bracket !== undefined) {
+        if (bracket !== undefined && ctx.RPAREN() === undefined) {
+          // Scenario in which there is no ending bracket
+          result.error.push('Expression bracketing is invalid ' + result.line + ':' + result.column)
+        } else {
+          const expressions = ctx.expression()
+          expressions.map(this.visitExpression)
+        }
+      }
+    }
+    return result// result
   }
 
   public visitFunc = (ctx: FuncContext): WJSCAst => {
@@ -105,7 +151,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitPairType = (ctx: PairTypeContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const pairs = ctx.pairElementType()
+    pairs.forEach((pair, index) => {
+      this.visitPairElementType(pair)
+    })
+    return this.initWJSCAst(ctx)// result
   }
 
   public visitParam = (ctx: ParamContext): WJSCAst => {
@@ -125,6 +175,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitStatement = (ctx: StatementContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
+    const skip = ctx.WSKIP()
+    const read = ctx.READ()
     return this.initWJSCAst(ctx) // result
   }
 
