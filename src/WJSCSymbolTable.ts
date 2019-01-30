@@ -1,4 +1,4 @@
-import { TypeName } from './WJSCType'
+import { hasSameType, TypeName } from './WJSCType'
 
 export class WJSCSymbolTable {
 
@@ -16,21 +16,27 @@ export class WJSCSymbolTable {
     return new WJSCSymbolTable(this.currentScopeLevel++, this)
   }
 
+  // Add an entry to the symbol table
   public insertSymbol = (identifier: string, type: TypeName) => {
     this.symboltable.push({ identifier, type })
   }
 
-  public localLookup = (identifier: string, type: TypeName): boolean => {
+  // Check if identifier exitsts in the local scope.
+  // If it does performs type check, else return false.
+  public localLookup = (identifier: string, type: TypeName): boolean | string => {
     this.symboltable.forEach((entry) => {
       if (entry.identifier === identifier) {
-        if (entry.type === type) {
-          return true
-        } else {
-          // Push type error to error log
-          return false
-        }
+        return hasSameType(entry.type, type) ||
+           'expression has type: ' + type + ', expected: ' + entry.type
       }
     })
+    return false
+  }
+
+  // Check if identifier exists in symbol table.
+  // If it does performs type check, else return false.
+  public lookup = (identifier: string, type: TypeName): boolean | string => {
+    // Perform localLookup and recursive global lookup
     return false
   }
 }
