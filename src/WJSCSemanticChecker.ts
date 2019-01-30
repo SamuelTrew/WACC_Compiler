@@ -18,7 +18,8 @@ import {
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import { WJSCAst } from './WJSCAst'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
-import { hasSameType } from './WJSCType'
+import {hasSameType, isBaseType} from './WJSCType'
+import has = Reflect.has
 
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
 
@@ -50,8 +51,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitArrayType = (ctx: ArrayTypeContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
-    // co const lbrack = ctx.LBRACK()
-    // co const rbrack = ctx.RBRACK()
     const type = ctx.baseType()
 
     if (type === undefined) {
@@ -63,7 +62,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         result.error.push('Not of correct type at ' + result.line + ':' + result.column)
       }
     }
-    return this.initWJSCAst(ctx) // result
+    return result
   }
 
   public visitAssignLhs = (ctx: AssignLhsContext): WJSCAst => {
@@ -82,8 +81,20 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const stringType = ctx.STRING()
+    const intType = ctx.INTEGER()
+    const boolType = ctx.BOOLEAN()
+    const charType = ctx.CHARACTER()
+
+    if (!(isBaseType(result.type) || isBaseType(stringType) || isBaseType(intType)
+    || isBaseType(boolType) || isBaseType(charType) || hasSameType(result.type, 'string')
+    || hasSameType(result.type, 'int') || hasSameType('char', result.type) ||
+      hasSameType('bool', result.type))) {
+      result.error.push('Incorrect type at ' + result.line + ':' + result.column)
+    }
+
+    return result
   }
 
   public visitComment = (ctx: CommentContext): WJSCAst => {
