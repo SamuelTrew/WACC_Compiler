@@ -18,7 +18,8 @@ import {
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import { WJSCAst } from './WJSCAst'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
-import { hasSameType } from './WJSCType'
+import {hasSameType, isBaseType} from './WJSCType'
+import has = Reflect.has
 
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
 
@@ -49,8 +50,19 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitArrayType = (ctx: ArrayTypeContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const type = ctx.baseType()
+
+    if (type === undefined) {
+      result.error.push('Type is undefined at ' + result.line + ':' + result.column)
+    } else {
+      const typeNode = this.visitBaseType(type)
+
+      if (hasSameType(result.type, typeNode.type)) {
+        result.error.push('Not of correct type at ' + result.line + ':' + result.column)
+      }
+    }
+    return result
   }
 
   public visitAssignLhs = (ctx: AssignLhsContext): WJSCAst => {
@@ -69,8 +81,24 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const stringType = ctx.STRING()
+    const intType = ctx.INTEGER()
+    const boolType = ctx.BOOLEAN()
+    const charType = ctx.CHARACTER()
+
+    if (!(isBaseType(result.type) || isBaseType(stringType) || isBaseType(intType)
+    || isBaseType(boolType) || isBaseType(charType) || hasSameType(result.type, 'string')
+    || hasSameType(result.type, 'int') || hasSameType('char', result.type) ||
+      hasSameType('bool', result.type))) {
+      result.error.push('Incorrect type at ' + result.line + ':' + result.column)
+    } else if (result.type === undefined) {
+      result.error.push('Type is undefined at ' + result.line + ':' + result.column)
+    } else if (!this.symbolTable.lookup(result.token, result.type)) {
+      result.error.push('Different type from ST at ' + result.line + ':' + result.column)
+    }
+
+    return result
   }
 
   public visitComment = (ctx: CommentContext): WJSCAst => {
@@ -89,8 +117,22 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitFunc = (ctx: FuncContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+
+    const type = ctx.type()
+    const ident = ctx.IDENTIFIER()
+    const paramList = ctx.paramList()
+    const stat = ctx.statement()
+
+    const typeNode = this.visitType(type)
+    const identNode = this.visitStatement(stat)
+
+    if (!(hasSameType(typeNode.type, result.type))) {
+      result.error.push('Incorrect type at ' + result.line + ':' + result.column)
+    } else if (result.type === undefined || type === undefined) {
+      result.error.push('Type is undefined at ' + result.line + ':' + result.column)
+    }
+    return  result
   }
 
   public visitPairElement = (ctx: PairElementContext): WJSCAst => {
