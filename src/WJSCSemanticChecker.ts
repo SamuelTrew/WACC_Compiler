@@ -92,6 +92,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     || hasSameType(result.type, 'int') || hasSameType('char', result.type) ||
       hasSameType('bool', result.type))) {
       result.error.push('Incorrect type at ' + result.line + ':' + result.column)
+    } else if (result.type === undefined) {
+      result.error.push('Type is undefined at ' + result.line + ':' + result.column)
+    } else if (!this.symbolTable.lookup(result.token, result.type)) {
+      result.error.push('Different type from ST at ' + result.line + ':' + result.column)
     }
 
     return result
