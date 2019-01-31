@@ -190,8 +190,26 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitType = (ctx: TypeContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+
+    const baseType = ctx.baseType()
+    const arrayType = ctx.arrayType()
+    const pairType = ctx.pairType()
+
+    if (result.type === undefined || baseType === undefined
+    || arrayType === undefined || pairType === undefined) {
+      result.error.push('Type is undefined at ' + result.line + ':' + result.column)
+    } else {
+      const baseTypeNode = this.visitBaseType(baseType)
+      const arrayTypeNode = this.visitArrayType(arrayType)
+      const pairTypeNode = this.visitPairType(pairType)
+      if (!(this.symbolTable.lookup(baseTypeNode.token, baseTypeNode.type)
+      || this.symbolTable.lookup(arrayTypeNode.token, arrayTypeNode.type)
+      || this.symbolTable.lookup(pairTypeNode.token, pairTypeNode.type))) {
+        result.error.push('Different type from ST at ' + result.line + ':' + result.column)
+      }
+    }
+    return result
   }
 
   protected defaultResult(): WJSCAst {
