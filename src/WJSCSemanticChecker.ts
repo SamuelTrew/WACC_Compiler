@@ -152,7 +152,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
           result.error.push('Expression bracketing is invalid ' + result.line + ':' + result.column)
         } else {
           const expressions = ctx.expression()
-          expressions.map(this.visitExpression)
+          expressions.forEach((child, index) => {
+            this.visitExpression(child)
+          })
         }
       }
       if (arrayElem !== undefined) {
@@ -166,7 +168,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const result = this.initWJSCAst(ctx)
 
     const type = ctx.type()
-    const ident = ctx.IDENTIFIER()
+    // WARNING: I think you need to check if a function has no undefined parts
+    // const ident = ctx.IDENTIFIER()
     const paramList = ctx.paramList()
     const stat = ctx.statement()
 
@@ -209,8 +212,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitParam = (ctx: ParamContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
-
-    const ident = ctx.IDENTIFIER()
+    // WARNING: I think you need to check if a function has no undefined parts
+    // const ident = ctx.IDENTIFIER()
     const type = ctx.type()
     const typeNode = this.visitType(type)
 
@@ -237,8 +240,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   public visitStatement = (ctx: StatementContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
     const skip = ctx.WSKIP()
-    // Missing: FREE, RETURN, EXIT (exitRule(this)?), PRINT, PRINTLN
-    const statWithSingleExp = ctx.exitRule(this)
+    // WARNING Missing: FREE, RETURN, EXIT, PRINT, PRINTLN <- Are these STDLIBs?
+    const statWithSingleExp = ctx.STDLIB_FUNCTIONS()
     // The other assignment format? (<type><ident> = <assign rhs>)
     const assignment = ctx.assignment() || ctx.READ()
     const conditionals = ctx.conditionalBlocks()
@@ -282,7 +285,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         } else {
           this.visitExpression(condExp)
         }
-        childStats.map(this.visitStatement)
+        childStats.forEach((child, index) => {
+          this.visitStatement(child)
+        })
       }
       if (begin !== undefined) {
         // We check to make sure end is there
@@ -290,12 +295,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
           result.error.push('Statement with begin has no end at ' + result.line + ':' + result.column)
         } else {
           const childStats = ctx.statement()
-          childStats.map(this.visitStatement)
+          childStats.forEach((child, index) => {
+            this.visitStatement(child)
+          })
         }
       }
       if (semicolon !== undefined) {
         const childStats = ctx.statement()
-        childStats.map(this.visitStatement)
+        childStats.forEach((child, index) => {
+          this.visitStatement(child)
+        })
       }
     }
     return result // result
