@@ -18,7 +18,7 @@ import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import { WJSCAst } from './WJSCAst'
 import { WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
-import { hasSameType, isBaseType} from './WJSCType'
+import { hasSameType, isBaseType } from './WJSCType'
 
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
 
@@ -136,7 +136,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   public visitExpression = (ctx: ExpressionContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
     const result = this.initWJSCAst(ctx)
-    const literals = ctx.INTEGER_LITERAL() || ctx.BOOLEAN_LITERAL() || ctx.CHARACTER_LITERAL()
+    const literals = ctx.integerLiteral() || ctx.BOOLEAN_LITERAL() || ctx.CHARACTER_LITERAL()
                      || ctx.STRING_LITERAL() || ctx.PAIR_LITERAL()
     const ident = ctx.IDENTIFIER()
     const arrayElem = ctx.arrayElement()
