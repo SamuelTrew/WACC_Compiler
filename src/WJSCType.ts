@@ -9,6 +9,9 @@ interface PairType {
   pairType: [TypeName, TypeName]
 }
 
+const isWJSCType = (tname: any): tname is TypeName =>
+  isBaseType(tname) || isArrayType(tname) || isPairType(tname)
+
 const isBaseType = (tname: any): tname is BaseType =>
   typeof tname === 'string' && (
     tname === 'int'
@@ -19,7 +22,7 @@ const isBaseType = (tname: any): tname is BaseType =>
   )
 
 const isArrayType = (tname: any): tname is ArrayType =>
-  tname.arrayType !== undefined && isBaseType(tname.arrayType)
+  tname.arrayType !== undefined && isWJSCType(tname.arrayType)
 
 const isPairType = (tname: any): tname is PairType =>
   tname.pairType !== undefined

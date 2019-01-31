@@ -155,5 +155,124 @@ describe('Type Check', function () {
         assert(!WJSCType.hasSameType(type, { arrayType: 'pair' }))
       })
     })
+    describe('Array of booleans', function () {
+      const type = { arrayType: 'bool' }
+      it('should not have base type', function () {
+        assert(!WJSCType.isBaseType(type))
+      })
+      it('should have array type', function () {
+        assert(WJSCType.isArrayType(type))
+      })
+      it('should not have pair type', function () {
+        assert(!WJSCType.isPairType(type))
+      })
+      it('should compare to itself correctly', function () {
+        assert(WJSCType.hasSameType(type, type))
+      })
+      it('should not compare to char arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'char' }))
+      })
+      it('should not compare to int arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'int' }))
+      })
+      it('should not compare to string arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'string' }))
+      })
+      it('should not compare to pair arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'pair' }))
+      })
+    })
+    describe('Array of chars', function () {
+      const type = { arrayType: 'char' }
+      it('should not have base type', function () {
+        assert(!WJSCType.isBaseType(type))
+      })
+      it('should have array type', function () {
+        assert(WJSCType.isArrayType(type))
+      })
+      it('should not have pair type', function () {
+        assert(!WJSCType.isPairType(type))
+      })
+      it('should compare to itself correctly', function () {
+        assert(WJSCType.hasSameType(type, type))
+      })
+      it('should not compare to bool arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'bool' }))
+      })
+      it('should not compare to int arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'int' }))
+      })
+      it('should not compare to string arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'string' }))
+      })
+      it('should not compare to pair arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'pair' }))
+      })
+    })
+    describe('Array of strings', function () {
+      const type = { arrayType: 'string' }
+      it('should not have base type', function () {
+        assert(!WJSCType.isBaseType(type))
+      })
+      it('should have array type', function () {
+        assert(WJSCType.isArrayType(type))
+      })
+      it('should not have pair type', function () {
+        assert(!WJSCType.isPairType(type))
+      })
+      it('should compare to itself correctly', function () {
+        assert(WJSCType.hasSameType(type, type))
+      })
+      it('should not compare to bool arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'bool' }))
+      })
+      it('should not compare to int arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'int' }))
+      })
+      it('should not compare to char arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'char' }))
+      })
+      it('should not compare to pair arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'pair' }))
+      })
+    })
+    describe('Array of pairs', function () {
+      const type = { arrayType: 'pair' }
+      it('should not have base type', function () {
+        assert(!WJSCType.isBaseType(type))
+      })
+      it('should have array type', function () {
+        assert(WJSCType.isArrayType(type))
+      })
+      it('should not have pair type', function () {
+        assert(!WJSCType.isPairType(type))
+      })
+      it('should compare to itself correctly', function () {
+        assert(WJSCType.hasSameType(type, type))
+      })
+      it('should not compare to bool arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'bool' }))
+      })
+      it('should not compare to int arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'int' }))
+      })
+      it('should not compare to char arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'char' }))
+      })
+      it('should not compare to string arrays', function () {
+        assert(!WJSCType.hasSameType(type, { arrayType: 'string' }))
+      })
+    })
+  })
+  describe('Complex Array Types', function () {
+    describe('Nested Arrays', function () {
+      const type = { arrayType: { arrayType: 'int' } }
+      it('should be array type', function () {
+        assert(WJSCType.isArrayType(type))
+      })
+      it('should compare to identical type', function () {
+        assert(WJSCType.hasSameType(type, type))
+      })
+    })
   })
 })

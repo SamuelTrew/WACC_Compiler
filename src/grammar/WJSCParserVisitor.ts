@@ -22,7 +22,6 @@ import { PairElementTypeContext } from "./WJSCParser";
 import { ExpressionContext } from "./WJSCParser";
 import { ArrayElementContext } from "./WJSCParser";
 import { ArrayLiteralContext } from "./WJSCParser";
-import { CommentContext } from "./WJSCParser";
 
 
 /**
@@ -165,12 +164,5 @@ export interface WJSCParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitArrayLiteral?: (ctx: ArrayLiteralContext) => Result;
-
-	/**
-	 * Visit a parse tree produced by `WJSCParser.comment`.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	visitComment?: (ctx: CommentContext) => Result;
 }
 
