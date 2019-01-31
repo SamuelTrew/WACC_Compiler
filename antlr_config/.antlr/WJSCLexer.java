@@ -1,4 +1,4 @@
-// Generated from WJSCLexer.g4 by ANTLR 4.7.2
+// Generated from c:\Users\vulga\Documents\wacc_06\antlr_config/WJSCLexer.g4 by ANTLR 4.7.1
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class WJSCLexer extends Lexer {
-	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -36,54 +36,44 @@ public class WJSCLexer extends Lexer {
 		"DEFAULT_MODE"
 	};
 
-	private static String[] makeRuleNames() {
-		return new String[] {
-			"EOL", "WHITESPACE", "BEGIN", "END", "IS", "STDLIB_FUNCTIONS", "WSKIP", 
-			"READ", "FREE", "RETURN", "EXIT", "PRINT", "PRINTLN", "IF", "THEN", "ELSE", 
-			"FI", "WHILE", "DO", "DONE", "CALL", "FIRST", "SECOND", "BINARY_OPERATOR", 
-			"MULTIPLY", "DIVIDE", "MODULO", "PLUS", "MINUS", "GREATER_THAN", "GREATER_EQUAL", 
-			"LESS_THAN", "LESS_EQUAL", "EQUALS", "STRICT_EQUALS", "NEQUALS", "NSTRICT_EQUALS", 
-			"LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", "NEW_PAIR", "UNARY_OPERATOR", 
-			"LOGICAL_NEGATION", "ARITHMETIC_NEGATION", "LENGTH", "ORDER_OF", "CHARACTER_OF", 
-			"DIGIT", "INTEGER_SIGN", "BOOLEAN_LITERAL", "TRUTH", "FALSITY", "BACKSLASH", 
-			"ESCAPED_CHAR", "NON_ESCAPED", "CHAR", "CHARACTER_LITERAL", "PAIR_LITERAL", 
-			"STRING_LITERAL", "INTEGER", "BOOLEAN", "CHARACTER", "STRING", "PAIR", 
-			"LPAREN", "RPAREN", "LBRACK", "RBRACK", "COMMA", "SEMICOLON", "APOS", 
-			"DBLQ", "NL", "COMMENT", "IDENTIFIER"
-		};
-	}
-	public static final String[] ruleNames = makeRuleNames();
+	public static final String[] ruleNames = {
+		"EOL", "WHITESPACE", "BEGIN", "END", "IS", "STDLIB_FUNCTIONS", "WSKIP", 
+		"READ", "FREE", "RETURN", "EXIT", "PRINT", "PRINTLN", "IF", "THEN", "ELSE", 
+		"FI", "WHILE", "DO", "DONE", "CALL", "FIRST", "SECOND", "BINARY_OPERATOR", 
+		"MULTIPLY", "DIVIDE", "MODULO", "PLUS", "MINUS", "GREATER_THAN", "GREATER_EQUAL", 
+		"LESS_THAN", "LESS_EQUAL", "EQUALS", "STRICT_EQUALS", "NEQUALS", "NSTRICT_EQUALS", 
+		"LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", "NEW_PAIR", "UNARY_OPERATOR", 
+		"LOGICAL_NEGATION", "ARITHMETIC_NEGATION", "LENGTH", "ORDER_OF", "CHARACTER_OF", 
+		"DIGIT", "INTEGER_SIGN", "BOOLEAN_LITERAL", "TRUTH", "FALSITY", "BACKSLASH", 
+		"ESCAPED_CHAR", "NON_ESCAPED", "CHAR", "CHARACTER_LITERAL", "PAIR_LITERAL", 
+		"STRING_LITERAL", "INTEGER", "BOOLEAN", "CHARACTER", "STRING", "PAIR", 
+		"LPAREN", "RPAREN", "LBRACK", "RBRACK", "COMMA", "SEMICOLON", "APOS", 
+		"DBLQ", "NL", "COMMENT", "IDENTIFIER"
+	};
 
-	private static String[] makeLiteralNames() {
-		return new String[] {
-			null, null, null, "'begin'", "'end'", "'is'", null, "'skip'", "'read'", 
-			"'free'", "'return'", "'exit'", "'print'", "'println'", "'if'", "'then'", 
-			"'else'", "'fi'", "'while'", "'do'", "'done'", "'call'", "'fst'", "'snd'", 
-			null, "'*'", "'/'", "'%'", "'+'", "'-'", "'>'", "'>='", "'<'", "'<='", 
-			"'=='", "'==='", "'!='", "'!=='", "'&&'", "'||'", "'='", "'newpair'", 
-			null, "'!'", null, "'len'", "'ord'", "'chr'", null, null, null, "'true'", 
-			"'false'", null, "'null'", null, "'int'", "'bool'", "'char'", "'string'", 
-			"'pair'", "'('", "')'", "'['", "']'", "','", "';'", "'''", "'\"'"
-		};
-	}
-	private static final String[] _LITERAL_NAMES = makeLiteralNames();
-	private static String[] makeSymbolicNames() {
-		return new String[] {
-			null, "EOL", "WHITESPACE", "BEGIN", "END", "IS", "STDLIB_FUNCTIONS", 
-			"WSKIP", "READ", "FREE", "RETURN", "EXIT", "PRINT", "PRINTLN", "IF", 
-			"THEN", "ELSE", "FI", "WHILE", "DO", "DONE", "CALL", "FIRST", "SECOND", 
-			"BINARY_OPERATOR", "MULTIPLY", "DIVIDE", "MODULO", "PLUS", "MINUS", "GREATER_THAN", 
-			"GREATER_EQUAL", "LESS_THAN", "LESS_EQUAL", "EQUALS", "STRICT_EQUALS", 
-			"NEQUALS", "NSTRICT_EQUALS", "LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", 
-			"NEW_PAIR", "UNARY_OPERATOR", "LOGICAL_NEGATION", "ARITHMETIC_NEGATION", 
-			"LENGTH", "ORDER_OF", "CHARACTER_OF", "DIGIT", "INTEGER_SIGN", "BOOLEAN_LITERAL", 
-			"TRUTH", "FALSITY", "CHARACTER_LITERAL", "PAIR_LITERAL", "STRING_LITERAL", 
-			"INTEGER", "BOOLEAN", "CHARACTER", "STRING", "PAIR", "LPAREN", "RPAREN", 
-			"LBRACK", "RBRACK", "COMMA", "SEMICOLON", "APOS", "DBLQ", "COMMENT", 
-			"IDENTIFIER"
-		};
-	}
-	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
+	private static final String[] _LITERAL_NAMES = {
+		null, null, null, "'begin'", "'end'", "'is'", null, "'skip'", "'read'", 
+		"'free'", "'return'", "'exit'", "'print'", "'println'", "'if'", "'then'", 
+		"'else'", "'fi'", "'while'", "'do'", "'done'", "'call'", "'fst'", "'snd'", 
+		null, "'*'", "'/'", "'%'", "'+'", "'-'", "'>'", "'>='", "'<'", "'<='", 
+		"'=='", "'==='", "'!='", "'!=='", "'&&'", "'||'", "'='", "'newpair'", 
+		null, "'!'", null, "'len'", "'ord'", "'chr'", null, null, null, "'true'", 
+		"'false'", null, "'null'", null, "'int'", "'bool'", "'char'", "'string'", 
+		"'pair'", "'('", "')'", "'['", "']'", "','", "';'", "'''", "'\"'"
+	};
+	private static final String[] _SYMBOLIC_NAMES = {
+		null, "EOL", "WHITESPACE", "BEGIN", "END", "IS", "STDLIB_FUNCTIONS", "WSKIP", 
+		"READ", "FREE", "RETURN", "EXIT", "PRINT", "PRINTLN", "IF", "THEN", "ELSE", 
+		"FI", "WHILE", "DO", "DONE", "CALL", "FIRST", "SECOND", "BINARY_OPERATOR", 
+		"MULTIPLY", "DIVIDE", "MODULO", "PLUS", "MINUS", "GREATER_THAN", "GREATER_EQUAL", 
+		"LESS_THAN", "LESS_EQUAL", "EQUALS", "STRICT_EQUALS", "NEQUALS", "NSTRICT_EQUALS", 
+		"LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", "NEW_PAIR", "UNARY_OPERATOR", 
+		"LOGICAL_NEGATION", "ARITHMETIC_NEGATION", "LENGTH", "ORDER_OF", "CHARACTER_OF", 
+		"DIGIT", "INTEGER_SIGN", "BOOLEAN_LITERAL", "TRUTH", "FALSITY", "CHARACTER_LITERAL", 
+		"PAIR_LITERAL", "STRING_LITERAL", "INTEGER", "BOOLEAN", "CHARACTER", "STRING", 
+		"PAIR", "LPAREN", "RPAREN", "LBRACK", "RBRACK", "COMMA", "SEMICOLON", 
+		"APOS", "DBLQ", "COMMENT", "IDENTIFIER"
+	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**

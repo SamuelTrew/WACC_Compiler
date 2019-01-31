@@ -177,6 +177,16 @@ public interface WJSCParserListener extends ParseTreeListener {
 	 */
 	void exitExpression(WJSCParser.ExpressionContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link WJSCParser#integerLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterIntegerLiteral(WJSCParser.IntegerLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link WJSCParser#integerLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitIntegerLiteral(WJSCParser.IntegerLiteralContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link WJSCParser#arrayElement}.
 	 * @param ctx the parse tree
 	 */

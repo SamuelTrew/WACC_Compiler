@@ -33,18 +33,6 @@ FIRST: 'fst';
 SECOND: 'snd';
 
 // Operators
-UNARY_OPERATOR: LOGICAL_NEGATION
-              | ARITHMETIC_NEGATION
-              | LENGTH
-              | ORDER_OF
-              | CHARACTER_OF
-              ;
-LOGICAL_NEGATION: '!';
-ARITHMETIC_NEGATION: MINUS;
-LENGTH: 'len';
-ORDER_OF: 'ord';
-CHARACTER_OF: 'chr';
-
 BINARY_OPERATOR: MULTIPLY
                | DIVIDE
                | MODULO
@@ -78,9 +66,19 @@ LOGICAL_AND: '&&';
 LOGICAL_OR: '||';
 ASSIGNMENT: '=';
 NEW_PAIR: 'newpair';
+UNARY_OPERATOR: LOGICAL_NEGATION
+              | ARITHMETIC_NEGATION
+              | LENGTH
+              | ORDER_OF
+              | CHARACTER_OF
+              ;
+LOGICAL_NEGATION: '!';
+ARITHMETIC_NEGATION: MINUS;
+LENGTH: 'len';
+ORDER_OF: 'ord';
+CHARACTER_OF: 'chr';
 
 // Identifiers & literals
-INTEGER_LITERAL: INTEGER_SIGN? DIGIT+;
 DIGIT: [0-9];
 INTEGER_SIGN: PLUS 
             | MINUS;

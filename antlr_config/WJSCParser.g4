@@ -69,18 +69,18 @@ pairElementType: baseType
                  | PAIR
                  ;
 
-expression: INTEGER_LITERAL
+expression: expression BINARY_OPERATOR expression
+          | arrayElement
+          | UNARY_OPERATOR expression
+          | LPAREN expression RPAREN
+          | IDENTIFIER
+          | integerLiteral
           | BOOLEAN_LITERAL
           | CHARACTER_LITERAL
           | STRING_LITERAL
           | PAIR_LITERAL
-          | IDENTIFIER
-          | arrayElement
-          | UNARY_OPERATOR expression
-          | expression BINARY_OPERATOR expression
-          | LPAREN expression RPAREN
           ;
-
+integerLiteral: INTEGER_SIGN? DIGIT+;
 arrayElement: IDENTIFIER (LBRACK expression RBRACK)+;
 arrayLiteral: LBRACK (expression (COMMA expression)*)? RBRACK;
 

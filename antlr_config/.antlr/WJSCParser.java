@@ -1,4 +1,4 @@
-// Generated from WJSCParser.g4 by ANTLR 4.7.2
+// Generated from c:\Users\vulga\Documents\wacc_06\antlr_config\WJSCParser.g4 by ANTLR 4.7.1
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class WJSCParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.7.2", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7.1", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -34,46 +34,36 @@ public class WJSCParser extends Parser {
 		RULE_argList = 9, RULE_pairElement = 10, RULE_type = 11, RULE_baseType = 12, 
 		RULE_arrayType = 13, RULE_pairType = 14, RULE_pairElementType = 15, RULE_expression = 16, 
 		RULE_integerLiteral = 17, RULE_arrayElement = 18, RULE_arrayLiteral = 19;
-	private static String[] makeRuleNames() {
-		return new String[] {
-			"program", "func", "paramList", "param", "statement", "conditionalBlocks", 
-			"assignment", "assignLhs", "assignRhs", "argList", "pairElement", "type", 
-			"baseType", "arrayType", "pairType", "pairElementType", "expression", 
-			"integerLiteral", "arrayElement", "arrayLiteral"
-		};
-	}
-	public static final String[] ruleNames = makeRuleNames();
+	public static final String[] ruleNames = {
+		"program", "func", "paramList", "param", "statement", "conditionalBlocks", 
+		"assignment", "assignLhs", "assignRhs", "argList", "pairElement", "type", 
+		"baseType", "arrayType", "pairType", "pairElementType", "expression", 
+		"integerLiteral", "arrayElement", "arrayLiteral"
+	};
 
-	private static String[] makeLiteralNames() {
-		return new String[] {
-			null, null, null, "'begin'", "'end'", "'is'", null, "'skip'", "'read'", 
-			"'free'", "'return'", "'exit'", "'print'", "'println'", "'if'", "'then'", 
-			"'else'", "'fi'", "'while'", "'do'", "'done'", "'call'", "'fst'", "'snd'", 
-			null, "'*'", "'/'", "'%'", "'+'", "'-'", "'>'", "'>='", "'<'", "'<='", 
-			"'=='", "'==='", "'!='", "'!=='", "'&&'", "'||'", "'='", "'newpair'", 
-			null, "'!'", null, "'len'", "'ord'", "'chr'", null, null, null, "'true'", 
-			"'false'", null, "'null'", null, "'int'", "'bool'", "'char'", "'string'", 
-			"'pair'", "'('", "')'", "'['", "']'", "','", "';'", "'''", "'\"'"
-		};
-	}
-	private static final String[] _LITERAL_NAMES = makeLiteralNames();
-	private static String[] makeSymbolicNames() {
-		return new String[] {
-			null, "EOL", "WHITESPACE", "BEGIN", "END", "IS", "STDLIB_FUNCTIONS", 
-			"WSKIP", "READ", "FREE", "RETURN", "EXIT", "PRINT", "PRINTLN", "IF", 
-			"THEN", "ELSE", "FI", "WHILE", "DO", "DONE", "CALL", "FIRST", "SECOND", 
-			"BINARY_OPERATOR", "MULTIPLY", "DIVIDE", "MODULO", "PLUS", "MINUS", "GREATER_THAN", 
-			"GREATER_EQUAL", "LESS_THAN", "LESS_EQUAL", "EQUALS", "STRICT_EQUALS", 
-			"NEQUALS", "NSTRICT_EQUALS", "LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", 
-			"NEW_PAIR", "UNARY_OPERATOR", "LOGICAL_NEGATION", "ARITHMETIC_NEGATION", 
-			"LENGTH", "ORDER_OF", "CHARACTER_OF", "DIGIT", "INTEGER_SIGN", "BOOLEAN_LITERAL", 
-			"TRUTH", "FALSITY", "CHARACTER_LITERAL", "PAIR_LITERAL", "STRING_LITERAL", 
-			"INTEGER", "BOOLEAN", "CHARACTER", "STRING", "PAIR", "LPAREN", "RPAREN", 
-			"LBRACK", "RBRACK", "COMMA", "SEMICOLON", "APOS", "DBLQ", "COMMENT", 
-			"IDENTIFIER"
-		};
-	}
-	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
+	private static final String[] _LITERAL_NAMES = {
+		null, null, null, "'begin'", "'end'", "'is'", null, "'skip'", "'read'", 
+		"'free'", "'return'", "'exit'", "'print'", "'println'", "'if'", "'then'", 
+		"'else'", "'fi'", "'while'", "'do'", "'done'", "'call'", "'fst'", "'snd'", 
+		null, "'*'", "'/'", "'%'", "'+'", "'-'", "'>'", "'>='", "'<'", "'<='", 
+		"'=='", "'==='", "'!='", "'!=='", "'&&'", "'||'", "'='", "'newpair'", 
+		null, "'!'", null, "'len'", "'ord'", "'chr'", null, null, null, "'true'", 
+		"'false'", null, "'null'", null, "'int'", "'bool'", "'char'", "'string'", 
+		"'pair'", "'('", "')'", "'['", "']'", "','", "';'", "'''", "'\"'"
+	};
+	private static final String[] _SYMBOLIC_NAMES = {
+		null, "EOL", "WHITESPACE", "BEGIN", "END", "IS", "STDLIB_FUNCTIONS", "WSKIP", 
+		"READ", "FREE", "RETURN", "EXIT", "PRINT", "PRINTLN", "IF", "THEN", "ELSE", 
+		"FI", "WHILE", "DO", "DONE", "CALL", "FIRST", "SECOND", "BINARY_OPERATOR", 
+		"MULTIPLY", "DIVIDE", "MODULO", "PLUS", "MINUS", "GREATER_THAN", "GREATER_EQUAL", 
+		"LESS_THAN", "LESS_EQUAL", "EQUALS", "STRICT_EQUALS", "NEQUALS", "NSTRICT_EQUALS", 
+		"LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", "NEW_PAIR", "UNARY_OPERATOR", 
+		"LOGICAL_NEGATION", "ARITHMETIC_NEGATION", "LENGTH", "ORDER_OF", "CHARACTER_OF", 
+		"DIGIT", "INTEGER_SIGN", "BOOLEAN_LITERAL", "TRUTH", "FALSITY", "CHARACTER_LITERAL", 
+		"PAIR_LITERAL", "STRING_LITERAL", "INTEGER", "BOOLEAN", "CHARACTER", "STRING", 
+		"PAIR", "LPAREN", "RPAREN", "LBRACK", "RBRACK", "COMMA", "SEMICOLON", 
+		"APOS", "DBLQ", "COMMENT", "IDENTIFIER"
+	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**
@@ -123,7 +113,6 @@ public class WJSCParser extends Parser {
 		super(input);
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
-
 	public static class ProgramContext extends ParserRuleContext {
 		public TerminalNode BEGIN() { return getToken(WJSCParser.BEGIN, 0); }
 		public StatementContext statement() {
@@ -141,14 +130,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_program; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterProgram(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitProgram(this);
-		}
 	}
 
 	public final ProgramContext program() throws RecognitionException {
@@ -214,14 +195,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_func; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterFunc(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitFunc(this);
-		}
 	}
 
 	public final FuncContext func() throws RecognitionException {
@@ -283,14 +256,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_paramList; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterParamList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitParamList(this);
-		}
 	}
 
 	public final ParamListContext paramList() throws RecognitionException {
@@ -340,14 +305,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_param; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterParam(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitParam(this);
-		}
 	}
 
 	public final ParamContext param() throws RecognitionException {
@@ -402,14 +359,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_statement; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterStatement(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitStatement(this);
-		}
 	}
 
 	public final StatementContext statement() throws RecognitionException {
@@ -540,14 +489,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_conditionalBlocks; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterConditionalBlocks(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitConditionalBlocks(this);
-		}
 	}
 
 	public final ConditionalBlocksContext conditionalBlocks() throws RecognitionException {
@@ -622,14 +563,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_assignment; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterAssignment(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitAssignment(this);
-		}
 	}
 
 	public final AssignmentContext assignment() throws RecognitionException {
@@ -696,14 +629,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_assignLhs; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterAssignLhs(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitAssignLhs(this);
-		}
 	}
 
 	public final AssignLhsContext assignLhs() throws RecognitionException {
@@ -773,14 +698,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_assignRhs; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterAssignRhs(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitAssignRhs(this);
-		}
 	}
 
 	public final AssignRhsContext assignRhs() throws RecognitionException {
@@ -891,14 +808,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_argList; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterArgList(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitArgList(this);
-		}
 	}
 
 	public final ArgListContext argList() throws RecognitionException {
@@ -949,14 +858,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_pairElement; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterPairElement(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitPairElement(this);
-		}
 	}
 
 	public final PairElementContext pairElement() throws RecognitionException {
@@ -1013,14 +914,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_type; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterType(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitType(this);
-		}
 	}
 
 	public final TypeContext type() throws RecognitionException {
@@ -1073,14 +966,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_baseType; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterBaseType(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitBaseType(this);
-		}
 	}
 
 	public final BaseTypeContext baseType() throws RecognitionException {
@@ -1129,14 +1014,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_arrayType; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterArrayType(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitArrayType(this);
-		}
 	}
 
 	public final ArrayTypeContext arrayType() throws RecognitionException {
@@ -1236,14 +1113,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_pairType; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterPairType(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitPairType(this);
-		}
 	}
 
 	public final PairTypeContext pairType() throws RecognitionException {
@@ -1289,14 +1158,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_pairElementType; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterPairElementType(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitPairElementType(this);
-		}
 	}
 
 	public final PairElementTypeContext pairElementType() throws RecognitionException {
@@ -1366,14 +1227,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_expression; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterExpression(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitExpression(this);
-		}
 	}
 
 	public final ExpressionContext expression() throws RecognitionException {
@@ -1503,14 +1356,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_integerLiteral; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterIntegerLiteral(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitIntegerLiteral(this);
-		}
 	}
 
 	public final IntegerLiteralContext integerLiteral() throws RecognitionException {
@@ -1584,14 +1429,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_arrayElement; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterArrayElement(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitArrayElement(this);
-		}
 	}
 
 	public final ArrayElementContext arrayElement() throws RecognitionException {
@@ -1657,14 +1494,6 @@ public class WJSCParser extends Parser {
 			super(parent, invokingState);
 		}
 		@Override public int getRuleIndex() { return RULE_arrayLiteral; }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).enterArrayLiteral(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof WJSCParserListener ) ((WJSCParserListener)listener).exitArrayLiteral(this);
-		}
 	}
 
 	public final ArrayLiteralContext arrayLiteral() throws RecognitionException {
