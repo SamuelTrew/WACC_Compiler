@@ -1,24 +1,13 @@
 lexer grammar WJSCLexer;
 
-// COMMENTS
-COMMENT: '#';
-
 // WHITESPACE
-EOL: ('\n' | '\r\n') -> skip;
+EOL: ('\n' | '\r' | '\r\n') -> skip;
 WHITESPACE: NL+ -> skip;
 
 // Keywords
-PROGRAM_KEYWORDS: BEGIN 
-                | END
-                ;
 BEGIN: 'begin';
 END: 'end';
 IS: 'is';
-STATEMENT_KEYWORDS: WSKIP 
-                  | READ 
-                  | STDLIB_FUNCTIONS
-                  | CONDITIONAL_KEYWORDS
-                  ;
 STDLIB_FUNCTIONS: FREE
                 | RETURN
                 | EXIT
@@ -32,14 +21,6 @@ RETURN: 'return';
 EXIT: 'exit';
 PRINT: 'print';
 PRINTLN: 'println';
-CONDITIONAL_KEYWORDS: IF
-                    | THEN
-                    | ELSE
-                    | FI
-                    | WHILE
-                    | DO
-                    | DONE
-                    ;
 IF: 'if';
 THEN: 'then';
 ELSE: 'else';
@@ -99,7 +80,6 @@ ASSIGNMENT: '=';
 NEW_PAIR: 'newpair';
 
 // Identifiers & literals
-IDENTIFIER: ('_'|[a-z]|[A-Z])('_'|[a-z]|[A-Z]|[0-9])*;
 INTEGER_LITERAL: INTEGER_SIGN? DIGIT+;
 DIGIT: [0-9];
 INTEGER_SIGN: PLUS 
@@ -147,3 +127,7 @@ APOS: '\'';
 DBLQ: '"';
 
 fragment NL: [ \t\u000C\r\n];
+
+// COMMENTS
+COMMENT: '#' ~[\r\n]* -> skip;
+IDENTIFIER: ('_'|[a-z]|[A-Z])('_'|[a-z]|[A-Z]|[0-9])*;

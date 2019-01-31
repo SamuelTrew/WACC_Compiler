@@ -7,7 +7,6 @@ import {
   AssignLhsContext, AssignmentContext,
   AssignRhsContext,
   BaseTypeContext,
-  CommentContext,
   ConditionalBlocksContext, ExpressionContext,
   FuncContext, PairElementContext,
   PairElementTypeContext, PairTypeContext, ParamContext, ParamListContext,
@@ -69,11 +68,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
-  }
-
-  public visitComment = (ctx: CommentContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
     return this.initWJSCAst(ctx) // result
   }
