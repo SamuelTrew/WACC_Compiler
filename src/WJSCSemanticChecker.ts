@@ -18,7 +18,7 @@ import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import { WJSCAst } from './WJSCAst'
 import { WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
-import { hasSameType, isBaseType } from './WJSCType'
+import { hasSameType, isBaseType} from './WJSCType'
 
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
 
@@ -46,7 +46,23 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const expressions = ctx.expression()
+    const children = expressions.map(this.visitExpression)
+    if (children.length !== 0) {
+      const firstChild = children[1]
+      children.forEach((child, index) => {
+        if (child.type === undefined || firstChild.type === undefined) {
+          result.error.push('Undefined types in Array Literals, at' + result.line + ':' + result.column)
+        } else if (!hasSameType(child.type, firstChild.type)) {
+          result.error.push('Incorrect type in Array Literals, at ' + result.line + ':' + result.column)
+        } else if (!this.symbolTable.lookup(child.token, child.type)) {
+          result.error.push('Different type from ST, at ' + result.line + ':' + result.column)
+        }
+        // We also need to check that the child type matches what's stored
+      })
+    }
+    return result
   }
 
   public visitArrayType = (ctx: ArrayTypeContext): WJSCAst => {
@@ -79,7 +95,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitAssignment = (ctx: AssignmentContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const lhs = ctx.assignLhs()
+    const rhs = ctx.assignRhs()
+    if (lhs === undefined || rhs === undefined) {
+      result.error.push('Assignment is invalid at ' + result.line + ':' + result.column)
+    } else {
+      this.visitAssignLhs(lhs)
+      this.visitAssignRhs(rhs)
+    }
+    return result // result
   }
 
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
@@ -110,7 +135,31 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitExpression = (ctx: ExpressionContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const literals = ctx.INTEGER_LITERAL() || ctx.BOOLEAN_LITERAL() || ctx.CHARACTER_LITERAL()
+                     || ctx.STRING_LITERAL() || ctx.PAIR_LITERAL()
+    const ident = ctx.IDENTIFIER()
+    const arrayElem = ctx.arrayElement()
+    const operators = ctx.UNARY_OPERATOR() || ctx.BINARY_OPERATOR()
+    const bracket = ctx.LPAREN()
+    if (literals === undefined && ident === undefined && arrayElem === undefined &&
+    operators === undefined && bracket === undefined) {
+      result.error.push('Expressions are invalid ' + result.line + ':' + result.column)
+    } else {
+      if (operators !== undefined || bracket !== undefined) {
+        if (bracket !== undefined && ctx.RPAREN() === undefined) {
+          // Scenario in which there is no ending bracket
+          result.error.push('Expression bracketing is invalid ' + result.line + ':' + result.column)
+        } else {
+          const expressions = ctx.expression()
+          expressions.map(this.visitExpression)
+        }
+      }
+      if (arrayElem !== undefined) {
+        this.visitArrayElement(arrayElem)
+      }
+    }
+    return result// result
   }
 
   public visitFunc = (ctx: FuncContext): WJSCAst => {
@@ -151,7 +200,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitPairType = (ctx: PairTypeContext): WJSCAst => {
     // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const pairs = ctx.pairElementType()
+    pairs.forEach((pair, index) => {
+      this.visitPairElementType(pair)
+    })
+    return this.initWJSCAst(ctx)// result
   }
 
   public visitParam = (ctx: ParamContext): WJSCAst => {
@@ -182,8 +235,70 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitStatement = (ctx: StatementContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const skip = ctx.WSKIP()
+    // Missing: FREE, RETURN, EXIT (exitRule(this)?), PRINT, PRINTLN
+    const statWithSingleExp = ctx.exitRule(this)
+    // The other assignment format? (<type><ident> = <assign rhs>)
+    const assignment = ctx.assignment() || ctx.READ()
+    const conditionals = ctx.conditionalBlocks()
+    const begin = ctx.BEGIN()
+    const semicolon = ctx.SEMICOLON()
+    if (skip === undefined && statWithSingleExp === undefined && assignment === undefined
+    && conditionals === undefined && begin === undefined && semicolon === undefined) {
+      result.error.push('Statement is invalid at ' + result.line + ':' + result.column)
+    } else {
+      if (statWithSingleExp !== undefined ) {
+        const singleExp = ctx.expression()
+        if (singleExp === undefined) {
+          result.error.push('Statement with single Exp has invalid Exp at ' + result.line + ':' + result.column)
+        } else {
+          this.visitExpression(singleExp)
+        }
+      }
+      if (assignment !== undefined) {
+        if (ctx.READ() !== undefined) {
+          const lhs = ctx.assignLhs()
+          if (lhs === undefined) {
+            result.error.push('Invalid Lhs for READ statement at  ' + result.line + ':' + result.column)
+          } else {
+            this.visitAssignLhs(lhs)
+          }
+        }
+        if (ctx.assignment() !== undefined) {
+          const assignments = ctx.assignment()
+          if (assignments === undefined) {
+            result.error.push('Invalid Assignment in statement at  ' + result.line + ':' + result.column)
+          } else {
+            this.visitAssignment(assignments)
+          }
+        }
+      }
+      if (conditionals !== undefined) {
+        const condExp = ctx.expression()
+        const childStats = ctx.statement()
+        if (condExp === undefined) {
+          result.error.push('Statement with cond Exp has invalid Exp at ' + result.line + ':' + result.column)
+        } else {
+          this.visitExpression(condExp)
+        }
+        childStats.map(this.visitStatement)
+      }
+      if (begin !== undefined) {
+        // We check to make sure end is there
+        if (ctx.END() === undefined) {
+          result.error.push('Statement with begin has no end at ' + result.line + ':' + result.column)
+        } else {
+          const childStats = ctx.statement()
+          childStats.map(this.visitStatement)
+        }
+      }
+      if (semicolon !== undefined) {
+        const childStats = ctx.statement()
+        childStats.map(this.visitStatement)
+      }
+    }
+    return result // result
   }
 
   public visitType = (ctx: TypeContext): WJSCAst => {
