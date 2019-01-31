@@ -1,4 +1,4 @@
-type TypeName = BaseType | ArrayType | PairType
+type TypeName = BaseType | ArrayType | PairType | undefined
 type BaseType = 'int' | 'bool' | 'char' | 'string' | 'pair'
 
 interface ArrayType {
@@ -25,19 +25,19 @@ const isArrayType = (tname: any): tname is ArrayType =>
   tname.arrayType !== undefined && isWJSCType(tname.arrayType)
 
 const isPairType = (tname: any): tname is PairType =>
-  tname.pairType !== undefined && isWJSCType(tname.pairType[0]) && isWJSCType(tname.pairType[1])
+  tname.pairType !== undefined
+  && isBaseType(tname.pairType[0])
+  && isBaseType(tname.pairType[1])
 
 const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
-  if (isWJSCType(typeA) && isWJSCType(typeB)) {
-    if (isBaseType(typeA)) {
-      return isBaseType(typeB) && typeA === typeB
-    } else if (isArrayType(typeA)) {
-      return isArrayType(typeB) && typeA.arrayType === typeB.arrayType
-    } else {
-      return isPairType(typeB)
-        && typeA.pairType[0] === typeB.pairType[0]
-        && typeA.pairType[1] === typeB.pairType[1]
-    }
+  if (isBaseType(typeA)) {
+    return isBaseType(typeB) && typeA === typeB
+  } else if (isArrayType(typeA)) {
+    return isArrayType(typeB) && typeA.arrayType === typeB.arrayType
+  } else if (isPairType(typeA)) {
+    return isPairType(typeB)
+      && typeA.pairType[0] === typeB.pairType[0]
+      && typeA.pairType[1] === typeB.pairType[1]
   } else {
     return false
   }
