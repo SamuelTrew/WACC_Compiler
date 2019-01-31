@@ -20,6 +20,7 @@ import { ArrayTypeContext } from "./WJSCParser";
 import { PairTypeContext } from "./WJSCParser";
 import { PairElementTypeContext } from "./WJSCParser";
 import { ExpressionContext } from "./WJSCParser";
+import { IntegerLiteralContext } from "./WJSCParser";
 import { ArrayElementContext } from "./WJSCParser";
 import { ArrayLiteralContext } from "./WJSCParser";
 
@@ -215,6 +216,17 @@ export interface WJSCParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitExpression?: (ctx: ExpressionContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.integerLiteral`.
+	 * @param ctx the parse tree
+	 */
+	enterIntegerLiteral?: (ctx: IntegerLiteralContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.integerLiteral`.
+	 * @param ctx the parse tree
+	 */
+	exitIntegerLiteral?: (ctx: IntegerLiteralContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `WJSCParser.arrayElement`.
