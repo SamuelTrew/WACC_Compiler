@@ -57,7 +57,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       result.error.push('Type is undefined at ' + result.line + ':' + result.column)
     } else {
       const typeNode = this.visitBaseType(type)
-
+      result.children.push(typeNode)
       if (hasSameType(result.type, typeNode.type)) {
         result.error.push('Not of correct type at ' + result.line + ':' + result.column)
       }
@@ -214,6 +214,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   protected defaultResult(): WJSCAst {
     return {
+      children: [],
       column: -1,
       error: [],
       line: -1,
@@ -224,6 +225,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   private initWJSCAst = (ctx: ParserRuleContext): WJSCAst => {
     return {
+      children: [],
       column: ctx.start.charPositionInLine,
       error: [],
       line: ctx.start.line,
