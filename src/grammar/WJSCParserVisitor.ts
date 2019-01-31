@@ -23,6 +23,9 @@ import { ExpressionContext } from "./WJSCParser";
 import { IntegerLiteralContext } from "./WJSCParser";
 import { ArrayElementContext } from "./WJSCParser";
 import { ArrayLiteralContext } from "./WJSCParser";
+import { BinaryOperatorContext } from "./WJSCParser";
+import { UnaryOperatorContext } from "./WJSCParser";
+import { StdlibContext } from "./WJSCParser";
 
 
 /**
@@ -172,5 +175,26 @@ export interface WJSCParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitArrayLiteral?: (ctx: ArrayLiteralContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `WJSCParser.binaryOperator`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitBinaryOperator?: (ctx: BinaryOperatorContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `WJSCParser.unaryOperator`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitUnaryOperator?: (ctx: UnaryOperatorContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `WJSCParser.stdlib`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitStdlib?: (ctx: StdlibContext) => Result;
 }
 

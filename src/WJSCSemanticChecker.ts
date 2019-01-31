@@ -140,7 +140,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
                      || ctx.STRING_LITERAL() || ctx.PAIR_LITERAL()
     const ident = ctx.IDENTIFIER()
     const arrayElem = ctx.arrayElement()
-    const operators = ctx.UNARY_OPERATOR() || ctx.BINARY_OPERATOR()
+    const operators = ctx.unaryOperator() || ctx.binaryOperator()
     const bracket = ctx.LPAREN()
     if (literals === undefined && ident === undefined && arrayElem === undefined &&
     operators === undefined && bracket === undefined) {
@@ -241,7 +241,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const result = this.initWJSCAst(ctx)
     const skip = ctx.WSKIP()
     // WARNING Missing: FREE, RETURN, EXIT, PRINT, PRINTLN <- Are these STDLIBs?
-    const statWithSingleExp = ctx.STDLIB_FUNCTIONS()
+    const statWithSingleExp = ctx.stdlib()
     // The other assignment format? (<type><ident> = <assign rhs>)
     const assignment = ctx.assignment() || ctx.READ()
     const conditionals = ctx.conditionalBlocks()

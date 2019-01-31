@@ -23,6 +23,9 @@ import { ExpressionContext } from "./WJSCParser";
 import { IntegerLiteralContext } from "./WJSCParser";
 import { ArrayElementContext } from "./WJSCParser";
 import { ArrayLiteralContext } from "./WJSCParser";
+import { BinaryOperatorContext } from "./WJSCParser";
+import { UnaryOperatorContext } from "./WJSCParser";
+import { StdlibContext } from "./WJSCParser";
 
 
 /**
@@ -249,5 +252,38 @@ export interface WJSCParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitArrayLiteral?: (ctx: ArrayLiteralContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.binaryOperator`.
+	 * @param ctx the parse tree
+	 */
+	enterBinaryOperator?: (ctx: BinaryOperatorContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.binaryOperator`.
+	 * @param ctx the parse tree
+	 */
+	exitBinaryOperator?: (ctx: BinaryOperatorContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.unaryOperator`.
+	 * @param ctx the parse tree
+	 */
+	enterUnaryOperator?: (ctx: UnaryOperatorContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.unaryOperator`.
+	 * @param ctx the parse tree
+	 */
+	exitUnaryOperator?: (ctx: UnaryOperatorContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.stdlib`.
+	 * @param ctx the parse tree
+	 */
+	enterStdlib?: (ctx: StdlibContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.stdlib`.
+	 * @param ctx the parse tree
+	 */
+	exitStdlib?: (ctx: StdlibContext) => void;
 }
 
