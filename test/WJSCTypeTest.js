@@ -1,5 +1,5 @@
-var WJSCType = require('../build/WJSCType')
-var assert = require('assert')
+const WJSCType = require('../build/WJSCType')
+const assert = require('assert')
 
 describe('Type Check', function () {
   describe('Base Types', function () {

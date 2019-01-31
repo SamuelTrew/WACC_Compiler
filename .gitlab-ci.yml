@@ -31,7 +31,29 @@ build:
     paths:
     - build/
 
+build-grammar:
+  stage: build
+  dependencies:
+  - install
+  only:
+  - master
+  script:
+  - npm run antlr:build
+  artifacts:
+    paths:
+    - antlr_config/antlr/
+
 test:
+  stage: test
+  dependencies:
+  - install
+  - build
+  only:
+  - master
+  script:
+  - npm run test
+
+lint:
   stage: test
   dependencies: 
   - install
@@ -39,7 +61,7 @@ test:
   only:
   - master
   script:
-  - npm run test
+  - npm run lint
 
 deploy:
   stage: deploy

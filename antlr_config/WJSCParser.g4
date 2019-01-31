@@ -14,7 +14,7 @@ statement: WSKIP
          | conditionalBlocks
          | assignment
          | READ assignLhs
-         | STDLIB_FUNCTIONS expression
+         | stdlib expression
          | conditionalBlocks
          | BEGIN statement END
          | statement SEMICOLON statement
@@ -69,19 +69,49 @@ pairElementType: baseType
                  | PAIR
                  ;
 
-expression: expression BINARY_OPERATOR expression
+expression: integerLiteral
+          | expression binaryOperator expression
           | arrayElement
-          | UNARY_OPERATOR expression
+          | unaryOperator expression
           | LPAREN expression RPAREN
           | IDENTIFIER
-          | integerLiteral
           | BOOLEAN_LITERAL
           | CHARACTER_LITERAL
           | STRING_LITERAL
           | PAIR_LITERAL
           ;
-integerLiteral: INTEGER_SIGN? DIGIT+;
+integerLiteral: (PLUS | MINUS)? DIGIT+;
 arrayElement: IDENTIFIER (LBRACK expression RBRACK)+;
 arrayLiteral: LBRACK (expression (COMMA expression)*)? RBRACK;
 
 
+binaryOperator: MULTIPLY
+              | DIVIDE
+              | MODULO
+              | PLUS
+              | MINUS
+              | GREATER_THAN
+              | GREATER_EQUAL
+              | LESS_THAN
+              | LESS_EQUAL
+              | EQUALS
+              | STRICT_EQUALS
+              | NEQUALS
+              | NSTRICT_EQUALS
+              | LOGICAL_AND
+              | LOGICAL_OR
+              ;
+
+unaryOperator: LOGICAL_NEGATION
+             | MINUS
+             | LENGTH
+             | ORDER_OF
+             | CHARACTER_OF
+             ;
+
+stdlib: FREE
+      | RETURN
+      | EXIT
+      | PRINT
+      | PRINTLN
+      ;

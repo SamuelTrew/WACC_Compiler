@@ -1,4 +1,4 @@
-// Generated from WJSCParser.g4 by ANTLR 4.7.2
+// Generated from WJSCParser.g4 by ANTLR 4.7
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -206,4 +206,34 @@ public interface WJSCParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitArrayLiteral(WJSCParser.ArrayLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link WJSCParser#binaryOperator}.
+	 * @param ctx the parse tree
+	 */
+	void enterBinaryOperator(WJSCParser.BinaryOperatorContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link WJSCParser#binaryOperator}.
+	 * @param ctx the parse tree
+	 */
+	void exitBinaryOperator(WJSCParser.BinaryOperatorContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link WJSCParser#unaryOperator}.
+	 * @param ctx the parse tree
+	 */
+	void enterUnaryOperator(WJSCParser.UnaryOperatorContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link WJSCParser#unaryOperator}.
+	 * @param ctx the parse tree
+	 */
+	void exitUnaryOperator(WJSCParser.UnaryOperatorContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link WJSCParser#stdlib}.
+	 * @param ctx the parse tree
+	 */
+	void enterStdlib(WJSCParser.StdlibContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link WJSCParser#stdlib}.
+	 * @param ctx the parse tree
+	 */
+	void exitStdlib(WJSCParser.StdlibContext ctx);
 }

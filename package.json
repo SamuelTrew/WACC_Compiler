@@ -16,13 +16,11 @@
     "build:basicgrammar": "cd antlr_config && antlr4ts -visitor BasicLexer.g4 BasicParser.g4 -o ../src/grammar",
     "build:compile": "webpack",
     "lint": "tslint -p tsconfig.json -c tslint.json",
-    "test": "npm run lint && npm run test:mocha",
-    "test:mocha": "mocha",
-    "test:mochaw": "mocha -w --reporter mochawesome --reporter-options reportDir=test/report",
-    "test:watch": "live-server --port=9000 --mount=/:test/report/ --entry-file=test/report/mochawesome.html",
-    "start:test": "concurrently --kill-others \"npm run test:mochaw\" \"npm run test:watch\" \"npm run build:tscw\"",
-    "antlr:build": "cd antlr_config && antlr4 WJSCLexer.g4 WJSCParser.g4 -o antlr && cd antlr && javac *.java",
-    "antlr:test": "node ./antlrGrammarTest.js"
+    "test": "mocha --reporter mochawesome --reporter-options reportDir=test/report",
+    "test:watch": "mocha -w --reporter mochawesome --reporter-options reportDir=test/report",
+    "test:serve": "live-server --port=9000 --mount=/:test/report/ --entry-file=test/report/mochawesome.html",
+    "start:test": "concurrently --kill-others \"npm run test:watch\" \"npm run test:serve\" \"npm run build:tscw\"",
+    "antlr:build": "cd antlr_config && java -jar \"../lib/antlr-4.7-complete.jar\" WJSCLexer.g4 WJSCParser.g4 -o antlr && cd antlr && javac *.java"
   },
   "repository": {
     "type": "git",
