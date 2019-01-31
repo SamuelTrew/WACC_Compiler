@@ -125,12 +125,19 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const stat = ctx.statement()
 
     const typeNode = this.visitType(type)
-    const identNode = this.visitStatement(stat)
-
-    if (!(hasSameType(typeNode.type, result.type))) {
-      result.error.push('Incorrect type at ' + result.line + ':' + result.column)
-    } else if (result.type === undefined || type === undefined) {
-      result.error.push('Type is undefined at ' + result.line + ':' + result.column)
+    const statNode = this.visitStatement(stat)
+    if (paramList !== undefined) {
+      const paramNode = this.visitParamList(paramList)
+      if (result.type === undefined || type === undefined) {
+        result.error.push('Type is undefined at ' + result.line + ':' + result.column)
+      } else if (!(this.symbolTable.lookup(result.token, result.type)
+      || this.symbolTable.lookup(typeNode.token, typeNode.type)
+      || this.symbolTable.lookup(statNode.token, statNode.type)
+      || this.symbolTable.lookup(paramNode.token, paramNode.type))) {
+        result.error.push('Different type from ST at ' + result.line + ':' + result.column)
+      }
+    } else {
+      result.error.push('Your paramList is undefined at ' + result.line + ':' + result.column)
     }
     return  result
   }
