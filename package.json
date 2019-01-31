@@ -20,7 +20,8 @@
     "test:mocha": "mocha",
     "test:mochaw": "mocha -w --reporter mochawesome --reporter-options reportDir=test/report",
     "test:watch": "live-server --port=9000 --mount=/:test/report/ --entry-file=test/report/mochawesome.html",
-    "start:test": "concurrently --kill-others \"npm run test:mochaw\" \"npm run test:watch\" \"npm run build:tscw\""
+    "start:test": "concurrently --kill-others \"npm run test:mochaw\" \"npm run test:watch\" \"npm run build:tscw\"",
+    "antlr:build": "cd antlr_config && antlr4 WJSCLexer.g4 WJSCParser.g4 -o antlr && cd antlr && javac *.java"
   },
   "repository": {
     "type": "git",
@@ -49,7 +50,9 @@
   "dependencies": {
     "antlr4ts": "^0.5.0-alpha.1",
     "chai": "^4.2.0",
+    "form-data": "^2.3.3",
     "json2yaml": "^1.1.0",
+    "node-fetch": "^2.3.0",
     "typescript": "^3.2.2"
   }
 }

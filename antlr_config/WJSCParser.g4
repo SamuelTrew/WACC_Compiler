@@ -2,7 +2,7 @@ parser grammar WJSCParser;
 
 options { tokenVocab = WJSCLexer; }
 
-program: BEGIN func* statement END;
+program: BEGIN func* statement END EOF;
 
 func: type IDENTIFIER LPAREN paramList? RPAREN IS statement END;
 
@@ -11,6 +11,8 @@ paramList: param (COMMA param)*;
 param: type IDENTIFIER;
 
 statement: WSKIP
+         | conditionalBlocks
+         | assignment
          | READ assignLhs
          | STDLIB_FUNCTIONS expression
          | conditionalBlocks
@@ -19,11 +21,11 @@ statement: WSKIP
          ;
 
 conditionalBlocks: IF expression THEN statement ELSE statement FI
-                  | WHILE expression DO statement DONE
-                  ;
+                 | WHILE expression DO statement DONE
+                 ;
 
 assignment: type IDENTIFIER ASSIGNMENT assignRhs
-          | assignLhs ASSIGNMENT 
+          | assignLhs ASSIGNMENT assignRhs
           ;
     
 assignLhs: IDENTIFIER
@@ -32,11 +34,11 @@ assignLhs: IDENTIFIER
           ;
 
 assignRhs: expression
-          | arrayLiteral
-          | NEW_PAIR LPAREN expression COMMA expression RPAREN
-          | pairElement
-          | CALL IDENTIFIER LPAREN argList? RPAREN
-          ;
+         | arrayLiteral
+         | NEW_PAIR LPAREN expression COMMA expression RPAREN
+         | pairElement
+         | CALL IDENTIFIER LPAREN argList? RPAREN
+         ;
     
 argList: expression (COMMA expression)*;
 
@@ -81,6 +83,5 @@ expression: INTEGER_LITERAL
 
 arrayElement: IDENTIFIER (LBRACK expression RBRACK)+;
 arrayLiteral: LBRACK (expression (COMMA expression)*)? RBRACK;
-comment: '#' ~(EOL)* EOL;
 
 
