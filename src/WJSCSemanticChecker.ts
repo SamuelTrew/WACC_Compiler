@@ -31,19 +31,31 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   private symbolTable = new WJSCSymbolTable(0, undefined, this.errorLog)
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
+    // 1. Ensure >1 expression  2. Visit expressions
     const result = this.initWJSCAst(ctx)
     const expressions = ctx.expression()
+    if (expressions.length === 0) {
+      this.errorLog.log(result, 'incorrect arg no', [1, 2])
+    }
     result.children = expressions.map(this.visitExpression)
     return result
   }
 
   public visitArrayElement = (ctx: ArrayElementContext): WJSCAst => {
-    // co const result = this.initWJSCAst(ctx)
-    // co const identifier = ctx.IDENTIFIER()
+    // 1. Ensure ident is in lookup 2. Visit expressions 3. Ensure expressions evaluate to int
+    const ident = ctx.IDENTIFIER()
+    const identType = this.visitTerminal(ident)
+    this.symbolTable.checkType(identType)
     const expressions = ctx.expression()
+    /*
+    expressions.forEach((child, index) => {
+       this.visitExpression(child)
+      child.t
+      })*/
     const children = expressions.map(this.visitExpression)
     // co const identName = this.visitTerminal(identifier).token
     children.forEach((child, index) => {
+      hasSameType(child.type, 'int')
       return true
     })
     return this.initWJSCAst(ctx)

@@ -3,7 +3,7 @@ import { TypeName } from './WJSCType'
 
 type WJSCErrorType = 'semantic' | 'syntactic'
 type WJSCSyntaxErrors = 'bad token fuck you'
-type WJSCSemanticErrors = 'undefined' | 'mismatch'
+type WJSCSemanticErrors = 'undefined' | 'mismatch' | 'incorrect arg no'
 
 class WJSCErrorLog {
 
@@ -13,7 +13,8 @@ class WJSCErrorLog {
     this.errorLog = []
   }
 
-  public log = (node: WJSCAst, error: WJSCSemanticErrors | WJSCSyntaxErrors, expectedType?: TypeName) => {
+  public log = (node: WJSCAst, error: WJSCSemanticErrors | WJSCSyntaxErrors,
+                additionalParam?: (TypeName | number[])) => {
     let errorMessage = ''
     const { line, column, token } = node
     if (this.isSemantic(error)) {
@@ -21,7 +22,11 @@ class WJSCErrorLog {
       if (error === 'undefined') {
         errorMessage += `Type of ${token} is undefined`
       } else if (error === 'mismatch') {
-        errorMessage += `Type of ${token} does not match expected type ${expectedType}`
+        errorMessage += `Type of ${token} does not match expected type ${additionalParam}`
+      } else if (error === 'incorrect arg no' && additionalParam !== undefined && additionalParam instanceof Array) {
+        errorMessage +=
+            `${token} does not have ${additionalParam[0]}
+             ${additionalParam[1] === -1 ? 'or more' : 'to ' + additionalParam[1].toString()} arguments`
       }
     } else {
       errorMessage += `Syntactic Error '${error} at ${line}:${column}: `
