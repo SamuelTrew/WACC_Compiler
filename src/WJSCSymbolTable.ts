@@ -1,3 +1,5 @@
+import { WJSCAst } from './WJSCAst'
+import { WJSCErrorLog } from './WJSCErrors'
 import { hasSameType, TypeName } from './WJSCType'
 
 export class WJSCSymbolTable {
@@ -5,15 +7,18 @@ export class WJSCSymbolTable {
   private currentScopeLevel: number
   private symbolTable: WJSCSymbolTableEntry[]
   private parentLevel?: WJSCSymbolTable
+  private errorLog: WJSCErrorLog
 
-  constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined) {
+  constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, errorLog: WJSCErrorLog) {
+    // TODO pass it the error log
     this.currentScopeLevel = scopeLevel
     this.symbolTable = []
     this.parentLevel = parentLevel
+    this.errorLog = errorLog
   }
 
   public enterScope = (): WJSCSymbolTable => {
-    return new WJSCSymbolTable(this.currentScopeLevel++, this)
+    return new WJSCSymbolTable(this.currentScopeLevel++, this, this.errorLog)
   }
 
   // Add an entry to the symbol table
@@ -21,33 +26,34 @@ export class WJSCSymbolTable {
     this.symbolTable.push({ identifier, type })
   }
 
-  // Check if identifier exists in the local scope.
-  // If it does performs type check, else return false.
-  public localLookup = (identifier: string, type: TypeName): boolean | string => {
+  // Return type of identifier in the local scope or undefined if not found.
+  public checkLocalType = (astNode: WJSCAst): TypeName => {
+    const identifier = astNode.token
+    const type = astNode.type
     this.symbolTable.forEach((entry) => {
       if (entry.identifier === identifier) {
-        return hasSameType(entry.type, type) ||
-           'expression has type: ' + type + ', expected: ' + entry.type
+        if (hasSameType(entry.type, type)) {
+          return entry.type
+        } else {
+          this.errorLog.log(astNode, 'mismatch', entry.type)
+          return 'mismatch'
+        }
       }
     })
-    return false
+    return 'undefined'
   }
 
-  // Check if identifier exists in symbol table.
-  // If it does performs type check, else return false.
-  public lookup = (identifier: string, type: TypeName): boolean | string => {
-    // Perform localLookup and recursive global lookup
-    const lookupResult = this.localLookup(identifier, type)
-    if (typeof lookupResult === 'boolean') {
-      if (lookupResult === true) {
-        return true
-      } else if (this.parentLevel) {
-        this.parentLevel.lookup(identifier, type)
-      }
-    } else {
-      return lookupResult
+  // Return type of identifier in the symbol table or undefined if not found.
+  public checkType = (astNode: WJSCAst): TypeName => {
+    // Perform checkLocalType and recursive global checkType
+    let lookupResult = this.checkLocalType(astNode)
+    if (this.parentLevel !== undefined && lookupResult === 'undefined') {
+      lookupResult = this.parentLevel.checkType(astNode)
     }
-    return false
+    if (lookupResult === 'undefined') {
+      this.errorLog.log(astNode, 'undefined')
+    }
+    return lookupResult
   }
 }
 
