@@ -22,13 +22,13 @@ import { hasSameType, isBaseType } from './WJSCType'
 
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
 
-  private symbolTable = new WJSCSymbolTable(0, undefined)
   private errorLog = new WJSCErrorLog()
+  private symbolTable = new WJSCSymbolTable(0, undefined, this.errorLog)
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
     const expressions = ctx.expression()
-    expressions.forEach(this.visitExpression)
+    result.children = expressions.map(this.visitExpression)
     return result
   }
 
@@ -45,7 +45,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
     const result = this.initWJSCAst(ctx)
     const expressions = ctx.expression()
     const children = expressions.map(this.visitExpression)
@@ -53,11 +52,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       const firstChild = children[1]
       children.forEach((child, index) => {
         if (child.type === undefined || firstChild.type === undefined) {
-          result.error.push('Undefined types in Array Literals, at' + result.line + ':' + result.column)
+          this.errorLog.log(result, 'undefined')
         } else if (!hasSameType(child.type, firstChild.type)) {
-          result.error.push('Incorrect type in Array Literals, at ' + result.line + ':' + result.column)
-        } else if (!this.symbolTable.lookup(child.token, child.type)) {
-          result.error.push('Different type from ST, at ' + result.line + ':' + result.column)
+          // TODO add new error for array type inconsistency
+          this.errorLog.log(result, 'mismatch', firstChild.type)
+        } else {
+          this.symbolTable.checkType(child)
         }
         // We also need to check that the child type matches what's stored
       })
@@ -121,8 +121,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       result.error.push('Incorrect type at ' + result.line + ':' + result.column)
     } else if (result.type === undefined) {
       this.errorLog.log(result, 'undefined')
-    } else if (!this.symbolTable.lookup(result.token, result.type)) {
-      this.errorLog.log(result, 'mismatch')
+    } else {
+      this.symbolTable.checkType(result)
     }
 
     return result
@@ -179,11 +179,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       const paramNode = this.visitParamList(paramList)
       if (result.type === undefined || type === undefined) {
         this.errorLog.log(result, 'undefined')
-      } else if (!(this.symbolTable.lookup(result.token, result.type)
-        || this.symbolTable.lookup(typeNode.token, typeNode.type)
-        || this.symbolTable.lookup(statNode.token, statNode.type)
-        || this.symbolTable.lookup(paramNode.token, paramNode.type))) {
-        this.errorLog.log(result, 'mismatch')
+      } else {
+        this.symbolTable.checkType(result)
+        this.symbolTable.checkType(typeNode)
+        this.symbolTable.checkType(statNode)
+        this.symbolTable.checkType(paramNode)
       }
     } else {
       result.error.push('Your paramList is undefined at ' + result.line + ':' + result.column)
@@ -217,13 +217,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const type = ctx.type()
     const typeNode = this.visitType(type)
 
-    if (type === undefined || result.type === undefined) {
-      result.error.push('Type is undefined at ' + result.line + ':' + result.column)
-    } else if (!this.symbolTable.lookup(typeNode.token, typeNode.type)) {
-      result.error.push('Different type from ST at ' + result.line + ':' + result.column)
-    } else if (!hasSameType(typeNode.type, result.type)) {
-      result.error.push('Incorrect type at ' + result.line + ':' + result.column)
-    }
+    // comment: if (type === undefined || result.type === undefined) {
+    //   result.error.push('Type is undefined at ' + result.line + ':' + result.column)
+    // } else if (!this.symbolTable.checkType(typeNode.token, typeNode.type)) {
+    //   result.error.push('Different type from ST at ' + result.line + ':' + result.column)
+    // } else if (!hasSameType(typeNode.type, result.type)) {
+    //   result.error.push('Incorrect type at ' + result.line + ':' + result.column)
+    // }
     return result
   }
 
@@ -313,23 +313,23 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   public visitType = (ctx: TypeContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
 
-    const baseType = ctx.baseType()
-    const arrayType = ctx.arrayType()
-    const pairType = ctx.pairType()
-
-    if (result.type === undefined || baseType === undefined
-      || arrayType === undefined || pairType === undefined) {
-      result.error.push('Type is undefined at ' + result.line + ':' + result.column)
-    } else {
-      const baseTypeNode = this.visitBaseType(baseType)
-      const arrayTypeNode = this.visitArrayType(arrayType)
-      const pairTypeNode = this.visitPairType(pairType)
-      if (!(this.symbolTable.lookup(baseTypeNode.token, baseTypeNode.type)
-        || this.symbolTable.lookup(arrayTypeNode.token, arrayTypeNode.type)
-        || this.symbolTable.lookup(pairTypeNode.token, pairTypeNode.type))) {
-        result.error.push('Different type from ST at ' + result.line + ':' + result.column)
-      }
+    let visited
+    const type = ctx.baseType() || ctx.arrayType() || ctx.pairType()
+    if (type instanceof BaseTypeContext) {
+      visited = this.visitBaseType(type)
+    } else if (type instanceof ArrayTypeContext) {
+      visited = this.visitArrayType(type)
+    } else if (type instanceof PairTypeContext) {
+      visited = this.visitPairType(type)
     }
+
+    if (visited) {
+      result.children.push(visited)
+      result.type = visited.type
+    } else {
+      this.errorLog.log(result, 'undefined')
+    }
+
     return result
   }
 
