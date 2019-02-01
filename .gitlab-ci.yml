@@ -48,6 +48,7 @@ test:
   dependencies:
   - install
   - build
+  - build-grammar
   only:
   - master
   script:

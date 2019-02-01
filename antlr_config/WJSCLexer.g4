@@ -65,6 +65,7 @@ fragment ESCAPED_CHAR: '0'
                      | 'r'
                      | '\''
                      | '\\'
+                     | '"'
                      ;
 fragment NON_ESCAPED: [\u0000-\u0021] 
                     | [\u0023-\u0026] 

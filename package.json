@@ -10,6 +10,7 @@
     "all": "npm run lint && npm run build && npm test",
     "clean": "rimraf build",
     "build": "npm run build:grammar && npm run build:compile",
+    "build:antlr": "cd antlr_config && java -jar \"../lib/antlr-4.7-complete.jar\" WJSCLexer.g4 WJSCParser.g4 -o antlr && cd antlr && javac -cp \"../../lib/antlr-4.7-complete.jar\" *.java",
     "build:tsc": "npm run build:grammar && tsc",
     "build:tscw": "tsc --watch",
     "build:grammar": "cd antlr_config && antlr4ts -visitor WJSCLexer.g4 WJSCParser.g4 -o ../src/grammar",
@@ -19,8 +20,7 @@
     "test": "mocha --reporter mochawesome --reporter-options reportDir=test/report",
     "test:watch": "mocha -w --reporter mochawesome --reporter-options reportDir=test/report",
     "test:serve": "live-server --port=9000 --mount=/:test/report/ --entry-file=test/report/mochawesome.html",
-    "start:test": "concurrently --kill-others \"npm run test:watch\" \"npm run test:serve\" \"npm run build:tscw\"",
-    "antlr:build": "cd antlr_config && java -jar \"../lib/antlr-4.7-complete.jar\" WJSCLexer.g4 WJSCParser.g4 -o antlr && cd antlr && javac -cp \"../../lib/antlr-4.7-complete.jar\" *.java"
+    "start:test": "concurrently --kill-others \"npm run test:watch\" \"npm run test:serve\" \"npm run build:tscw\""
   },
   "repository": {
     "type": "git",
