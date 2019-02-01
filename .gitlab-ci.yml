@@ -38,7 +38,7 @@ build-grammar:
   only:
   - master
   script:
-  - npm run antlr:build
+  - npm run build:antlr
   artifacts:
     paths:
     - antlr_config/antlr/
@@ -52,6 +52,7 @@ test:
   only:
   - master
   script:
+  - cd antlr_config/antlr && ls && cd ../..
   - npm run test
 
 lint:

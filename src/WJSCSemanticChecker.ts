@@ -1,5 +1,5 @@
-import { ParserRuleContext } from 'antlr4ts'
-import { AbstractParseTreeVisitor } from 'antlr4ts/tree'
+import { Parser, ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
 import {
   ArgListContext, ArrayElementContext,
   ArrayLiteralContext,
@@ -15,11 +15,16 @@ import {
   TypeContext,
 } from './grammar/WJSCParser'
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
-import { WJSCAst } from './WJSCAst'
+import { WJSCAst, WJSCTerminal } from './WJSCAst'
 import { WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 import { hasSameType, isBaseType } from './WJSCType'
+import { WJSCLexer } from './grammar/WJSCLexer';
 
+/**
+ * A semantic checker which builds an AST as it traverses through the tree
+ * returned from the ANTLR4 runtime.
+ */
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements WJSCParserVisitor<WJSCAst> {
 
   private errorLog = new WJSCErrorLog()
@@ -137,13 +142,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     // not code: const result = this.initWJSCAst(ctx)
     const result = this.initWJSCAst(ctx)
     const literals = ctx.integerLiteral() || ctx.BOOLEAN_LITERAL() || ctx.CHARACTER_LITERAL()
-                     || ctx.STRING_LITERAL() || ctx.PAIR_LITERAL()
+      || ctx.STRING_LITERAL() || ctx.PAIR_LITERAL()
     const ident = ctx.IDENTIFIER()
     const arrayElem = ctx.arrayElement()
     const operators = ctx.unaryOperator() || ctx.binaryOperator()
     const bracket = ctx.LPAREN()
     if (literals === undefined && ident === undefined && arrayElem === undefined &&
-    operators === undefined && bracket === undefined) {
+      operators === undefined && bracket === undefined) {
       result.error.push('Expressions are invalid ' + result.line + ':' + result.column)
     } else {
       if (operators !== undefined || bracket !== undefined) {
@@ -248,10 +253,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const begin = ctx.BEGIN()
     const semicolon = ctx.SEMICOLON()
     if (skip === undefined && statWithSingleExp === undefined && assignment === undefined
-    && conditionals === undefined && begin === undefined && semicolon === undefined) {
+      && conditionals === undefined && begin === undefined && semicolon === undefined) {
       result.error.push('Statement is invalid at ' + result.line + ':' + result.column)
     } else {
-      if (statWithSingleExp !== undefined ) {
+      if (statWithSingleExp !== undefined) {
         const singleExp = ctx.expression()
         if (singleExp === undefined) {
           result.error.push('Statement with single Exp has invalid Exp at ' + result.line + ':' + result.column)
@@ -333,25 +338,45 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     return result
   }
 
+  public visitTerminal = (node: TerminalNode): WJSCTerminal => {
+    const terminal = this.initWJSCAst(node) as WJSCTerminal
+    const token = node.toString()
+    const type = node.symbol.type
+    if (WJSCLexer.BEGIN <= type && type <= WJSCLexer.END) {
+      terminal.terminalType = 'PROGRAM_KEYWORD'
+    } else if (type === WJSCLexer.IS) {
+      terminal.terminalType = 'FUNCTION_DECL'
+    } else if (WJSCLexer.WSKIP <= type && type <= WJSCLexer.PRINTLN) {
+      terminal.terminalType = 'STDLIB'
+    } else if (WJSCLexer.IF <= type && type <= WJSCLexer.DONE) {
+      terminal.terminalType = 'CONDITIONALS'
+    }
+  }
+
   protected defaultResult(): WJSCAst {
     return {
       children: [],
       column: -1,
-      error: [],
       line: -1,
       startIndex: -1,
-      token: '',
+      token: 'default',
+      type: 'undefined',
     }
   }
 
-  private initWJSCAst = (ctx: ParserRuleContext): WJSCAst => {
+  private initWJSCAst = (ctx: ParserRuleContext | TerminalNode): WJSCAst | WJSCTerminal => {
+    let charPositionInLine, line, startIndex, text
+    if (ctx instanceof ParserRuleContext) {
+      ({ charPositionInLine, line, startIndex, text } = ctx.start)
+    } else {
+      ({ charPositionInLine, line, startIndex, text } = ctx.symbol)
+    }
     return {
       children: [],
-      column: ctx.start.charPositionInLine,
-      error: [],
-      line: ctx.start.line,
-      startIndex: ctx.start.startIndex,
-      token: ctx.start.text || '',
+      column: charPositionInLine,
+      line, startIndex,
+      token: text || '',
+      type: 'undefined',
     }
   }
 }
