@@ -20,8 +20,9 @@ import { WJSCAst, WJSCTerminal } from './WJSCAst'
 import { WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 import { hasSameType, isBaseType } from './WJSCType'
-// Results must be pushed in exact order?
+// WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
+// Result type?
 /**
  * A semantic checker which builds an AST as it traverses through the tree
  * returned from the ANTLR4 runtime.
@@ -535,25 +536,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitType = (ctx: TypeContext): WJSCAst => {
+    // 1. Ensure either base type, array type, pair type not undefined 2. visit types
     const result = this.initWJSCAst(ctx)
-
-    let visited
     const type = ctx.baseType() || ctx.arrayType() || ctx.pairType()
-    if (type instanceof BaseTypeContext) {
-      visited = this.visitBaseType(type)
-    } else if (type instanceof ArrayTypeContext) {
-      visited = this.visitArrayType(type)
-    } else if (type instanceof PairTypeContext) {
-      visited = this.visitPairType(type)
-    }
-
-    if (visited) {
-      result.children.push(visited)
-      result.type = visited.type
-    } else {
+    if (type === undefined) {
       this.errorLog.log(result, 'undefined')
+    } else {
+      const childType =
+          (type instanceof BaseTypeContext) ? this.visitBaseType(type) :
+              (type instanceof ArrayTypeContext) ? this.visitArrayType(type) :
+                  this.visitPairType(type)
+      result.children.push(childType)
     }
-
     return result
   }
 
