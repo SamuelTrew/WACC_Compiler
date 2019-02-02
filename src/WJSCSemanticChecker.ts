@@ -202,13 +202,36 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     } else {
       this.symbolTable.checkType(result)
     }
-
     return result
   }
 
   public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const doBlock = ctx.DO()
+    const ifBlock = ctx.IF()
+    const endIf = ctx.FI()
+    const elseBlock = ctx.ELSE()
+    const whileBlock = ctx.WHILE()
+    const endDone = ctx.DONE()
+    const thenBlock = ctx.THEN()
+    const statements = ctx.statement()
+    const expression = ctx.expression()
+    if (statements === undefined || expression === undefined) {
+      this.errorLog.log(result, 'undefined')
+    } else {
+      if ((ifBlock !== undefined && thenBlock !== undefined && endIf !== undefined) || (whileBlock !== undefined)) {
+        const exprNode = this.visitExpression(expression)
+        this.symbolTable.checkType(exprNode)
+        if ((doBlock !== undefined && endDone !== undefined) || (elseBlock !== undefined)) {
+          statements.forEach((stat, index) => {
+            this.visitStatement(stat)
+          })
+        }
+      } else {
+        this.errorLog.log(result, 'undefined')
+      }
+    }
+    return result
   }
 
   public visitExpression = (ctx: ExpressionContext): WJSCAst => {
@@ -276,8 +299,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitPairElement = (ctx: PairElementContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const expressions = ctx.expression()
+    if (expressions === undefined) {
+      this.errorLog.log(result, 'undefined')
+    } else {
+      const exprNode = this.visitExpression(expressions)
+      this.symbolTable.checkType(exprNode)
+    }
+    return result
   }
 
   public visitPairElementType = (ctx: PairElementTypeContext): WJSCAst => {
