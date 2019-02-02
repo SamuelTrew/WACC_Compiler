@@ -358,23 +358,17 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitPairElementType = (ctx: PairElementTypeContext): WJSCAst => {
+    // 1. Ensure either base, array or pair not undefined 2. visit possibilities
     const result = this.initWJSCAst(ctx)
-    const baseType = ctx.baseType()
-    const arrayType = ctx.arrayType()
-    const pair = ctx.PAIR()
-
-    if (baseType === undefined || arrayType === undefined || pair === undefined) {
+    const possibles = ctx.baseType() || ctx.arrayType() || ctx.PAIR()
+    if (possibles === undefined) {
       this.errorLog.log(result, 'undefined')
     } else {
-      const baseTypeNode = this.visitBaseType(baseType)
-      const arrayTypeNode = this.visitArrayType(arrayType)
-      const pairTerminalNode = this.visitTerminal(pair)
-
-      this.symbolTable.checkType(baseTypeNode)
-      this.symbolTable.checkType(arrayTypeNode)
-      this.symbolTable.checkType(pairTerminalNode)
-
-      this.checkChildrenUndefined(result)
+      const possiblesType =
+          (possibles instanceof BaseTypeContext) ? this.visitBaseType(possibles) :
+              (possibles instanceof ArrayTypeContext) ? this.visitArrayType(possibles) :
+                  this.visitTerminal(possibles)
+      result.children.push(possiblesType)
     }
     return result
   }
