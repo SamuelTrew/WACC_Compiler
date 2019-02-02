@@ -343,13 +343,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitPairElement = (ctx: PairElementContext): WJSCAst => {
+    // 1. Ensure order and expressions not undefined 2. visit childOrder and childExp
     const result = this.initWJSCAst(ctx)
+    const order = ctx.FIRST() || ctx.SECOND()
     const expressions = ctx.expression()
-    if (expressions === undefined) {
+    if (expressions === undefined || order === undefined) {
       this.errorLog.log(result, 'undefined')
     } else {
-      const exprNode = this.visitExpression(expressions)
-      this.symbolTable.checkType(exprNode)
+      result.children.push(this.visitTerminal(order))
+      const childExp = this.visitExpression(expressions)
+      result.children.push(childExp)
     }
     return result
   }
