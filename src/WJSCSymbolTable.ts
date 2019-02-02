@@ -28,20 +28,21 @@ export class WJSCSymbolTable {
   }
 
   // Add an entry to the symbol table
-  public insertSymbol = (identifier: string, type: TypeName) => {
-    this.symbolTable.push({ identifier, type })
+  public insertSymbol = (identifier: string, node: WJSCAst) => {
+    this.symbolTable.push({ identifier, node })
   }
 
   // Return type of identifier in the local scope or undefined if not found.
   public checkLocalType = (astNode: WJSCAst): TypeName => {
     const identifier = astNode.token
-    const type = astNode.type
+    const givenType = astNode.type
     this.symbolTable.forEach((entry) => {
       if (entry.identifier === identifier) {
-        if (hasSameType(entry.type, type)) {
-          return entry.type
+        const foundType = entry.node.type
+        if (hasSameType(foundType, givenType)) {
+          return givenType
         } else {
-          this.errorLog.log(astNode, 'mismatch', entry.type)
+          this.errorLog.log(astNode, 'mismatch', foundType)
           return 'mismatch'
         }
       }
@@ -65,5 +66,5 @@ export class WJSCSymbolTable {
 
 export interface WJSCSymbolTableEntry {
   identifier: string
-  type: TypeName
+  node: WJSCAst
 }
