@@ -310,32 +310,34 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitFunc = (ctx: FuncContext): WJSCAst => {
+    // 1. Ensure type, ident, is, stat, end not undefined
+    // 2. visit them 3. if paramList is present, visit paramList
+    // 4. WARNING: Should we add it to symbolTable?
     const result = this.initWJSCAst(ctx)
-
     const type = ctx.type()
-    // WARNING: I think you need to check if a function has no undefined parts
     const ident = ctx.IDENTIFIER()
+    const lBracket = ctx.LPAREN()
     const paramList = ctx.paramList()
+    const rBracket = ctx.RPAREN()
+    const is = ctx.IS()
     const stat = ctx.statement()
-
-    const typeNode = this.visitType(type)
-    const statNode = this.visitStatement(stat)
-    const identNode = this.visitTerminal(ident)
-    if (paramList !== undefined) {
-      const paramNode = this.visitParamList(paramList)
-      if (result.type === undefined || type === undefined) {
-        this.errorLog.log(result, 'undefined')
-      } else {
-        this.symbolTable.checkType(result)
-        this.symbolTable.checkType(typeNode)
-        this.symbolTable.checkType(statNode)
-        this.symbolTable.checkType(paramNode)
-        this.symbolTable.checkType(identNode)
-
-        this.checkChildrenUndefined(result)
-      }
+    const end = ctx.END()
+    if (type === undefined || ident === undefined || lBracket === undefined || rBracket === undefined ||
+        is === undefined || stat === undefined || end === undefined) {
+      this.errorLog.log(result, 'undefined')
     } else {
-      this.errorLog.pushError('Your paramList is undefined at ' + result.line + ':' + result.column)
+      result.children.push(this.visitType(type))
+      const identType = this.visitTerminal(ident)
+      this.symbolTable.checkType(identType)
+      result.children.push(identType)
+      result.children.push(this.visitTerminal(lBracket))
+      if (paramList !== undefined) {
+        result.children.push(this.visitParamList(paramList))
+      }
+      result.children.push(this.visitTerminal(rBracket))
+      result.children.push(this.visitTerminal(is))
+      result.children.push(this.visitStatement(stat))
+      result.children.push(this.visitTerminal(end))
     }
     return result
   }
