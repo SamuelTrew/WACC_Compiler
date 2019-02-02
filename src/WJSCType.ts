@@ -1,6 +1,6 @@
 type TypeName = BaseType | ArrayType | PairType | ErrorType | undefined
 type BaseType = 'int' | 'bool' | 'char' | 'string' | 'pair'
-type ErrorType = 'undefined' | 'mismatch'
+type ErrorType = 'undefined' | 'mismatch' | 'incorrect arg no'
 
 interface ArrayType {
   arrayType: TypeName

@@ -39,7 +39,7 @@ class WJSCErrorLog {
   }
 
   private isSemantic = (error: WJSCSemanticErrors | WJSCSyntaxErrors): error is WJSCSemanticErrors =>
-    error === 'undefined' || error === 'mismatch'
+    error === 'undefined' || error === 'mismatch' || error === 'incorrect arg no'
 
 }
 

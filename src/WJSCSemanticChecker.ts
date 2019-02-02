@@ -59,7 +59,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
     // 1. Ensure >1 expression 2. visit expressions 3. Ensure children not undefined
-    // 4. Ensure children have same type 5. Ensure child is in lookup
+    // 4. Ensure children have same type
     const result = this.initWJSCAst(ctx)
     const expressions = ctx.expression()
     if (expressions.length === 0) {
@@ -70,11 +70,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       result.children.forEach((child, index) => {
         if (child.type === undefined || firstChild.type === undefined) {
           this.errorLog.log(result, 'undefined')
-        } else if (!hasSameType(child.type, firstChild.type)) {
+        }
+        if (!hasSameType(child.type, firstChild.type)) {
           // TODO add new error for array type inconsistency
           this.errorLog.log(result, 'mismatch', firstChild.type)
-        } else {
-          this.symbolTable.checkType(child)
         }
       })
     }
@@ -114,7 +113,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
               this.visitPairElement(lhsElems)))
       result.children.push(lhsNode)
       if (lhsElems instanceof TerminalNode) {
-        this.symbolTable.checkType(lhsNode)
+        const identType = this.visitTerminal(lhsElems)
+        this.symbolTable.checkType(identType)
       }
     }
     return this.initWJSCAst(ctx) // result
@@ -146,7 +146,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         if (rhsNode !== undefined) {
           result.children.push(rhsNode)
           if (rhsElems instanceof TerminalNode) {
-            this.symbolTable.checkType(rhsNode)
+            const identType = this.visitTerminal(rhsElems)
+            this.symbolTable.checkType(identType)
           }
         }
       }
@@ -155,71 +156,94 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitAssignment = (ctx: AssignmentContext): WJSCAst => {
+    // NOTE: This function is specifically for new assignments
     // 1. Both lhs and rhs not undefined 2. visit lhs and rhs
-    // THIS IS WRONG. Not the actual assignment option
+    // 3. Add this assignment to the lookup
+    // 4. (Check that can be removed later): Ensure ident is in table
     const result = this.initWJSCAst(ctx)
-    const lhs = ctx.assignLhs()
+    const lhsType = ctx.type()
+    const lhsIdent = ctx.IDENTIFIER()
     const rhs = ctx.assignRhs()
-    if (lhs === undefined || rhs === undefined) {
+    if (lhsType === undefined || lhsIdent === undefined || rhs === undefined) {
       this.errorLog.log(result, 'undefined')
     } else {
-      result.children.push(this.visitAssignLhs(lhs))
-      result.children.push(this.visitAssignRhs(rhs))
-      const ident = lhs.IDENTIFIER()
-      if (ident === undefined) {
-        this.errorLog.log(result, 'undefined')
-      } else {
-        // WARNING insert rhs?
-        // this.symbolTable.insertSymbol(ident.text, rhs)
-      }
+      result.children.push(this.visitType(lhsType))
+      const identType = this.visitTerminal(lhsIdent)
+      result.children.push(identType)
+      const right = this.visitAssignRhs(rhs)
+      result.children.push(right)
+      this.symbolTable.insertSymbol(identType.toString(), right)
+      // WARNING: Below will eventually be an unnecessary check
+      this.symbolTable.checkType(identType)
     }
     return result
   }
 
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
+    // 1. Ensure one of base type 2. visit these types
     const result = this.initWJSCAst(ctx)
-    const stringType = ctx.STRING()
-    const intType = ctx.INTEGER()
-    const boolType = ctx.BOOLEAN()
-    const charType = ctx.CHARACTER()
-
-    if (!(isBaseType(result.type) || isBaseType(stringType) || isBaseType(intType)
-      || isBaseType(boolType) || isBaseType(charType) || hasSameType(result.type, 'string')
-      || hasSameType(result.type, 'int') || hasSameType('char', result.type) ||
-      hasSameType('bool', result.type))) {
-      this.errorLog.pushError('Incorrect type at ' + result.line + ':' + result.column)
-    } else if (result.type === undefined) {
+    const base = ctx.INTEGER() || ctx.BOOLEAN() || ctx.CHARACTER() || ctx.STRING()
+    if (base === undefined) {
       this.errorLog.log(result, 'undefined')
     } else {
-      this.symbolTable.checkType(result)
+      const terminal = this.visitTerminal(base)
+      result.children.push(terminal)
     }
     return result
   }
 
   public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCAst => {
+    // 1. Ensure either ifThenElseFi or whileDoDone 2. if ifThenElseFi check childStat == 2
+    // 3. if whileDoDone check childStat == 1 4. visit all children
+    // 5. Ensure childStats not undefined
+    // 6. Ensure childExps are booleans
     const result = this.initWJSCAst(ctx)
-    const doBlock = ctx.DO()
-    const ifBlock = ctx.IF()
-    const endIf = ctx.FI()
-    const elseBlock = ctx.ELSE()
-    const whileBlock = ctx.WHILE()
-    const endDone = ctx.DONE()
-    const thenBlock = ctx.THEN()
-    const statements = ctx.statement()
-    const expression = ctx.expression()
-    if (statements === undefined || expression === undefined) {
+    const ifB = ctx.IF()
+    const thenB = ctx.THEN()
+    const elseB = ctx.ELSE()
+    const fiB = ctx.FI()
+    const whileB = ctx.WHILE()
+    const doB = ctx.DO()
+    const doneB = ctx.DONE()
+    const childExp = ctx.expression()
+    const childStat = ctx.statement()
+    const ifThenElseFi = (ifB !== undefined) && (thenB !== undefined) && (elseB !== undefined) && (fiB !== undefined)
+        && (childExp !== undefined) && (childStat !== undefined)
+    const whileDoDone = (whileB !== undefined) && (doB !== undefined) && (doneB !== undefined)
+        && (childExp !== undefined) && (childStat !== undefined)
+    if (!ifThenElseFi && !whileDoDone) {
       this.errorLog.log(result, 'undefined')
     } else {
-      if ((ifBlock !== undefined && thenBlock !== undefined && endIf !== undefined) || (whileBlock !== undefined)) {
-        const exprNode = this.visitExpression(expression)
-        this.symbolTable.checkType(exprNode)
-        if ((doBlock !== undefined && endDone !== undefined) || (elseBlock !== undefined)) {
-          statements.forEach((stat, index) => {
-            this.visitStatement(stat)
-          })
-        }
+      if (ifThenElseFi !== undefined &&  childStat.length !== 2) {
+        this.errorLog.log(result, 'incorrect arg no', [2, 2])
+      } else if (whileDoDone !== undefined && childStat.length !== 1 ) {
+        this.errorLog.log(result, 'incorrect arg no', [1, 1])
       } else {
-        this.errorLog.log(result, 'undefined')
+        // Visit childExps and childStats, checking 5. and 6.
+        // WARNING: Assumes order in which they are pushed to the result does not matter. redo later
+        const childExpType = this.visitExpression(childExp)
+        if (!hasSameType(childExpType.type, 'bool')) {
+          this.errorLog.log(result, 'mismatch', 'bool')
+        }
+        childStat.forEach((child, index) => {
+          const childStatType = this.visitStatement(child)
+          result.children.push(childStatType)
+          if (childStatType === undefined) {
+            this.errorLog.log(result, 'undefined')
+          }
+        })
+        if ((ifB !== undefined) && (thenB !== undefined) && (elseB !== undefined) && (fiB !== undefined)) {
+          // <- tsLint wont allow ifThen...
+          // visiting ifThenElseFi's unique children
+          result.children.push(this.visitTerminal(ifB))
+          result.children.push(this.visitTerminal(thenB))
+          result.children.push(this.visitTerminal(fiB))
+        } else if ((whileB !== undefined) && (doB !== undefined) && (doneB !== undefined)) {
+          // visiting whileDoDone's unique children
+          result.children.push(this.visitTerminal(whileB))
+          result.children.push(this.visitTerminal(doB))
+          result.children.push(this.visitTerminal(doneB))
+        }
       }
     }
     return result
