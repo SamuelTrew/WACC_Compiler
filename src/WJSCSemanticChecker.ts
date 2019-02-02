@@ -182,7 +182,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         // this.symbolTable.insertSymbol(ident.text, rhs)
       }
     }
-    return result // result
+    return result
   }
 
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
@@ -212,7 +212,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitExpression = (ctx: ExpressionContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
     const result = this.initWJSCAst(ctx)
     const literals = ctx.integerLiteral() || ctx.BOOLEAN_LITERAL() || ctx.CHARACTER_LITERAL()
       || ctx.STRING_LITERAL() || ctx.PAIR_LITERAL()
@@ -239,7 +238,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         this.visitArrayElement(arrayElem)
       }
     }
-    return result// result
+    return result
   }
 
   public visitFunc = (ctx: FuncContext): WJSCAst => {
@@ -247,12 +246,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
     const type = ctx.type()
     // WARNING: I think you need to check if a function has no undefined parts
-    // const ident = ctx.IDENTIFIER()
+    const ident = ctx.IDENTIFIER()
     const paramList = ctx.paramList()
     const stat = ctx.statement()
 
     const typeNode = this.visitType(type)
     const statNode = this.visitStatement(stat)
+    const identNode = this.visitTerminal(ident)
     if (paramList !== undefined) {
       const paramNode = this.visitParamList(paramList)
       if (result.type === undefined || type === undefined) {
@@ -262,6 +262,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         this.symbolTable.checkType(typeNode)
         this.symbolTable.checkType(statNode)
         this.symbolTable.checkType(paramNode)
+        this.symbolTable.checkType(identNode)
       }
     } else {
       result.error.push('Your paramList is undefined at ' + result.line + ':' + result.column)
@@ -275,17 +276,32 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitPairElementType = (ctx: PairElementTypeContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const baseType = ctx.baseType()
+    const arrayType = ctx.arrayType()
+    const pair = ctx.PAIR()
+
+    if (baseType === undefined || arrayType === undefined || pair === undefined) {
+      this.errorLog.log(result, 'undefined')
+    } else {
+      const baseTypeNode = this.visitBaseType(baseType)
+      const arrayTypeNode = this.visitArrayType(arrayType)
+      const pairTerminalNode = this.visitTerminal(pair)
+
+      this.symbolTable.checkType(baseTypeNode)
+      this.symbolTable.checkType(arrayTypeNode)
+      this.symbolTable.checkType(pairTerminalNode)
+    }
+    return result
   }
 
   public visitPairType = (ctx: PairTypeContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
+    const result = this.initWJSCAst(ctx)
     const pairs = ctx.pairElementType()
     pairs.forEach((pair, index) => {
       this.visitPairElementType(pair)
     })
-    return this.initWJSCAst(ctx)// result
+    return result
   }
 
   public visitParam = (ctx: ParamContext): WJSCAst => {
@@ -306,13 +322,30 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitParamList = (ctx: ParamListContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const params = ctx.param()
+    params.forEach((param, index) => {
+      this.visitParam(param)
+    })
+    return result
   }
 
   public visitProgram = (ctx: ProgramContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    const result = this.initWJSCAst(ctx)
+    const functions = ctx.func()
+    const stat = ctx.statement()
+
+    if (functions === undefined || stat === undefined) {
+      this.errorLog.log(result, 'undefined')
+    } else {
+      const statNode = this.visitStatement(stat)
+      this.symbolTable.checkType(statNode)
+      functions.forEach((func, index) => {
+        const funcNode = this.visitFunc(func)
+        this.symbolTable.checkType(funcNode)
+      })
+    }
+    return result
   }
 
   public visitStatement = (ctx: StatementContext): WJSCAst => {
