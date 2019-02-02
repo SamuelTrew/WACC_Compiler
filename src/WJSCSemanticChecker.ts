@@ -38,12 +38,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       this.errorLog.log(result, 'incorrect arg no', [1, -1])
     }
     result.children = expressions.map(this.visitExpression)
-    result.children.forEach((child, index) => {
-      // WARNING: Correct check to ensure array size declaration is an int?
-      if (child.type === undefined) {
-        this.errorLog.log(result, 'undefined')
-      }
-    })
+    this.checkChildrenUndefined(result)
     return result
   }
 
@@ -140,11 +135,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
           this.errorLog.log(result, 'undefined') // <- Checks right number of expressions for rhsElems that have it
         } else {
           result.children = rhsElems.map(this.visitExpression)// <- visit children Expressions
-          result.children.forEach((child, index) => {
-            if (child.type === undefined) {
-              this.errorLog.log(result, 'undefined')
-            }
-          })
+          this.checkChildrenUndefined(result)
         }
       } else {
         const rhsNode =
@@ -196,7 +187,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       || isBaseType(boolType) || isBaseType(charType) || hasSameType(result.type, 'string')
       || hasSameType(result.type, 'int') || hasSameType('char', result.type) ||
       hasSameType('bool', result.type))) {
-      result.error.push('Incorrect type at ' + result.line + ':' + result.column)
+      this.errorLog.pushError('Incorrect type at ' + result.line + ':' + result.column)
     } else if (result.type === undefined) {
       this.errorLog.log(result, 'undefined')
     } else {
@@ -244,12 +235,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const bracket = ctx.LPAREN()
     if (literals === undefined && ident === undefined && arrayElem === undefined &&
       operators === undefined && bracket === undefined) {
-      result.error.push('Expressions are invalid ' + result.line + ':' + result.column)
+      this.errorLog.pushError('Expressions are invalid ' + result.line + ':' + result.column)
     } else {
       if (operators !== undefined || bracket !== undefined) {
         if (bracket !== undefined && ctx.RPAREN() === undefined) {
           // Scenario in which there is no ending bracket
-          result.error.push('Expression bracketing is invalid ' + result.line + ':' + result.column)
+          this.errorLog.pushError('Expression bracketing is invalid ' + result.line + ':' + result.column)
         } else {
           const expressions = ctx.expression()
           expressions.forEach((child, index) => {
@@ -286,14 +277,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         this.symbolTable.checkType(statNode)
         this.symbolTable.checkType(paramNode)
         this.symbolTable.checkType(identNode)
-        result.children.forEach((child, index) => {
-          if (child.type === undefined) {
-            this.errorLog.log(child, 'undefined')
-          }
-        })
+
+        this.checkChildrenUndefined(result)
       }
     } else {
-      result.error.push('Your paramList is undefined at ' + result.line + ':' + result.column)
+      this.errorLog.pushError('Your paramList is undefined at ' + result.line + ':' + result.column)
     }
     return result
   }
@@ -327,11 +315,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       this.symbolTable.checkType(arrayTypeNode)
       this.symbolTable.checkType(pairTerminalNode)
 
-      result.children.forEach((child, index) => {
-        if (child.type === undefined) {
-          this.errorLog.log(child, 'undefined')
-        }
-      })
+      this.checkChildrenUndefined(result)
     }
     return result
   }
@@ -353,11 +337,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const typeNode = this.visitType(type)
 
     // comment: if (type === undefined || result.type === undefined) {
-    //   result.error.push('Type is undefined at ' + result.line + ':' + result.column)
+    //   this.errorLog.pushError('Type is undefined at ' + result.line + ':' + result.column)
     // } else if (!this.symbolTable.checkType(typeNode.token, typeNode.type)) {
-    //   result.error.push('Different type from ST at ' + result.line + ':' + result.column)
+    //   this.errorLog.pushError('Different type from ST at ' + result.line + ':' + result.column)
     // } else if (!hasSameType(typeNode.type, result.type)) {
-    //   result.error.push('Incorrect type at ' + result.line + ':' + result.column)
+    //   this.errorLog.pushError('Incorrect type at ' + result.line + ':' + result.column)
     // }
     return result
   }
@@ -385,11 +369,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         const funcNode = this.visitFunc(func)
         this.symbolTable.checkType(funcNode)
       })
-      result.children.forEach((child, index) => {
-        if (child.type === undefined) {
-          this.errorLog.log(child, 'undefined')
-        }
-      })
+      this.checkChildrenUndefined(result)
     }
     return result
   }
@@ -406,12 +386,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const semicolon = ctx.SEMICOLON()
     if (skip === undefined && statWithSingleExp === undefined && assignment === undefined
       && conditionals === undefined && begin === undefined && semicolon === undefined) {
-      result.error.push('Statement is invalid at ' + result.line + ':' + result.column)
+      this.errorLog.pushError('Statement is invalid at ' + result.line + ':' + result.column)
     } else {
       if (statWithSingleExp !== undefined) {
         const singleExp = ctx.expression()
         if (singleExp === undefined) {
-          result.error.push('Statement with single Exp has invalid Exp at ' + result.line + ':' + result.column)
+          this.errorLog.pushError('Statement with single Exp has invalid Exp at ' + result.line + ':' + result.column)
         } else {
           this.visitExpression(singleExp)
         }
@@ -420,7 +400,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         if (ctx.READ() !== undefined) {
           const lhs = ctx.assignLhs()
           if (lhs === undefined) {
-            result.error.push('Invalid Lhs for READ statement at  ' + result.line + ':' + result.column)
+            this.errorLog.pushError('Invalid Lhs for READ statement at  ' + result.line + ':' + result.column)
           } else {
             this.visitAssignLhs(lhs)
           }
@@ -428,7 +408,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         if (ctx.assignment() !== undefined) {
           const assignments = ctx.assignment()
           if (assignments === undefined) {
-            result.error.push('Invalid Assignment in statement at  ' + result.line + ':' + result.column)
+            this.errorLog.pushError('Invalid Assignment in statement at  ' + result.line + ':' + result.column)
           } else {
             this.visitAssignment(assignments)
           }
@@ -438,7 +418,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         const condExp = ctx.expression()
         const childStats = ctx.statement()
         if (condExp === undefined) {
-          result.error.push('Statement with cond Exp has invalid Exp at ' + result.line + ':' + result.column)
+          this.errorLog.pushError('Statement with cond Exp has invalid Exp at ' + result.line + ':' + result.column)
         } else {
           this.visitExpression(condExp)
         }
@@ -449,7 +429,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       if (begin !== undefined) {
         // We check to make sure end is there
         if (ctx.END() === undefined) {
-          result.error.push('Statement with begin has no end at ' + result.line + ':' + result.column)
+          this.errorLog.pushError('Statement with begin has no end at ' + result.line + ':' + result.column)
         } else {
           const childStats = ctx.statement()
           childStats.forEach((child, index) => {
@@ -531,6 +511,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       token: text || '',
       type: 'undefined',
     }
+  }
+
+  private checkChildrenUndefined(result: WJSCAst | WJSCTerminal) {
+    result.children.forEach((child, index) => {
+      // WARNING: Correct check to ensure array size declaration is an int?
+      if (child.type === undefined) {
+        this.errorLog.log(result, 'undefined')
+      }
+    })
   }
 }
 
