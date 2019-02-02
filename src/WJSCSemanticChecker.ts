@@ -436,20 +436,27 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitProgram = (ctx: ProgramContext): WJSCAst => {
+    // 1. Ensure begin, stat and end not undefined 2. visit them
+    // 3. If func is present, visit func's list 4. Ensure funcChild not undefined
     const result = this.initWJSCAst(ctx)
+    const begin = ctx.BEGIN()
     const functions = ctx.func()
     const stat = ctx.statement()
-
-    if (functions === undefined || stat === undefined) {
+    const end = ctx.END()
+    if (begin === undefined || stat === undefined || end === undefined) {
       this.errorLog.log(result, 'undefined')
     } else {
-      const statNode = this.visitStatement(stat)
-      this.symbolTable.checkType(statNode)
-      functions.forEach((func, index) => {
-        const funcNode = this.visitFunc(func)
-        this.symbolTable.checkType(funcNode)
-      })
-      this.checkChildrenUndefined(result)
+      result.children.push(this.visitTerminal(begin))
+      if (functions !== undefined) {
+        functions.forEach((child, index) => {
+          if (child === undefined) {
+            this.errorLog.log(result, 'undefined')
+          }
+          result.children.push(this.visitFunc(child))
+        })
+      }
+      result.children.push(this.visitStatement(stat))
+      result.children.push(this.visitTerminal(end))
     }
     return result
   }
