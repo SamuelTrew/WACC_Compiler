@@ -1,5 +1,6 @@
 import { Parser, ParserRuleContext } from 'antlr4ts'
 import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext, ArrayElementContext,
   ArrayLiteralContext,
@@ -19,7 +20,6 @@ import { WJSCAst, WJSCTerminal } from './WJSCAst'
 import { WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 import { hasSameType, isBaseType } from './WJSCType'
-import { WJSCLexer } from './grammar/WJSCLexer';
 
 /**
  * A semantic checker which builds an AST as it traverses through the tree
@@ -31,43 +31,48 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   private symbolTable = new WJSCSymbolTable(0, undefined, this.errorLog)
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
-    // 1. Ensure >1 expression  2. Visit expressions
+    // 1. Ensure >1 expression  2. Visit expressions 3. Ensure children not undefined
     const result = this.initWJSCAst(ctx)
     const expressions = ctx.expression()
     if (expressions.length === 0) {
-      this.errorLog.log(result, 'incorrect arg no', [1, 2])
+      this.errorLog.log(result, 'incorrect arg no', [1, -1])
     }
     result.children = expressions.map(this.visitExpression)
+    result.children.forEach((child, index) => {
+      // WARNING: Correct check to ensure array size declaration is an int?
+      if (child.type === undefined) {
+        this.errorLog.log(result, 'undefined')
+      }
+    })
     return result
   }
 
   public visitArrayElement = (ctx: ArrayElementContext): WJSCAst => {
     // 1. Ensure ident is in lookup 2. Visit expressions 3. Ensure expressions evaluate to int
+    const result = this.initWJSCAst(ctx)
     const ident = ctx.IDENTIFIER()
     const identType = this.visitTerminal(ident)
     this.symbolTable.checkType(identType)
     const expressions = ctx.expression()
-    /*
-    expressions.forEach((child, index) => {
-       this.visitExpression(child)
-      child.t
-      })*/
-    const children = expressions.map(this.visitExpression)
-    // co const identName = this.visitTerminal(identifier).token
-    children.forEach((child, index) => {
+    result.children = expressions.map(this.visitExpression)
+    result.children.forEach((child, index) => {
+      // WARNING: Correct check to ensure array size declaration is an int?
       hasSameType(child.type, 'int')
-      return true
     })
-    return this.initWJSCAst(ctx)
+    return result
   }
 
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
+    // 1. Ensure >1 expression 2. visit expressions 3. Ensure children not undefined
+    // 4. Ensure children have same type 5. Ensure child is in lookup
     const result = this.initWJSCAst(ctx)
     const expressions = ctx.expression()
-    const children = expressions.map(this.visitExpression)
-    if (children.length !== 0) {
-      const firstChild = children[1]
-      children.forEach((child, index) => {
+    if (expressions.length === 0) {
+      this.errorLog.log(result, 'incorrect arg no', [1, -1])
+    } else {
+      result.children = expressions.map(this.visitExpression)
+      const firstChild = result.children[0]
+      result.children.forEach((child, index) => {
         if (child.type === undefined || firstChild.type === undefined) {
           this.errorLog.log(result, 'undefined')
         } else if (!hasSameType(child.type, firstChild.type)) {
@@ -76,13 +81,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         } else {
           this.symbolTable.checkType(child)
         }
-        // We also need to check that the child type matches what's stored
       })
     }
     return result
   }
 
   public visitArrayType = (ctx: ArrayTypeContext): WJSCAst => {
+    // 1. Ensure type not undefined 2. visit sub type
     const result = this.initWJSCAst(ctx)
     const type = ctx.baseType() || ctx.arrayType() || ctx.pairType()
     if (type === undefined) {
@@ -101,25 +106,81 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitAssignLhs = (ctx: AssignLhsContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
+    // 1. Ensure either ident, array-elem, pair-elem 2. Visit these elems
+    // 3. If ident, ensure ident is in lookup
+    const result = this.initWJSCAst(ctx)
+    const lhsElems = ctx.IDENTIFIER() || ctx.arrayElement() || ctx.pairElement()
+    if (lhsElems === undefined) {
+      this.errorLog.log(result, 'undefined')
+    } else {
+      const lhsNode =
+          (lhsElems instanceof TerminalNode ? this.visitTerminal(lhsElems) :
+              (lhsElems instanceof ArrayElementContext ? this.visitArrayElement(lhsElems) :
+              this.visitPairElement(lhsElems)))
+      result.children.push(lhsNode)
+      if (lhsElems instanceof TerminalNode) {
+        this.symbolTable.checkType(lhsNode)
+      }
+    }
     return this.initWJSCAst(ctx) // result
   }
 
   public visitAssignRhs = (ctx: AssignRhsContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
-    return this.initWJSCAst(ctx) // result
+    // 1. Ensure either array-liter, pair-elem, ident, expr(expr only or newpair)
+    // 2. If expr, ensure children == 1. Else it is new pair and ensure children == 2
+    // 2. Visit these elems 3. If ident, ensure ident is in lookup
+    const result = this.initWJSCAst(ctx)
+    const rhsElems = ctx.expression() || ctx.arrayLiteral() || ctx.pairElement() || ctx.IDENTIFIER()
+    if (rhsElems === undefined) {
+      this.errorLog.log(result, 'undefined')
+    } else {
+      if (ctx.expression() !== undefined) {
+        if (!(ctx.NEW_PAIR() !== undefined && ctx.expression().length === 2 ||
+            ctx.NEW_PAIR() === undefined && ctx.expression().length === 1)) {
+          this.errorLog.log(result, 'undefined') // <- Checks right number of expressions for rhsElems that have it
+        } else {
+          result.children = rhsElems.map(this.visitExpression)// <- visit children Expressions
+          result.children.forEach((child, index) => {
+            if (child.type === undefined) {
+              this.errorLog.log(result, 'undefined')
+            }
+          })
+        }
+      } else {
+        const rhsNode =
+            (rhsElems instanceof TerminalNode ? this.visitTerminal(rhsElems) :
+                (rhsElems instanceof ArrayLiteralContext ? this.visitArrayLiteral(rhsElems) :
+                    (rhsElems instanceof PairElementContext ? this.visitPairElement(rhsElems) :
+                        undefined))) // <- visit children arrayLiter, pairElem, ident
+        if (rhsNode !== undefined) {
+          result.children.push(rhsNode)
+          if (rhsElems instanceof TerminalNode) {
+            this.symbolTable.checkType(rhsNode)
+          }
+        }
+      }
+    }
+    return result // result
   }
 
   public visitAssignment = (ctx: AssignmentContext): WJSCAst => {
-    // not code: const result = this.initWJSCAst(ctx)
+    // 1. Both lhs and rhs not undefined 2. visit lhs and rhs
+    // THIS IS WRONG. Not the actual assignment option
     const result = this.initWJSCAst(ctx)
     const lhs = ctx.assignLhs()
     const rhs = ctx.assignRhs()
     if (lhs === undefined || rhs === undefined) {
-      result.error.push('Assignment is invalid at ' + result.line + ':' + result.column)
+      this.errorLog.log(result, 'undefined')
     } else {
-      this.visitAssignLhs(lhs)
-      this.visitAssignRhs(rhs)
+      result.children.push(this.visitAssignLhs(lhs))
+      result.children.push(this.visitAssignRhs(rhs))
+      const ident = lhs.IDENTIFIER()
+      if (ident === undefined) {
+        this.errorLog.log(result, 'undefined')
+      } else {
+        // WARNING insert rhs?
+        // this.symbolTable.insertSymbol(ident.text, rhs)
+      }
     }
     return result // result
   }

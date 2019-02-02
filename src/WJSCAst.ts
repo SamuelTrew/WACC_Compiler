@@ -19,7 +19,7 @@ type Literals = 'INT_LITERAL'
   | 'PAIR_LITERAL'
 
 export interface WJSCAst {
-  children?: WJSCAst[]
+  children: WJSCAst[]
   column: number
   line: number
   parserRule?: WJSCParserRules
