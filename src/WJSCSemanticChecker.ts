@@ -20,7 +20,8 @@ import { WJSCAst, WJSCTerminal } from './WJSCAst'
 import { WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 import { hasSameType, isBaseType } from './WJSCType'
-
+// Results must be pushed in exact order?
+// Should error-ridden elems still be pushed on results?
 /**
  * A semantic checker which builds an AST as it traverses through the tree
  * returned from the ANTLR4 runtime.
@@ -250,30 +251,59 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitExpression = (ctx: ExpressionContext): WJSCAst => {
+    // 1. Ensure either literals, idents, array-elem, operators or bracket
+    // 2. if bracket, ensure both brackets present 3. Ensure ident is in lookup
+    // 4. visit childrenExp 5. if Unop or bracket, childExp == 1 6. if BinOp, childExp == 2
+    // 5. ensure childExpType are not undefined
     const result = this.initWJSCAst(ctx)
-    const literals = ctx.integerLiteral() || ctx.BOOLEAN_LITERAL() || ctx.CHARACTER_LITERAL()
+    const intLiterals = ctx.integerLiteral()
+    const literals = ctx.BOOLEAN_LITERAL() || ctx.CHARACTER_LITERAL()
       || ctx.STRING_LITERAL() || ctx.PAIR_LITERAL()
     const ident = ctx.IDENTIFIER()
     const arrayElem = ctx.arrayElement()
     const operators = ctx.unaryOperator() || ctx.binaryOperator()
     const bracket = ctx.LPAREN()
-    if (literals === undefined && ident === undefined && arrayElem === undefined &&
+    if (intLiterals === undefined && literals === undefined && ident === undefined && arrayElem === undefined &&
       operators === undefined && bracket === undefined) {
-      this.errorLog.pushError('Expressions are invalid ' + result.line + ':' + result.column)
+      this.errorLog.log(result, 'undefined')
     } else {
-      if (operators !== undefined || bracket !== undefined) {
-        if (bracket !== undefined && ctx.RPAREN() === undefined) {
-          // Scenario in which there is no ending bracket
-          this.errorLog.pushError('Expression bracketing is invalid ' + result.line + ':' + result.column)
+      if (literals !== undefined) {
+        result.children.push(this.visitTerminal(literals))
+      } else if (ident !== undefined) {
+        const identType = this.visitTerminal(ident)
+        this.symbolTable.checkType(identType)
+        result.children.push(identType)
+      } else if (arrayElem !== undefined) {
+        result.children.push(this.visitArrayElement(arrayElem))
+      } else if (operators !== undefined || bracket !== undefined) {
+        if (bracket !== undefined) {
+          result.children.push(this.visitTerminal(bracket))
+          const rBracket = ctx.RPAREN()
+          if (rBracket === undefined) {
+            this.errorLog.log(result, 'undefined')
+          } else {
+            result.children.push(this.visitTerminal(rBracket))
+          }
+        }
+        const expressions = ctx.expression()
+        if (expressions === undefined) {
+          this.errorLog.log(result, 'undefined')
         } else {
-          const expressions = ctx.expression()
-          expressions.forEach((child, index) => {
-            this.visitExpression(child)
+          if ((ident !== undefined || ctx.unaryOperator() !== undefined) && expressions.length !== 1) {
+            this.errorLog.log(result, 'incorrect arg no', [1, 1])
+          } else if (ctx.binaryOperator() !== undefined && expressions.length !== 2) {
+            this.errorLog.log(result, 'incorrect arg no', [2, 2])
+          }
+          const childrenExpType = expressions.map(this.visitExpression)
+          childrenExpType.forEach((child, index) => {
+            if (child === undefined) {
+              this.errorLog.log(result, 'undefined')
+            }
+            result.children.push(child)
           })
         }
-      }
-      if (arrayElem !== undefined) {
-        this.visitArrayElement(arrayElem)
+      }  else {
+        // int literals- cant visit them
       }
     }
     return result
