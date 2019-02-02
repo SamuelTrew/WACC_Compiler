@@ -32,35 +32,38 @@ export class WJSCSymbolTable {
     this.symbolTable.push({ identifier, node })
   }
 
-  // Return type of identifier in the local scope or undefined if not found.
-  public checkLocalType = (astNode: WJSCAst): TypeName => {
-    const identifier = astNode.token
-    const givenType = astNode.type
-    this.symbolTable.forEach((entry) => {
-      if (entry.identifier === identifier) {
-        const foundType = entry.node.type
-        if (hasSameType(foundType, givenType)) {
-          return givenType
-        } else {
-          this.errorLog.log(astNode, 'mismatch', foundType)
-          return 'mismatch'
-        }
-      }
-    })
-    return 'undefined'
+  public globalLookup = (identifier: string): WJSCAst | undefined => {
+    let result = this.localLookup(identifier)
+    if (result === undefined && this.parentLevel !== undefined) {
+      result = this.parentLevel.globalLookup(identifier)
+    }
+    return result
   }
 
   // Return type of identifier in the symbol table or undefined if not found.
-  public checkType = (astNode: WJSCAst): TypeName => {
+  public checkType = (astNode: WJSCAst): boolean => {
     // Perform checkLocalType and recursive global checkType
-    let lookupResult = this.checkLocalType(astNode)
-    if (this.parentLevel !== undefined && lookupResult === 'undefined') {
-      lookupResult = this.parentLevel.checkType(astNode)
-    }
-    if (lookupResult === 'undefined') {
+    const lookupResult = this.globalLookup(astNode.token)
+    if (lookupResult === undefined) {
       this.errorLog.log(astNode, 'undefined')
+      return false
+    } else {
+      const foundType = lookupResult.type
+      if (!hasSameType(foundType, astNode.type)) {
+        this.errorLog.log(astNode, 'mismatch', foundType)
+        return false
+      }
     }
-    return lookupResult
+    return true
+  }
+
+  private localLookup = (identifier: string): WJSCAst | undefined => {
+    this.symbolTable.forEach((entry) => {
+      if (entry.identifier === identifier) {
+        return entry.node
+      }
+    })
+    return undefined
   }
 }
 
