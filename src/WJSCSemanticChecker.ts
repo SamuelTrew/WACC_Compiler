@@ -414,11 +414,24 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitParamList = (ctx: ParamListContext): WJSCAst => {
+    // 1. Ensure params not undefined 2. Ensure param >= 1
+    // 3. visit params 4. Ensure params not undefined
     const result = this.initWJSCAst(ctx)
     const params = ctx.param()
-    params.forEach((param, index) => {
-      this.visitParam(param)
-    })
+    if (params === undefined) {
+      this.errorLog.log(result, 'undefined')
+    } else {
+      if (params.length < 1) {
+        this.errorLog.log(result, 'incorrect arg no', [1, -1])
+      } else {
+        params.forEach((param, index) => {
+          if (param === undefined) {
+            this.errorLog.log(result, 'undefined')
+          }
+          result.children.push(this.visitParam(param))
+        })
+      }
+    }
     return result
   }
 
