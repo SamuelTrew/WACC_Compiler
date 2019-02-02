@@ -2,7 +2,7 @@ import { WJSCAst } from './WJSCAst'
 import { TypeName } from './WJSCType'
 
 type WJSCErrorType = 'semantic' | 'syntactic'
-type WJSCSyntaxErrors = 'bad token fuck you'
+type WJSCSyntaxErrors = 'badtoken' | 'illegalchar' | 'overflow' | 'underflow'
 type WJSCSemanticErrors = 'undefined' | 'mismatch' | 'incorrect arg no'
 
 class WJSCErrorLog {

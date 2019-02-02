@@ -43,19 +43,17 @@ NSTRICT_EQUALS: '!==';
 LOGICAL_AND: '&&';
 LOGICAL_OR: '||';
 ASSIGNMENT: '=';
-NEW_PAIR: 'newpair';
 LOGICAL_NEGATION: '!';
+NEW_PAIR: 'newpair';
 LENGTH: 'len';
 ORDER_OF: 'ord';
 CHARACTER_OF: 'chr';
 
 // Identifiers & literals
 DIGIT: [0-9];
-BOOLEAN_LITERAL: TRUTH
-               | FALSITY
+BOOLEAN_LITERAL: 'true'
+               | 'false'
                ;
-TRUTH: 'true';
-FALSITY: 'false';
 fragment BACKSLASH: '\\';
 fragment ESCAPED_CHAR: '0'
                      | 'b'

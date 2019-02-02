@@ -1,22 +1,6 @@
-import { TypeName } from './WJSCType'
+import { TypeName, WJSCTerminalType } from './WJSCType'
 
 type WJSCParserRules = 'arg-list'
-export type WJSCTerminalType = Keywords
-  | Operators
-  | Literals
-  | 'TYPE_IDENTIFIER'
-  | 'IDENTIFIER'
-type Keywords = 'PROGRAM_KEYWORD'
-  | 'FUNCTION_DECL'
-  | 'CONDITIONALS'
-  | 'STDLIB'
-  | 'PAIR_ACCESSOR'
-type Operators = 'UNARY_OPERATOR' | 'BINARY_OPERATOR'
-type Literals = 'INT_LITERAL'
-  | 'CHAR_LITERAL'
-  | 'BOOL_LITERAL'
-  | 'STRING_LITERAL'
-  | 'PAIR_LITERAL'
 
 export interface WJSCAst {
   children: WJSCAst[]
@@ -30,4 +14,5 @@ export interface WJSCAst {
 
 export interface WJSCTerminal extends WJSCAst {
   terminalType?: WJSCTerminalType
+  value: any
 }

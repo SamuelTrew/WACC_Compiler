@@ -538,6 +538,30 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       terminal.terminalType = 'STDLIB'
     } else if (WJSCLexer.IF <= type && type <= WJSCLexer.DONE) {
       terminal.terminalType = 'CONDITIONALS'
+    } else if (type === WJSCLexer.CALL) {
+      terminal.terminalType = 'FUNCTION_CALL'
+    } else if (type === WJSCLexer.FIRST || type === WJSCLexer.SECOND) {
+      terminal.terminalType = 'PAIR_ACCESSOR'
+    } else if (WJSCLexer.MULTIPLY <= type && type <= WJSCLexer.LOGICAL_OR) {
+      terminal.terminalType = 'BINARY_OPERATOR'
+    } else if (type === WJSCLexer.ASSIGNMENT) {
+      terminal.terminalType = 'ASSIGNMENT_OPERATOR'
+    } else if (WJSCLexer.LOGICAL_NEGATION <= type && type <= WJSCLexer.CHARACTER_OF) {
+      terminal.terminalType = 'UNARY_OPERATOR'
+    } else if (type === WJSCLexer.BOOLEAN_LITERAL) {
+      terminal.terminalType = 'BOOL_LITERAL'
+      terminal.type = 'bool'
+      terminal.value = (token === 'true')
+    } else if (type === WJSCLexer.CHARACTER_LITERAL) {
+      terminal.terminalType = 'CHAR_LITERAL'
+      terminal.type = 'char'
+      if (token.length !== 1) { this.errorLog.log(terminal, 'illegalchar') }
+      terminal.value = token.charCodeAt(0)
+    } else if (type === WJSCLexer.DIGIT) {
+      terminal.terminalType = 'INT_LITERAL'
+      terminal.type = 'int'
+      terminal.value = Number(token)
+      if (terminal.value > ) 
     }
     return terminal
   }
