@@ -2,6 +2,25 @@ type TypeName = BaseType | ArrayType | PairType | ErrorType | undefined
 type BaseType = 'int' | 'bool' | 'char' | 'string' | 'pair'
 type ErrorType = 'undefined' | 'mismatch' | 'incorrect arg no'
 
+export type WJSCTerminalType = Keywords
+  | Operators
+  | Literals
+  | 'TYPE_IDENTIFIER'
+  | 'IDENTIFIER'
+  | 'FUNCTION_CALL'
+  | 'SEPARATOR'
+type Keywords = 'PROGRAM_KEYWORD'
+  | 'FUNCTION_DECL'
+  | 'CONDITIONALS'
+  | 'STDLIB'
+  | 'PAIR_ACCESSOR'
+type Operators = 'UNARY_OPERATOR' | 'BINARY_OPERATOR' | 'ASSIGNMENT_OPERATOR'
+type Literals = 'INT_LITERAL'
+  | 'CHAR_LITERAL'
+  | 'BOOL_LITERAL'
+  | 'STRING_LITERAL'
+  | 'PAIR_LITERAL'
+
 interface ArrayType {
   arrayType: TypeName
 }
@@ -9,6 +28,10 @@ interface ArrayType {
 interface PairType {
   pairType: [TypeName, TypeName]
 }
+
+// tslint:disable-next-line:no-bitwise
+const MIN_INT = - (1 << 31)
+const MAX_INT = (- MIN_INT) - 1
 
 const isWJSCType = (tname: any): tname is TypeName =>
   isBaseType(tname) || isArrayType(tname) || isPairType(tname)
@@ -45,6 +68,6 @@ const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
 }
 
 export {
-  TypeName, BaseType, PairType, isBaseType,
-  isArrayType, isPairType, hasSameType,
+  MAX_INT, MIN_INT, TypeName, BaseType, PairType, isBaseType, isArrayType,
+  isPairType, hasSameType,
 }

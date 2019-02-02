@@ -54,8 +54,8 @@ export class WJSCLexer extends Lexer {
 	public static readonly LOGICAL_AND = 36;
 	public static readonly LOGICAL_OR = 37;
 	public static readonly ASSIGNMENT = 38;
-	public static readonly NEW_PAIR = 39;
-	public static readonly LOGICAL_NEGATION = 40;
+	public static readonly LOGICAL_NEGATION = 39;
+	public static readonly NEW_PAIR = 40;
 	public static readonly LENGTH = 41;
 	public static readonly ORDER_OF = 42;
 	public static readonly CHARACTER_OF = 43;
@@ -92,7 +92,7 @@ export class WJSCLexer extends Lexer {
 		"DONE", "CALL", "FIRST", "SECOND", "MULTIPLY", "DIVIDE", "MODULO", "PLUS", 
 		"MINUS", "GREATER_THAN", "GREATER_EQUAL", "LESS_THAN", "LESS_EQUAL", "EQUALS", 
 		"STRICT_EQUALS", "NEQUALS", "NSTRICT_EQUALS", "LOGICAL_AND", "LOGICAL_OR", 
-		"ASSIGNMENT", "NEW_PAIR", "LOGICAL_NEGATION", "LENGTH", "ORDER_OF", "CHARACTER_OF", 
+		"ASSIGNMENT", "LOGICAL_NEGATION", "NEW_PAIR", "LENGTH", "ORDER_OF", "CHARACTER_OF", 
 		"DIGIT", "BOOLEAN_LITERAL", "TRUTH", "FALSITY", "BACKSLASH", "ESCAPED_CHAR", 
 		"NON_ESCAPED", "CHAR", "CHARACTER_LITERAL", "PAIR_LITERAL", "STRING_LITERAL", 
 		"INTEGER", "BOOLEAN", "CHARACTER", "STRING", "PAIR", "LPAREN", "RPAREN", 
@@ -105,8 +105,8 @@ export class WJSCLexer extends Lexer {
 		"'read'", "'free'", "'return'", "'exit'", "'print'", "'println'", "'if'", 
 		"'then'", "'else'", "'fi'", "'while'", "'do'", "'done'", "'call'", "'fst'", 
 		"'snd'", "'*'", "'/'", "'%'", "'+'", "'-'", "'>'", "'>='", "'<'", "'<='", 
-		"'=='", "'==='", "'!='", "'!=='", "'&&'", "'||'", "'='", "'newpair'", 
-		"'!'", "'len'", "'ord'", "'chr'", undefined, undefined, "'true'", "'false'", 
+		"'=='", "'==='", "'!='", "'!=='", "'&&'", "'||'", "'='", "'!'", "'newpair'", 
+		"'len'", "'ord'", "'chr'", undefined, undefined, "'true'", "'false'", 
 		undefined, "'null'", undefined, "'int'", "'bool'", "'char'", "'string'", 
 		"'pair'", "'('", "')'", "'['", "']'", "','", "';'", "'''", "'\"'",
 	];
@@ -116,7 +116,7 @@ export class WJSCLexer extends Lexer {
 		"WHILE", "DO", "DONE", "CALL", "FIRST", "SECOND", "MULTIPLY", "DIVIDE", 
 		"MODULO", "PLUS", "MINUS", "GREATER_THAN", "GREATER_EQUAL", "LESS_THAN", 
 		"LESS_EQUAL", "EQUALS", "STRICT_EQUALS", "NEQUALS", "NSTRICT_EQUALS", 
-		"LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", "NEW_PAIR", "LOGICAL_NEGATION", 
+		"LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", "LOGICAL_NEGATION", "NEW_PAIR", 
 		"LENGTH", "ORDER_OF", "CHARACTER_OF", "DIGIT", "BOOLEAN_LITERAL", "TRUTH", 
 		"FALSITY", "CHARACTER_LITERAL", "PAIR_LITERAL", "STRING_LITERAL", "INTEGER", 
 		"BOOLEAN", "CHARACTER", "STRING", "PAIR", "LPAREN", "RPAREN", "LBRACK", 
@@ -176,8 +176,8 @@ export class WJSCLexer extends Lexer {
 		"\x03\x19\x03\x1A\x03\x1A\x03\x1B\x03\x1B\x03\x1C\x03\x1C\x03\x1D\x03\x1D" +
 		"\x03\x1E\x03\x1E\x03\x1E\x03\x1F\x03\x1F\x03 \x03 \x03 \x03!\x03!\x03" +
 		"!\x03\"\x03\"\x03\"\x03\"\x03#\x03#\x03#\x03$\x03$\x03$\x03$\x03%\x03" +
-		"%\x03%\x03&\x03&\x03&\x03\'\x03\'\x03(\x03(\x03(\x03(\x03(\x03(\x03(\x03" +
-		"(\x03)\x03)\x03*\x03*\x03*\x03*\x03+\x03+\x03+\x03+\x03,\x03,\x03,\x03" +
+		"%\x03%\x03&\x03&\x03&\x03\'\x03\'\x03(\x03(\x03)\x03)\x03)\x03)\x03)\x03" +
+		")\x03)\x03)\x03*\x03*\x03*\x03*\x03+\x03+\x03+\x03+\x03,\x03,\x03,\x03" +
 		",\x03-\x03-\x03.\x03.\x05.\u0143\n.\x03/\x03/\x03/\x03/\x03/\x030\x03" +
 		"0\x030\x030\x030\x030\x031\x031\x032\x032\x033\x053\u0155\n3\x034\x03" +
 		"4\x034\x034\x054\u015B\n4\x035\x035\x035\x035\x036\x036\x036\x036\x03" +
@@ -229,7 +229,7 @@ export class WJSCLexer extends Lexer {
 		"\x02\x02\x02=\u010D\x03\x02\x02\x02?\u010F\x03\x02\x02\x02A\u0112\x03" +
 		"\x02\x02\x02C\u0115\x03\x02\x02\x02E\u0119\x03\x02\x02\x02G\u011C\x03" +
 		"\x02\x02\x02I\u0120\x03\x02\x02\x02K\u0123\x03\x02\x02\x02M\u0126\x03" +
-		"\x02\x02\x02O\u0128\x03\x02\x02\x02Q\u0130\x03\x02\x02\x02S\u0132\x03" +
+		"\x02\x02\x02O\u0128\x03\x02\x02\x02Q\u012A\x03\x02\x02\x02S\u0132\x03" +
 		"\x02\x02\x02U\u0136\x03\x02\x02\x02W\u013A\x03\x02\x02\x02Y\u013E\x03" +
 		"\x02\x02\x02[\u0142\x03\x02\x02\x02]\u0144\x03\x02\x02\x02_\u0149\x03" +
 		"\x02\x02\x02a\u014F\x03\x02\x02\x02c\u0151\x03\x02\x02\x02e\u0154\x03" +
@@ -288,10 +288,10 @@ export class WJSCLexer extends Lexer {
 		"\u011E\x07?\x02\x02\u011E\u011F\x07?\x02\x02\u011FH\x03\x02\x02\x02\u0120" +
 		"\u0121\x07(\x02\x02\u0121\u0122\x07(\x02\x02\u0122J\x03\x02\x02\x02\u0123" +
 		"\u0124\x07~\x02\x02\u0124\u0125\x07~\x02\x02\u0125L\x03\x02\x02\x02\u0126" +
-		"\u0127\x07?\x02\x02\u0127N\x03\x02\x02\x02\u0128\u0129\x07p\x02\x02\u0129" +
-		"\u012A\x07g\x02\x02\u012A\u012B\x07y\x02\x02\u012B\u012C\x07r\x02\x02" +
-		"\u012C\u012D\x07c\x02\x02\u012D\u012E\x07k\x02\x02\u012E\u012F\x07t\x02" +
-		"\x02\u012FP\x03\x02\x02\x02\u0130\u0131\x07#\x02\x02\u0131R\x03\x02\x02" +
+		"\u0127\x07?\x02\x02\u0127N\x03\x02\x02\x02\u0128\u0129\x07#\x02\x02\u0129" +
+		"P\x03\x02\x02\x02\u012A\u012B\x07p\x02\x02\u012B\u012C\x07g\x02\x02\u012C" +
+		"\u012D\x07y\x02\x02\u012D\u012E\x07r\x02\x02\u012E\u012F\x07c\x02\x02" +
+		"\u012F\u0130\x07k\x02\x02\u0130\u0131\x07t\x02\x02\u0131R\x03\x02\x02" +
 		"\x02\u0132\u0133\x07n\x02\x02\u0133\u0134\x07g\x02\x02\u0134\u0135\x07" +
 		"p\x02\x02\u0135T\x03\x02\x02\x02\u0136\u0137\x07q\x02\x02\u0137\u0138" +
 		"\x07t\x02\x02\u0138\u0139\x07f\x02\x02\u0139V\x03\x02\x02\x02\u013A\u013B" +
