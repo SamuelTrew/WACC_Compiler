@@ -263,6 +263,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         this.symbolTable.checkType(statNode)
         this.symbolTable.checkType(paramNode)
         this.symbolTable.checkType(identNode)
+        result.children.forEach((child, index) => {
+          if (child.type === undefined) {
+            this.errorLog.log(child, 'undefined')
+          }
+        })
       }
     } else {
       result.error.push('Your paramList is undefined at ' + result.line + ':' + result.column)
@@ -291,6 +296,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       this.symbolTable.checkType(baseTypeNode)
       this.symbolTable.checkType(arrayTypeNode)
       this.symbolTable.checkType(pairTerminalNode)
+
+      result.children.forEach((child, index) => {
+        if (child.type === undefined) {
+          this.errorLog.log(child, 'undefined')
+        }
+      })
     }
     return result
   }
@@ -343,6 +354,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       functions.forEach((func, index) => {
         const funcNode = this.visitFunc(func)
         this.symbolTable.checkType(funcNode)
+      })
+      result.children.forEach((child, index) => {
+        if (child.type === undefined) {
+          this.errorLog.log(child, 'undefined')
+        }
       })
     }
     return result
@@ -418,7 +434,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         })
       }
     }
-    return result // result
+    return result
   }
 
   public visitType = (ctx: TypeContext): WJSCAst => {
@@ -457,6 +473,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     } else if (WJSCLexer.IF <= type && type <= WJSCLexer.DONE) {
       terminal.terminalType = 'CONDITIONALS'
     }
+    return terminal
   }
 
   protected defaultResult(): WJSCAst {
