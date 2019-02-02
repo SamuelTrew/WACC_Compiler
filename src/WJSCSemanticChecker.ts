@@ -398,19 +398,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitParam = (ctx: ParamContext): WJSCAst => {
+    // 1. Ensure type and ident not undefined 2. Ensure ident is in lookup
     const result = this.initWJSCAst(ctx)
-    // WARNING: I think you need to check if a function has no undefined parts
-    // const ident = ctx.IDENTIFIER()
     const type = ctx.type()
-    const typeNode = this.visitType(type)
-
-    // comment: if (type === undefined || result.type === undefined) {
-    //   this.errorLog.pushError('Type is undefined at ' + result.line + ':' + result.column)
-    // } else if (!this.symbolTable.checkType(typeNode.token, typeNode.type)) {
-    //   this.errorLog.pushError('Different type from ST at ' + result.line + ':' + result.column)
-    // } else if (!hasSameType(typeNode.type, result.type)) {
-    //   this.errorLog.pushError('Incorrect type at ' + result.line + ':' + result.column)
-    // }
+    const ident = ctx.IDENTIFIER()
+    if (type === undefined || ident === undefined) {
+      this.errorLog.log(result, 'undefined')
+    } else {
+      result.children.push(this.visitType(type))
+      const identType = this.visitTerminal(ident)
+      this.symbolTable.checkType(identType)
+      result.children.push(identType)
+    }
     return result
   }
 
