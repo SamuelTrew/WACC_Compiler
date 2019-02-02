@@ -10,7 +10,6 @@ export class WJSCSymbolTable {
   private errorLog: WJSCErrorLog
 
   constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, errorLog: WJSCErrorLog) {
-    // TODO pass it the error log
     this.currentScopeLevel = scopeLevel
     this.symbolTable = []
     this.parentLevel = parentLevel
@@ -19,6 +18,13 @@ export class WJSCSymbolTable {
 
   public enterScope = (): WJSCSymbolTable => {
     return new WJSCSymbolTable(this.currentScopeLevel++, this, this.errorLog)
+  }
+
+  public exitScope = (): WJSCSymbolTable | undefined => {
+    if (this.parentLevel !==  undefined) {
+      return this.parentLevel
+    }
+    this.errorLog.pushError('Cannot exit from top level scope')
   }
 
   // Add an entry to the symbol table
