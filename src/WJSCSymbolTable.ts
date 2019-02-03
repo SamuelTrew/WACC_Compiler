@@ -6,8 +6,8 @@ export class WJSCSymbolTable {
 
   private currentScopeLevel: number
   private symbolTable: WJSCSymbolTableEntry[]
-  private parentLevel?: WJSCSymbolTable
-  private errorLog: WJSCErrorLog
+  private readonly parentLevel?: WJSCSymbolTable
+  private readonly errorLog: WJSCErrorLog
 
   constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, errorLog: WJSCErrorLog) {
     this.currentScopeLevel = scopeLevel
@@ -16,15 +16,18 @@ export class WJSCSymbolTable {
     this.errorLog = errorLog
   }
 
+  // Create new child symbol table
   public enterScope = (): WJSCSymbolTable => {
     return new WJSCSymbolTable(this.currentScopeLevel++, this, this.errorLog)
   }
 
-  public exitScope = (): WJSCSymbolTable | undefined => {
+  // Return the parent symbol table
+  public exitScope = (): WJSCSymbolTable => {
     if (this.parentLevel !==  undefined) {
       return this.parentLevel
     }
     this.errorLog.pushError('Cannot exit from top level scope')
+    return this
   }
 
   // Add an entry to the symbol table
@@ -32,6 +35,18 @@ export class WJSCSymbolTable {
     this.symbolTable.push({ identifier, node })
   }
 
+  // Lookup the WJSCAst node with the given identifier in the local scope
+  public localLookup = (identifier: string): WJSCAst | undefined => {
+    this.symbolTable.forEach((entry) => {
+      if (entry.identifier === identifier) {
+        return entry.node
+      }
+    })
+    return undefined
+  }
+
+  // Lookup the WJSCAst node with the given identifier in the local scope and
+  // all its parent scopes
   public globalLookup = (identifier: string): WJSCAst | undefined => {
     let result = this.localLookup(identifier)
     if (result === undefined && this.parentLevel !== undefined) {
@@ -40,9 +55,8 @@ export class WJSCSymbolTable {
     return result
   }
 
-  // Return type of identifier in the symbol table or undefined if not found.
+  // Return whether the node given has the same type in the symbol table
   public checkType = (astNode: WJSCAst): boolean => {
-    // Perform checkLocalType and recursive global checkType
     const lookupResult = this.globalLookup(astNode.token)
     if (lookupResult === undefined) {
       this.errorLog.log(astNode, 'undefined')
@@ -55,15 +69,6 @@ export class WJSCSymbolTable {
       }
     }
     return true
-  }
-
-  private localLookup = (identifier: string): WJSCAst | undefined => {
-    this.symbolTable.forEach((entry) => {
-      if (entry.identifier === identifier) {
-        return entry.node
-      }
-    })
-    return undefined
   }
 }
 
