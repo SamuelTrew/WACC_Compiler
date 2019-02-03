@@ -1,6 +1,8 @@
-import { TypeName, WJSCTerminalType } from './WJSCType'
+import { TerminalType, TypeName } from './WJSCType'
 
-type WJSCParserRules = 'arg-list'
+enum WJSCParserRules {
+  ArgList = 'arglist',
+}
 
 export interface WJSCAst {
   children: WJSCAst[]
@@ -13,6 +15,6 @@ export interface WJSCAst {
 }
 
 export interface WJSCTerminal extends WJSCAst {
-  terminalType?: WJSCTerminalType
+  terminalType?: TerminalType
   value: any
 }

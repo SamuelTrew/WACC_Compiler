@@ -1,25 +1,14 @@
-type TypeName = BaseType | ArrayType | PairType | ErrorType | undefined
-type BaseType = 'int' | 'bool' | 'char' | 'string' | 'pair'
-type ErrorType = 'undefined' | 'mismatch' | 'incorrect arg no'
+import { ErrType } from './WJSCErrors'
 
-export type WJSCTerminalType = Keywords
-  | Operators
-  | Literals
-  | 'TYPE_IDENTIFIER'
-  | 'IDENTIFIER'
-  | 'FUNCTION_CALL'
-  | 'SEPARATOR'
-type Keywords = 'PROGRAM_KEYWORD'
-  | 'FUNCTION_DECL'
-  | 'CONDITIONALS'
-  | 'STDLIB'
-  | 'PAIR_ACCESSOR'
-type Operators = 'UNARY_OPERATOR' | 'BINARY_OPERATOR' | 'ASSIGNMENT_OPERATOR'
-type Literals = 'INT_LITERAL'
-  | 'CHAR_LITERAL'
-  | 'BOOL_LITERAL'
-  | 'STRING_LITERAL'
-  | 'PAIR_LITERAL'
+type TypeName = BaseType | ArrayType | PairType | ErrType | undefined
+
+enum BaseType {
+  Integer = 'int',
+  Boolean = 'bool',
+  Character = 'char',
+  String = 'str',
+  Pair = 'pair',
+}
 
 interface ArrayType {
   arrayType: TypeName
@@ -27,6 +16,29 @@ interface ArrayType {
 
 interface PairType {
   pairType: [TypeName, TypeName]
+}
+
+export type TerminalType = TerminalKeywords
+  | TerminalOperators
+  | BaseType
+
+enum TerminalKeywords {
+  Program = 'program',
+  Function = 'func',
+  Call = 'call',
+  Conditional = 'cond',
+  Stdlib = 'stdlib',
+  Pair = 'pair',
+  Type = 'type',
+  Identifier = 'ident',
+  Separator = 'separator',
+  Accessor = 'accessor',
+}
+
+enum TerminalOperators {
+  Unary = 'unary',
+  Binary = 'binary',
+  Assignment = 'assign',
 }
 
 // tslint:disable-next-line:no-bitwise
@@ -69,5 +81,5 @@ const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
 
 export {
   MAX_INT, MIN_INT, TypeName, BaseType, PairType, isBaseType, isArrayType,
-  isPairType, hasSameType,
+  isPairType, hasSameType, TerminalKeywords, TerminalOperators,
 }

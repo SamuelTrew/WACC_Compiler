@@ -1,5 +1,5 @@
 import { WJSCAst } from './WJSCAst'
-import { WJSCErrorLog } from './WJSCErrors'
+import { SemError, WJSCErrorLog } from './WJSCErrors'
 import { hasSameType, TypeName } from './WJSCType'
 
 export class WJSCSymbolTable {
@@ -21,7 +21,7 @@ export class WJSCSymbolTable {
   }
 
   public exitScope = (): WJSCSymbolTable | undefined => {
-    if (this.parentLevel !==  undefined) {
+    if (this.parentLevel !== undefined) {
       return this.parentLevel
     }
     this.errorLog.pushError('Cannot exit from top level scope')
@@ -45,12 +45,12 @@ export class WJSCSymbolTable {
     // Perform checkLocalType and recursive global checkType
     const lookupResult = this.globalLookup(astNode.token)
     if (lookupResult === undefined) {
-      this.errorLog.log(astNode, 'undefined')
+      this.errorLog.log(astNode, SemError.Undefined)
       return false
     } else {
       const foundType = lookupResult.type
       if (!hasSameType(foundType, astNode.type)) {
-        this.errorLog.log(astNode, 'mismatch', foundType)
+        this.errorLog.log(astNode, SemError.Mismatch, foundType)
         return false
       }
     }

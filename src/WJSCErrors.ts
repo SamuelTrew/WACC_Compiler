@@ -1,9 +1,24 @@
 import { WJSCAst } from './WJSCAst'
 import { TypeName } from './WJSCType'
 
-type WJSCErrorType = 'semantic' | 'syntactic'
-type WJSCSyntaxErrors = 'badtoken' | 'illegalchar' | 'overflow' | 'underflow'
-type WJSCSemanticErrors = 'undefined' | 'mismatch' | 'incorrect arg no'
+enum ErrType {
+  Semantic = 'semantic',
+  Syntactic = 'syntactic',
+}
+
+enum SynError {
+  BadToken = 'bad token',
+  IllegalChar = 'illegal char',
+  IllegalStr = 'illegal string',
+  Overflow = 'overflow',
+  Underflow = 'underflow',
+}
+
+enum SemError {
+  Undefined = 'undefined',
+  Mismatch = 'mismatch',
+  IncorrectArgNo = 'incorrect arg no',
+}
 
 class WJSCErrorLog {
 
@@ -13,19 +28,20 @@ class WJSCErrorLog {
     this.errorLog = []
   }
 
-  public log = (node: WJSCAst, error: WJSCSemanticErrors | WJSCSyntaxErrors,
+  public log = (node: WJSCAst, error: SemError | SynError,
                 additionalParam?: (TypeName | number[])) => {
     let errorMessage = ''
     const { line, column, token } = node
     if (this.isSemantic(error)) {
       errorMessage += `Semantic Error '${error}' at ${line}:${column}: `
-      if (error === 'undefined') {
+      if (error === SemError.Undefined) {
         errorMessage += `Type of ${token} is undefined`
-      } else if (error === 'mismatch') {
+      } else if (error === SemError.Mismatch) {
         errorMessage += `Type of ${token} does not match expected type ${additionalParam}`
-      } else if (error === 'incorrect arg no' && additionalParam !== undefined && additionalParam instanceof Array) {
+      } else if (error === SemError.IncorrectArgNo && additionalParam !== undefined &&
+        additionalParam instanceof Array) {
         errorMessage +=
-            `${token} does not have ${additionalParam[0]}
+          `${token} does not have ${additionalParam[0]}
              ${additionalParam[1] === -1 ? 'or more' : 'to ' + additionalParam[1].toString()} arguments`
       }
     } else {
@@ -38,9 +54,11 @@ class WJSCErrorLog {
     this.errorLog.push(message)
   }
 
-  private isSemantic = (error: WJSCSemanticErrors | WJSCSyntaxErrors): error is WJSCSemanticErrors =>
-    error === 'undefined' || error === 'mismatch' || error === 'incorrect arg no'
+  private isSemantic = (error: SemError | SynError): error is SemError =>
+    error === SemError.IncorrectArgNo
+    || error === SemError.Mismatch
+    || error === SemError.Undefined
 
 }
 
-export { WJSCErrorLog }
+export { WJSCErrorLog, ErrType, SemError, SynError }
