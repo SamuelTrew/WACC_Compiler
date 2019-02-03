@@ -22,7 +22,8 @@ import { WJSCSymbolTable } from './WJSCSymbolTable'
 import { hasSameType, isBaseType } from './WJSCType'
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
-// Result type?
+// Result.type?
+// CHECK CHILD EXP TYPE NOT CHILD EXP AHHHHHH
 /**
  * A semantic checker which builds an AST as it traverses through the tree
  * returned from the ANTLR4 runtime.
@@ -123,34 +124,79 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitAssignRhs = (ctx: AssignRhsContext): WJSCAst => {
-    // 1. Ensure either array-liter, pair-elem, ident, expr(expr only or newpair)
-    // 2. If expr, ensure children == 1. Else it is new pair and ensure children == 2
-    // 2. Visit these elems 3. If ident, ensure ident is in lookup
+    // 1. Ensure either array-liter, pair-elem, call or expr(expr only or newpair)
+    // 2. If call, ensure ident, brackets not undefined. check ident in lookup.
+    // 3. If exp alone, ensure childExp not undefined
+    // 4. If 2 exps, ensure newpair, brackets, comma not undefined. Ensure childExps not undefined
+    // 5. visitThem
     const result = this.initWJSCAst(ctx)
-    const rhsElems = ctx.expression() || ctx.arrayLiteral() || ctx.pairElement() || ctx.IDENTIFIER()
-    if (rhsElems === undefined) {
+    const possibles = ctx.arrayLiteral() || ctx.pairElement() || ctx.CALL() || ctx.expression()
+    if (possibles === undefined) {
       this.errorLog.log(result, 'undefined')
     } else {
-      if (ctx.expression() !== undefined) {
-        if (!(ctx.NEW_PAIR() !== undefined && ctx.expression().length === 2 ||
-            ctx.NEW_PAIR() === undefined && ctx.expression().length === 1)) {
-          this.errorLog.log(result, 'undefined') // <- Checks right number of expressions for rhsElems that have it
+      const arrLiter = ctx.arrayLiteral()
+      const pairElem = ctx.pairElement()
+      const call = ctx.CALL()
+      if (arrLiter !== undefined) {
+        result.children.push(this.visitArrayLiteral(arrLiter))
+      } else if (pairElem !== undefined) {
+        result.children.push(this.visitPairElement(pairElem))
+      } else if (call !== undefined) {
+        result.children.push(this.visitTerminal(call))
+        const ident = ctx.IDENTIFIER()
+        const lBrack = ctx.LPAREN()
+        const rBrack = ctx.RPAREN()
+        const argList = ctx.argList()
+        if (ident === undefined || lBrack === undefined) {
+          this.errorLog.log(result, 'undefined')
         } else {
-          result.children = rhsElems.map(this.visitExpression)// <- visit children Expressions
-          this.checkChildrenUndefined(result)
+          const identType = this.visitTerminal(ident)
+          this.symbolTable.checkType(identType)
+          result.children.push(identType)
+          result.children.push(this.visitTerminal(lBrack))
+        }
+        if (argList !== undefined) {
+          result.children.push(this.visitArgList(argList))
+        }
+        if (rBrack === undefined) {
+          this.errorLog.log(result, 'undefined')
+        } else {
+          result.children.push(this.visitTerminal(rBrack))
         }
       } else {
-        const rhsNode =
-            (rhsElems instanceof TerminalNode ? this.visitTerminal(rhsElems) :
-                (rhsElems instanceof ArrayLiteralContext ? this.visitArrayLiteral(rhsElems) :
-                    (rhsElems instanceof PairElementContext ? this.visitPairElement(rhsElems) :
-                        undefined))) // <- visit children arrayLiter, pairElem, ident
-        if (rhsNode !== undefined) {
-          result.children.push(rhsNode)
-          if (rhsElems instanceof TerminalNode) {
-            const identType = this.visitTerminal(rhsElems)
-            this.symbolTable.checkType(identType)
+        // These are all the children with expr in it
+        const expressions = (ctx.expression()).map(this.visitExpression)
+        if (expressions.length === 1) {
+          if (expressions[0] === undefined) {
+            this.errorLog.log(result, 'undefined')
+          } else {
+            result.children.push(expressions[0])
           }
+        } else if (expressions.length === 2) {
+          const newpair = ctx.NEW_PAIR()
+          const lBrack = ctx.LPAREN()
+          const comma = ctx.COMMA()
+          const rBrack = ctx.RPAREN()
+          if (newpair === undefined || lBrack === undefined || comma === undefined || rBrack === undefined) {
+            this.errorLog.log(result, 'undefined')
+          } else {
+            result.children.push(this.visitTerminal(newpair))
+            result.children.push(this.visitTerminal(lBrack))
+            if (expressions[0] === undefined) {
+              this.errorLog.log(result, 'undefined')
+            } else {
+              result.children.push(expressions[0])
+            }
+            result.children.push(this.visitTerminal(comma))
+            if (expressions[1] === undefined) {
+              this.errorLog.log(result, 'undefined')
+            } else {
+              result.children.push(expressions[1])
+            }
+            result.children.push(this.visitTerminal(rBrack))
+          }
+        } else {
+          this.errorLog.log(result, 'incorrect arg no', [1, 2])
         }
       }
     }
@@ -158,29 +204,35 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitAssignment = (ctx: AssignmentContext): WJSCAst => {
-    // NOTE: This function is specifically for new assignments <--- CHANGE
     // 1. Both lhs and rhs not undefined 2. visit lhs and rhs
-    // 3. Add this assignment to the lookup
+    // 3. If an assignment, Add this assignment to the lookup
     // 4. (Check that can be removed later): Ensure ident is in table
     const result = this.initWJSCAst(ctx)
+    const lhs = ctx.assignLhs()
     const lhsType = ctx.type()
     const lhsIdent = ctx.IDENTIFIER()
     const rhs = ctx.assignRhs()
-    if (lhsType === undefined || lhsIdent === undefined || rhs === undefined) {
+    if ((lhs === undefined && (lhsType === undefined || lhsIdent === undefined)) || rhs === undefined) {
       this.errorLog.log(result, 'undefined')
     } else {
-      result.children.push(this.visitType(lhsType))
-      const identType = this.visitTerminal(lhsIdent)
-      result.children.push(identType)
-      const right = this.visitAssignRhs(rhs)
-      result.children.push(right)
-      this.symbolTable.insertSymbol(identType.toString(), right)
-      // WARNING: Below will eventually be an unnecessary check
-      this.symbolTable.checkType(identType)
+      if (lhs !== undefined) {
+        // Reassignment
+        result.children.push(this.visitAssignLhs(lhs))
+        result.children.push(this.visitAssignRhs(rhs))
+      } else if (lhsType !== undefined && lhsIdent !== undefined) {
+        // Assignment
+        result.children.push(this.visitType(lhsType))
+        const identType = this.visitTerminal(lhsIdent)
+        result.children.push(identType)
+        const right = this.visitAssignRhs(rhs)
+        result.children.push(right)
+        this.symbolTable.insertSymbol(identType.toString(), right)
+        // WARNING: Below will eventually be an unnecessary check
+        this.symbolTable.checkType(identType)
+      }
     }
     return result
   }
-
 
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
     // 1. Ensure one of base type 2. visit these types
