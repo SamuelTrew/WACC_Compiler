@@ -383,7 +383,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       result.children.push(this.visitType(type))
       const identType = this.visitTerminal(ident)
       this.symbolTable.checkType(identType)
+      // TODO Add new function type to symbol table?
       result.children.push(identType)
+
+      // Function's own scope
+      this.symbolTable = this.symbolTable.enterScope()
       result.children.push(this.visitTerminal(lBracket))
       if (paramList !== undefined) {
         result.children.push(this.visitParamList(paramList))
@@ -392,6 +396,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       result.children.push(this.visitTerminal(is))
       result.children.push(this.visitStatement(stat))
       result.children.push(this.visitTerminal(end))
+      this.symbolTable = this.symbolTable.exitScope()
     }
     return result
   }
