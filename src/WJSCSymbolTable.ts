@@ -21,14 +21,9 @@ export class WJSCSymbolTable {
     return new WJSCSymbolTable(this.currentScopeLevel++, this, this.errorLog)
   }
 
-<<<<<<< HEAD
-  public exitScope = (): WJSCSymbolTable | undefined => {
-    if (this.parentLevel !== undefined) {
-=======
   // Return the parent symbol table
   public exitScope = (): WJSCSymbolTable => {
     if (this.parentLevel !==  undefined) {
->>>>>>> 9deb7027ec94ccc6f2c1846e988f62e8ff55079d
       return this.parentLevel
     }
     this.errorLog.pushError('Cannot exit from top level scope')
