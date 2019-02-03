@@ -158,7 +158,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitAssignment = (ctx: AssignmentContext): WJSCAst => {
-    // NOTE: This function is specifically for new assignments
+    // NOTE: This function is specifically for new assignments <--- CHANGE
     // 1. Both lhs and rhs not undefined 2. visit lhs and rhs
     // 3. Add this assignment to the lookup
     // 4. (Check that can be removed later): Ensure ident is in table
@@ -180,6 +180,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     }
     return result
   }
+
 
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
     // 1. Ensure one of base type 2. visit these types
@@ -463,73 +464,75 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitStatement = (ctx: StatementContext): WJSCAst => {
+    // 1. Ensure either skip, Assignments, read, singleExp, conditional, begin/end or semicolon
+    // not undefined 2. If read, ensures lhs not undefined 3. If singleExp,ensures expr not undefined
+    // 4. If begin, ensures stat and end not undefined, and stat == 1
+    // 5. If semicolon, ensure stat not undefined, stat == 1
+    // 6. visit them
     const result = this.initWJSCAst(ctx)
     const skip = ctx.WSKIP()
-    // WARNING Missing: FREE, RETURN, EXIT, PRINT, PRINTLN <- Are these STDLIBs?
-    const statWithSingleExp = ctx.stdlib()
-    // The other assignment format? (<type><ident> = <assign rhs>)
-    const assignment = ctx.assignment() || ctx.READ()
+    const assignment = ctx.assignment()
+    const read = ctx.READ()
+    const singleExp = ctx.stdlib()
     const conditionals = ctx.conditionalBlocks()
     const begin = ctx.BEGIN()
     const semicolon = ctx.SEMICOLON()
-    if (skip === undefined && statWithSingleExp === undefined && assignment === undefined
-      && conditionals === undefined && begin === undefined && semicolon === undefined) {
-      this.errorLog.pushError('Statement is invalid at ' + result.line + ':' + result.column)
+    if (result === undefined && skip === undefined && assignment === undefined
+    && read === undefined && singleExp === undefined && conditionals === undefined && begin === undefined
+    && semicolon === undefined) {
+      this.errorLog.log(result, 'undefined')
     } else {
-      if (statWithSingleExp !== undefined) {
-        const singleExp = ctx.expression()
-        if (singleExp === undefined) {
-          this.errorLog.pushError('Statement with single Exp has invalid Exp at ' + result.line + ':' + result.column)
+      if (skip !== undefined) {
+        result.children.push(this.visitTerminal(skip))
+      } else if (assignment !== undefined) {
+        result.children.push(this.visitAssignment(assignment))
+      } else if (read !== undefined) {
+        const lhs = ctx.assignLhs()
+        if (lhs === undefined) {
+          this.errorLog.log(result, 'undefined')
         } else {
-          this.visitExpression(singleExp)
+          result.children.push(this.visitTerminal(read))
+          result.children.push(this.visitAssignLhs(lhs))
         }
-      }
-      if (assignment !== undefined) {
-        if (ctx.READ() !== undefined) {
-          const lhs = ctx.assignLhs()
-          if (lhs === undefined) {
-            this.errorLog.pushError('Invalid Lhs for READ statement at  ' + result.line + ':' + result.column)
+      } else if (singleExp !== undefined) {
+        const expression = ctx.expression()
+        if (expression === undefined) {
+          this.errorLog.log(result, 'undefined')
+        } else {
+          result.children.push(this.visitExpression(expression))
+        }
+      } else if (conditionals !== undefined) {
+          result.children.push(this.visitConditionalBlocks(conditionals))
+      } else if (begin !== undefined) {
+          const stat = ctx.statement()
+          const end = ctx.END()
+          if (stat === undefined || end === undefined) {
+            this.errorLog.log(result, 'undefined')
           } else {
-            this.visitAssignLhs(lhs)
+            if (stat.length !== 1) {
+              this.errorLog.log(result, 'incorrect arg no', [1, 1])
+            } else {
+              if (stat[0] === undefined) {
+                this.errorLog.log(result, 'undefined')
+              }
+              result.children.push(this.visitStatement(stat[0]))
+            }
+            result.children.push(this.visitTerminal(end))
+          }
+      } else if (semicolon !== undefined) {
+        // semicolon
+        const stat = ctx.statement()
+        if (stat === undefined) {
+          this.errorLog.log(result, 'undefined')
+        } else {
+          if (stat.length !== 2) {
+            this.errorLog.log(result, 'incorrect arg no', [2, 2])
+          } else {
+            result.children.push(this.visitStatement(stat[0]))
+            result.children.push(this.visitTerminal(semicolon))
+            result.children.push(this.visitStatement(stat[1]))
           }
         }
-        if (ctx.assignment() !== undefined) {
-          const assignments = ctx.assignment()
-          if (assignments === undefined) {
-            this.errorLog.pushError('Invalid Assignment in statement at  ' + result.line + ':' + result.column)
-          } else {
-            this.visitAssignment(assignments)
-          }
-        }
-      }
-      if (conditionals !== undefined) {
-        const condExp = ctx.expression()
-        const childStats = ctx.statement()
-        if (condExp === undefined) {
-          this.errorLog.pushError('Statement with cond Exp has invalid Exp at ' + result.line + ':' + result.column)
-        } else {
-          this.visitExpression(condExp)
-        }
-        childStats.forEach((child, index) => {
-          this.visitStatement(child)
-        })
-      }
-      if (begin !== undefined) {
-        // We check to make sure end is there
-        if (ctx.END() === undefined) {
-          this.errorLog.pushError('Statement with begin has no end at ' + result.line + ':' + result.column)
-        } else {
-          const childStats = ctx.statement()
-          childStats.forEach((child, index) => {
-            this.visitStatement(child)
-          })
-        }
-      }
-      if (semicolon !== undefined) {
-        const childStats = ctx.statement()
-        childStats.forEach((child, index) => {
-          this.visitStatement(child)
-        })
       }
     }
     return result
