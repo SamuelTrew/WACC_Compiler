@@ -14,12 +14,16 @@ import {
   ProgramContext,
   StatementContext,
   TypeContext,
+  IntegerLiteralContext,
+  StdlibContext,
+  UnaryOperatorContext,
 } from './grammar/WJSCParser'
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import { WJSCAst, WJSCTerminal } from './WJSCAst'
 import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 import { BaseType, hasSameType, isBaseType, TerminalKeywords, TerminalOperators } from './WJSCType'
+import { BinaryOperContext } from './grammar/BasicParser';
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
 // Result.type?
@@ -245,6 +249,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       result.children.push(terminal)
     }
     return result
+  }
+
+  public visitBinaryOperator = (ctx: BinaryOperContext): WJSCAst => {
+    return this.initWJSCAst(ctx)
   }
 
   public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCAst => {
@@ -594,6 +602,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     return result
   }
 
+  public visitStdlib = (ctx: StdlibContext): WJSCAst => {
+    return this.initWJSCAst(ctx)
+  }
+
   public visitType = (ctx: TypeContext): WJSCAst => {
     // 1. Ensure either base type, array type, pair type not undefined 2. visit types
     const result = this.initWJSCAst(ctx)
@@ -666,6 +678,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       terminal.value = token
     }
     return terminal
+  }
+
+  public visitUnaryOperator = (ctx: UnaryOperatorContext): WJSCAst => {
+    return this.initWJSCAst(ctx)
   }
 
   protected defaultResult(): WJSCAst {

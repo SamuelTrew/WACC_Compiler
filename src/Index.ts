@@ -32,5 +32,5 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   const tokenStream = new antlr4ts.CommonTokenStream(lexer)
   const parser = new WJSCParser(tokenStream)
   const visitor = new WJSCSemanticChecker()
-  visitor.visit(parser.program())
+  console.log(JSON.stringify(visitor.visit(parser.program()), null, 2))
 })
