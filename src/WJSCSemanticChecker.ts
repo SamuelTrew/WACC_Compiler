@@ -662,7 +662,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitStdlib = (ctx: StdlibContext): WJSCAst => {
-    return this.initWJSCAst(ctx)
+    // 1. Ensure stdLib not undefined 2. visit stbLibs
+    const result = this.initWJSCAst(ctx)
+    const lib = ctx.FREE() || ctx.RETURN() || ctx.RETURN() || ctx.EXIT() || ctx.PRINT() || ctx.PRINTLN()
+    if (!lib) {
+      this.errorLog.log(result, SemError.Undefined)
+    } else {
+      result.children.push(this.visitTerminal(lib))
+    }
+    return result
   }
 
   public visitType = (ctx: TypeContext): WJSCAst => {
@@ -761,7 +769,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitUnaryOperator = (ctx: UnaryOperatorContext): WJSCAst => {
-    return this.initWJSCAst(ctx)
+    // 1. Ensure either of ops not undefined 2. visit ops
+    const result = this.initWJSCAst(ctx)
+    const op = ctx.LOGICAL_NEGATION() || ctx.MINUS() || ctx.LENGTH() || ctx.ORDER_OF() || ctx.CHARACTER_OF()
+    if (!op) {
+      this.errorLog.log(result, SemError.Undefined)
+    } else {
+      result.children.push(this.visitTerminal(op))
+    }
+    return result
   }
 
   protected defaultResult(): WJSCAst {
