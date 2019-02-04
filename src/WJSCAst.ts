@@ -1,6 +1,6 @@
 import { TerminalType, TypeName } from './WJSCType'
 
-enum WJSCParserRules {
+export enum WJSCParserRules {
   ArgList = 'arglist',
 }
 

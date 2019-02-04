@@ -7,7 +7,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "all": "npm run lint && npm run build && npm test",
+    "all": "npm run lint && npm run build:antlr && npm run build && npm test",
     "clean": "rimraf build",
     "build": "npm run build:grammar && npm run build:compile",
     "build:antlr": "cd antlr_config && java -jar \"../lib/antlr-4.7-complete.jar\" WJSCLexer.g4 WJSCParser.g4 -o antlr && cd antlr && javac -cp \"../../lib/antlr-4.7-complete.jar\" *.java",
@@ -47,10 +47,13 @@
     "webpack-dev-server": "^3.1.14"
   },
   "dependencies": {
+    "@types/argparse": "^1.0.35",
     "antlr4ts": "^0.5.0-alpha.1",
+    "argparse": "^1.0.10",
     "chai": "^4.2.0",
     "form-data": "^2.3.3",
     "json2yaml": "^1.1.0",
+    "lodash": "^4.17.11",
     "node-fetch": "^2.3.0",
     "recursive-readdir": "^2.2.2",
     "typescript": "^3.2.2"

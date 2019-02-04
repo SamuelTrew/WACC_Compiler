@@ -342,7 +342,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         if (!expressions) {
           this.errorLog.log(result, SemError.Undefined)
         } else {
-          if ((ident || ctx.unaryOperator()) && expressions.length !== 1) {
+          if (ctx.unaryOperator() && expressions.length !== 1) {
             this.errorLog.log(result, SemError.IncorrectArgNo, [1, 1])
           } else if (ctx.binaryOperator() && expressions.length !== 2) {
             this.errorLog.log(result, SemError.IncorrectArgNo, [2, 2])
