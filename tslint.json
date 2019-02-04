@@ -41,7 +41,8 @@
             "check-preblock",
             "check-postbrace"
         ],
-        "one-variable-per-declaration": false
+        "one-variable-per-declaration": false,
+        "no-console": false,
     },
     "rulesDirectory": []
 }
