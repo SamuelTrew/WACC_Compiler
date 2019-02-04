@@ -79,20 +79,39 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       this.errorLog.log(result, SemError.IncorrectArgNo, [1, -1])
     } else {
       const comma = ctx.COMMA()
-      if (expressions.length - 1 !== comma.length) {
+      if (expressions.length - 1 !== comma.length && expressions.length - 1 >= comma.length) {
+        // ^ There are less commas than expected for the given number of exprs
         this.errorLog.log(result, SemError.IncorrectArgNo, [expressions.length - 1, expressions.length - 1])
+      } else if (expressions.length - 1 !== comma.length && expressions.length - 1 < comma.length) {
+        // ^ Else if there are less expressions than expected for the given number of commas
+        this.errorLog.log(result, SemError.IncorrectArgNo, [comma.length + 1, comma.length + 1])
       }
-      result.children = expressions.map(this.visitExpression)
-      const firstChild = result.children[0]
-      result.children.forEach((child, index) => {
-        if (!child.type || !firstChild.type) {
-          this.errorLog.log(result, SemError.Undefined)
+      result.children.push(this.visitTerminal(ctx.LBRACK()))
+      const firstChild = this.visitExpression(expressions[0])
+      if (!firstChild.type) {
+        this.errorLog.log(result, SemError.Undefined)
+      }
+      result.children.push(firstChild) // <- this is the expr that must be present
+      const length = expressions.length - 1  >= comma.length ? expressions.length - 1 : comma.length
+      let index = 0
+      while (index !== length) {
+        if (index < comma.length) {
+          const currComma = this.visitTerminal(comma[index])
+          result.children.push(currComma)
         }
-        if (!hasSameType(child.type, firstChild.type)) {
-          // TODO add new error for array type inconsistency
-          this.errorLog.log(result, SemError.Mismatch, firstChild.type)
+        if (index < expressions.length - 1) {
+          const childStat = this.visitExpression(expressions[index + 1])
+          if (!childStat.type) {
+            this.errorLog.log(result, SemError.Undefined)
+          }
+          if (!hasSameType(childStat.type, firstChild.type)) {
+            this.errorLog.log(result, SemError.Mismatch, firstChild.type)
+          }
+          result.children.push(childStat)
         }
-      })
+        index++
+      }
+      result.children.push(this.visitTerminal(ctx.RBRACK()))
     }
     return result
   }
