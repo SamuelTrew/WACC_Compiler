@@ -33,4 +33,6 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   const parser = new WJSCParser(tokenStream)
   const visitor = new WJSCSemanticChecker()
   console.log(JSON.stringify(visitor.visit(parser.program()), null, 2))
+  visitor.errorLog.printErrors()
+  visitor.symbolTable.printSymTab()
 })

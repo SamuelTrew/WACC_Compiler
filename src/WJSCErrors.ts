@@ -54,6 +54,10 @@ class WJSCErrorLog {
     this.errorLog.push(message)
   }
 
+  public printErrors = () => {
+    this.errorLog.forEach((error) => console.error(error))
+  }
+
   private isSemantic = (error: SemError | SynError): error is SemError =>
     error === SemError.IncorrectArgNo
     || error === SemError.Mismatch

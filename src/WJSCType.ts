@@ -36,13 +36,11 @@ enum TerminalKeywords {
 }
 
 enum TerminalOperators {
-  Unary = 'unary',
-  Binary = 'binary',
+  Operator = 'operator',
   Assignment = 'assign',
 }
 
-// tslint:disable-next-line:no-bitwise
-const MIN_INT = - (1 << 31)
+const MIN_INT = - Math.pow(2, 31)
 const MAX_INT = (- MIN_INT) - 1
 
 const isWJSCType = (tname: any): tname is TypeName =>

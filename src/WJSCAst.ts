@@ -1,20 +1,51 @@
 import { TerminalType, TypeName } from './WJSCType'
 
-export enum WJSCParserRules {
-  ArgList = 'arglist',
+enum WJSCParserRules {
+  Undefined = 'undefined',
+  Program = 'program',
+  Function = 'function',
+  Statement = 'statement',
+  Terminal = 'terminal',
 }
 
-export interface WJSCAst {
+enum WJSCStandardLibrary {
+  Skip,
+  Read,
+  Free,
+  Return,
+  Exit,
+  Print,
+  Println,
+}
+
+interface WJSCAst {
   children: WJSCAst[]
   column: number
   line: number
-  parserRule?: WJSCParserRules
+  parserRule: string
   startIndex: number
   token: string
   type: TypeName
 }
 
-export interface WJSCTerminal extends WJSCAst {
+interface WJSCTerminal extends WJSCAst {
   terminalType?: TerminalType
   value: any
+}
+
+interface WJSCFunction extends WJSCAst {
+  arguments: string[]
+}
+
+interface WJSCStatement extends WJSCAst {
+  function: WJSCStandardLibrary
+}
+
+interface WJSCParameter extends WJSCAst {
+  identifier: string
+}
+
+export {
+  WJSCParserRules, WJSCAst, WJSCTerminal, WJSCFunction, WJSCStatement,
+  WJSCParameter,
 }
