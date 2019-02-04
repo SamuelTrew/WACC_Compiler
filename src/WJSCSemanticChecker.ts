@@ -71,7 +71,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       result.children = expressions.map(this.visitExpression)
       const firstChild = result.children[0]
       result.children.forEach((child, index) => {
-        if (child.type === undefined || firstChild.type === undefined) {
+        if (!child.type || !firstChild.type) {
           this.errorLog.log(result, SemError.Undefined)
         }
         if (!hasSameType(child.type, firstChild.type)) {
@@ -87,7 +87,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     // 1. Ensure type not undefined 2. visit sub type
     const result = this.initWJSCAst(ctx)
     const type = ctx.baseType() || ctx.arrayType() || ctx.pairType()
-    if (type === undefined) {
+    if (!type) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       const typeNode =
@@ -107,7 +107,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     // 3. If ident, ensure ident is in lookup
     const result = this.initWJSCAst(ctx)
     const lhsElems = ctx.IDENTIFIER() || ctx.arrayElement() || ctx.pairElement()
-    if (lhsElems === undefined) {
+    if (!lhsElems) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       const lhsNode =
@@ -131,23 +131,23 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     // 5. visitThem
     const result = this.initWJSCAst(ctx)
     const possibles = ctx.arrayLiteral() || ctx.pairElement() || ctx.CALL() || ctx.expression()
-    if (possibles === undefined) {
+    if (!possibles) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       const arrLiter = ctx.arrayLiteral()
       const pairElem = ctx.pairElement()
       const call = ctx.CALL()
-      if (arrLiter !== undefined) {
+      if (arrLiter) {
         result.children.push(this.visitArrayLiteral(arrLiter))
-      } else if (pairElem !== undefined) {
+      } else if (pairElem) {
         result.children.push(this.visitPairElement(pairElem))
-      } else if (call !== undefined) {
+      } else if (call) {
         result.children.push(this.visitTerminal(call))
         const ident = ctx.IDENTIFIER()
         const lBrack = ctx.LPAREN()
         const rBrack = ctx.RPAREN()
         const argList = ctx.argList()
-        if (ident === undefined || lBrack === undefined) {
+        if (!ident || !lBrack) {
           this.errorLog.log(result, SemError.Undefined)
         } else {
           const identType = this.visitTerminal(ident)
@@ -155,10 +155,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
           result.children.push(identType)
           result.children.push(this.visitTerminal(lBrack))
         }
-        if (argList !== undefined) {
+        if (argList) {
           result.children.push(this.visitArgList(argList))
         }
-        if (rBrack === undefined) {
+        if (!rBrack) {
           this.errorLog.log(result, SemError.Undefined)
         } else {
           result.children.push(this.visitTerminal(rBrack))
@@ -167,7 +167,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         // These are all the children with expr in it
         const expressions = (ctx.expression()).map(this.visitExpression)
         if (expressions.length === 1) {
-          if (expressions[0] === undefined) {
+          if (!expressions[0]) {
             this.errorLog.log(result, SemError.Undefined)
           } else {
             result.children.push(expressions[0])
@@ -177,18 +177,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
           const lBrack = ctx.LPAREN()
           const comma = ctx.COMMA()
           const rBrack = ctx.RPAREN()
-          if (newpair === undefined || lBrack === undefined || comma === undefined || rBrack === undefined) {
+          if (!newpair || !lBrack || !comma || !rBrack) {
             this.errorLog.log(result, SemError.Undefined)
           } else {
             result.children.push(this.visitTerminal(newpair))
             result.children.push(this.visitTerminal(lBrack))
-            if (expressions[0] === undefined) {
+            if (!expressions[0]) {
               this.errorLog.log(result, SemError.Undefined)
             } else {
               result.children.push(expressions[0])
             }
             result.children.push(this.visitTerminal(comma))
-            if (expressions[1] === undefined) {
+            if (!expressions[1]) {
               this.errorLog.log(result, SemError.Undefined)
             } else {
               result.children.push(expressions[1])
@@ -212,14 +212,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const lhsType = ctx.type()
     const lhsIdent = ctx.IDENTIFIER()
     const rhs = ctx.assignRhs()
-    if ((lhs === undefined && (lhsType === undefined || lhsIdent === undefined)) || rhs === undefined) {
+    if ((!lhs && (!lhsType || !lhsIdent)) || !rhs) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
-      if (lhs !== undefined) {
+      if (lhs) {
         // Reassignment
         result.children.push(this.visitAssignLhs(lhs))
         result.children.push(this.visitAssignRhs(rhs))
-      } else if (lhsType !== undefined && lhsIdent !== undefined) {
+      } else if (lhsType && lhsIdent) {
         // Assignment
         result.children.push(this.visitType(lhsType))
         const identType = this.visitTerminal(lhsIdent)
@@ -238,7 +238,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     // 1. Ensure one of base type 2. visit these types
     const result = this.initWJSCAst(ctx)
     const base = ctx.INTEGER() || ctx.BOOLEAN() || ctx.CHARACTER() || ctx.STRING()
-    if (base === undefined) {
+    if (!base) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       const terminal = this.visitTerminal(base)
@@ -262,16 +262,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const doneB = ctx.DONE()
     const childExp = ctx.expression()
     const childStat = ctx.statement()
-    const ifThenElseFi = (ifB !== undefined) && (thenB !== undefined) && (elseB !== undefined) && (fiB !== undefined)
-      && (childExp !== undefined) && (childStat !== undefined)
-    const whileDoDone = (whileB !== undefined) && (doB !== undefined) && (doneB !== undefined)
-      && (childExp !== undefined) && (childStat !== undefined)
+    const ifThenElseFi = (ifB) && (thenB) && (elseB) && (fiB)
+      && (childExp) && (childStat)
+    const whileDoDone = (whileB) && (doB) && (doneB)
+      && (childExp) && (childStat)
     if (!ifThenElseFi && !whileDoDone) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
-      if (ifThenElseFi !== undefined && childStat.length !== 2) {
+      if (ifThenElseFi && childStat.length !== 2) {
         this.errorLog.log(result, SemError.IncorrectArgNo, [2, 2])
-      } else if (whileDoDone !== undefined && childStat.length !== 1) {
+      } else if (whileDoDone && childStat.length !== 1) {
         this.errorLog.log(result, SemError.IncorrectArgNo, [1, 1])
       } else {
         // Visit childExps and childStats, checking 5. and 6.
@@ -283,17 +283,17 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         childStat.forEach((child, index) => {
           const childStatType = this.visitStatement(child)
           result.children.push(childStatType)
-          if (childStatType === undefined) {
+          if (!childStatType) {
             this.errorLog.log(result, SemError.Undefined)
           }
         })
-        if ((ifB !== undefined) && (thenB !== undefined) && (elseB !== undefined) && (fiB !== undefined)) {
+        if ((ifB) && (thenB) && (elseB) && (fiB)) {
           // <- tsLint wont allow ifThen...
           // visiting ifThenElseFi's unique children
           result.children.push(this.visitTerminal(ifB))
           result.children.push(this.visitTerminal(thenB))
           result.children.push(this.visitTerminal(fiB))
-        } else if ((whileB !== undefined) && (doB !== undefined) && (doneB !== undefined)) {
+        } else if ((whileB) && (doB) && (doneB)) {
           // visiting whileDoDone's unique children
           result.children.push(this.visitTerminal(whileB))
           result.children.push(this.visitTerminal(doB))
@@ -317,40 +317,39 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const arrayElem = ctx.arrayElement()
     const operators = ctx.unaryOperator() || ctx.binaryOperator()
     const bracket = ctx.LPAREN()
-    if (intLiterals === undefined && literals === undefined && ident === undefined && arrayElem === undefined &&
-      operators === undefined && bracket === undefined) {
+    if (!intLiterals && !literals && !ident && !arrayElem && !operators && !bracket) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
-      if (literals !== undefined) {
+      if (literals) {
         result.children.push(this.visitTerminal(literals))
-      } else if (ident !== undefined) {
+      } else if (ident) {
         const identType = this.visitTerminal(ident)
         this.symbolTable.checkType(identType)
         result.children.push(identType)
-      } else if (arrayElem !== undefined) {
+      } else if (arrayElem) {
         result.children.push(this.visitArrayElement(arrayElem))
-      } else if (operators !== undefined || bracket !== undefined) {
-        if (bracket !== undefined) {
+      } else if (operators || bracket) {
+        if (bracket) {
           result.children.push(this.visitTerminal(bracket))
           const rBracket = ctx.RPAREN()
-          if (rBracket === undefined) {
+          if (!rBracket) {
             this.errorLog.log(result, SemError.Undefined)
           } else {
             result.children.push(this.visitTerminal(rBracket))
           }
         }
         const expressions = ctx.expression()
-        if (expressions === undefined) {
+        if (!expressions) {
           this.errorLog.log(result, SemError.Undefined)
         } else {
-          if ((ident !== undefined || ctx.unaryOperator() !== undefined) && expressions.length !== 1) {
+          if ((ident || ctx.unaryOperator()) && expressions.length !== 1) {
             this.errorLog.log(result, SemError.IncorrectArgNo, [1, 1])
-          } else if (ctx.binaryOperator() !== undefined && expressions.length !== 2) {
+          } else if (ctx.binaryOperator() && expressions.length !== 2) {
             this.errorLog.log(result, SemError.IncorrectArgNo, [2, 2])
           }
           const childrenExpType = expressions.map(this.visitExpression)
           childrenExpType.forEach((child, index) => {
-            if (child === undefined) {
+            if (!child) {
               this.errorLog.log(result, SemError.Undefined)
             }
             result.children.push(child)
@@ -376,8 +375,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const is = ctx.IS()
     const stat = ctx.statement()
     const end = ctx.END()
-    if (type === undefined || ident === undefined || lBracket === undefined || rBracket === undefined ||
-      is === undefined || stat === undefined || end === undefined) {
+    if (!type || !ident || !lBracket || !rBracket ||
+      !is || !stat || !end) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       result.children.push(this.visitType(type))
@@ -389,7 +388,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       // Function's own scope
       this.symbolTable = this.symbolTable.enterScope()
       result.children.push(this.visitTerminal(lBracket))
-      if (paramList !== undefined) {
+      if (paramList) {
         result.children.push(this.visitParamList(paramList))
       }
       result.children.push(this.visitTerminal(rBracket))
@@ -406,7 +405,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const result = this.initWJSCAst(ctx)
     const order = ctx.FIRST() || ctx.SECOND()
     const expressions = ctx.expression()
-    if (expressions === undefined || order === undefined) {
+    if (!expressions || !order) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       result.children.push(this.visitTerminal(order))
@@ -420,7 +419,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     // 1. Ensure either base, array or pair not undefined 2. visit possibilities
     const result = this.initWJSCAst(ctx)
     const possibles = ctx.baseType() || ctx.arrayType() || ctx.PAIR()
-    if (possibles === undefined) {
+    if (!possibles) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       const possiblesType =
@@ -438,7 +437,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const result = this.initWJSCAst(ctx)
     const pair = ctx.PAIR()
     const pairs = ctx.pairElementType()
-    if (pair === undefined || pairs === undefined) {
+    if (!pair || !pairs) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       result.children.push(this.visitTerminal(pair))
@@ -446,7 +445,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
         this.errorLog.log(result, SemError.IncorrectArgNo, [2, 2])
       } else {
         pairs.forEach((child, index) => {
-          if (child === undefined) {
+          if (!child) {
             this.errorLog.log(result, SemError.Undefined)
           }
           result.children.push(this.visitPairElementType(child))
@@ -461,7 +460,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const result = this.initWJSCAst(ctx)
     const type = ctx.type()
     const ident = ctx.IDENTIFIER()
-    if (type === undefined || ident === undefined) {
+    if (!type || !ident) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       result.children.push(this.visitType(type))
@@ -477,14 +476,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     // 3. visit params 4. Ensure params not undefined
     const result = this.initWJSCAst(ctx)
     const params = ctx.param()
-    if (params === undefined) {
+    if (!params) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       if (params.length < 1) {
         this.errorLog.log(result, SemError.IncorrectArgNo, [1, -1])
       } else {
         params.forEach((param, index) => {
-          if (param === undefined) {
+          if (!param) {
             this.errorLog.log(result, SemError.Undefined)
           }
           result.children.push(this.visitParam(param))
@@ -502,13 +501,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const functions = ctx.func()
     const stat = ctx.statement()
     const end = ctx.END()
-    if (begin === undefined || stat === undefined || end === undefined) {
+    if (!begin || !stat || !end) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       result.children.push(this.visitTerminal(begin))
-      if (functions !== undefined) {
+      if (functions) {
         functions.forEach((child, index) => {
-          if (child === undefined) {
+          if (!child) {
             this.errorLog.log(result, SemError.Undefined)
           }
           result.children.push(this.visitFunc(child))
@@ -534,52 +533,52 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const conditionals = ctx.conditionalBlocks()
     const begin = ctx.BEGIN()
     const semicolon = ctx.SEMICOLON()
-    if (result === undefined && skip === undefined && assignment === undefined
-      && read === undefined && singleExp === undefined && conditionals === undefined && begin === undefined
-      && semicolon === undefined) {
+    if (!result && !skip && !assignment
+      && !read && !singleExp && !conditionals && !begin
+      && !semicolon) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
-      if (skip !== undefined) {
+      if (skip) {
         result.children.push(this.visitTerminal(skip))
-      } else if (assignment !== undefined) {
+      } else if (assignment) {
         result.children.push(this.visitAssignment(assignment))
-      } else if (read !== undefined) {
+      } else if (read) {
         const lhs = ctx.assignLhs()
-        if (lhs === undefined) {
+        if (!lhs) {
           this.errorLog.log(result, SemError.Undefined)
         } else {
           result.children.push(this.visitTerminal(read))
           result.children.push(this.visitAssignLhs(lhs))
         }
-      } else if (singleExp !== undefined) {
+      } else if (singleExp) {
         const expression = ctx.expression()
-        if (expression === undefined) {
+        if (!expression) {
           this.errorLog.log(result, SemError.Undefined)
         } else {
           result.children.push(this.visitExpression(expression))
         }
-      } else if (conditionals !== undefined) {
+      } else if (conditionals) {
         result.children.push(this.visitConditionalBlocks(conditionals))
-      } else if (begin !== undefined) {
+      } else if (begin) {
         const stat = ctx.statement()
         const end = ctx.END()
-        if (stat === undefined || end === undefined) {
+        if (!stat || !end) {
           this.errorLog.log(result, SemError.Undefined)
         } else {
           if (stat.length !== 1) {
             this.errorLog.log(result, SemError.IncorrectArgNo, [1, 1])
           } else {
-            if (stat[0] === undefined) {
+            if (!stat[0]) {
               this.errorLog.log(result, SemError.Undefined)
             }
             result.children.push(this.visitStatement(stat[0]))
           }
           result.children.push(this.visitTerminal(end))
         }
-      } else if (semicolon !== undefined) {
+      } else if (semicolon) {
         // semicolon
         const stat = ctx.statement()
-        if (stat === undefined) {
+        if (!stat) {
           this.errorLog.log(result, SemError.Undefined)
         } else {
           if (stat.length !== 2) {
@@ -599,7 +598,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     // 1. Ensure either base type, array type, pair type not undefined 2. visit types
     const result = this.initWJSCAst(ctx)
     const type = ctx.baseType() || ctx.arrayType() || ctx.pairType()
-    if (type === undefined) {
+    if (!type) {
       this.errorLog.log(result, SemError.Undefined)
     } else {
       const childType =
@@ -699,7 +698,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   private checkChildrenUndefined(result: WJSCAst | WJSCTerminal) {
     result.children.forEach((child, index) => {
       // WARNING: Correct check to ensure array size declaration is an int?
-      if (child.type === undefined) {
+      if (!child.type) {
         this.errorLog.log(result, SemError.Undefined)
       }
     })
