@@ -38,40 +38,47 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   private symbolTable = new WJSCSymbolTable(0, undefined, this.errorLog)
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
-    // 1. Ensure >1 expression  2. Visit expressions 3. Ensure children not undefined
+    // 1. Ensure >1 expression 2. Visit expressions
     const result = this.initWJSCAst(ctx)
     const expressions = ctx.expression()
     if (expressions.length === 0) {
       this.errorLog.log(result, SemError.IncorrectArgNo, [1, -1])
     }
     result.children = expressions.map(this.visitExpression)
-    this.checkChildrenUndefined(result)
     return result
   }
 
   public visitArrayElement = (ctx: ArrayElementContext): WJSCAst => {
-    // 1. Ensure ident is in lookup 2. Visit expressions 3. Ensure expressions evaluate to int
+    // 1. Ensure ident is in lookup 2. Ensure >1 expression 3. Visit expressions 4. Ensure expressions evaluate to int
     const result = this.initWJSCAst(ctx)
     const ident = ctx.IDENTIFIER()
     const identType = this.visitTerminal(ident)
     this.symbolTable.checkType(identType)
     const expressions = ctx.expression()
+    if (expressions.length === 0) {
+      this.errorLog.log(result, SemError.IncorrectArgNo, [1, -1])
+    }
     result.children = expressions.map(this.visitExpression)
     result.children.forEach((child, index) => {
-      // WARNING: Correct check to ensure array size declaration is an int?
       hasSameType(child.type, BaseType.Integer)
     })
     return result
   }
 
   public visitArrayLiteral = (ctx: ArrayLiteralContext): WJSCAst => {
-    // 1. Ensure >1 expression 2. visit expressions 3. Ensure children not undefined
+    // WARNING: THIS IS WRONG. COMMAS, LBRACK, RBRACK
+    // 1. Ensure >1 expression 2. Ensure commas == expression - 1
+    // 2. visit Lbrack, expressions, comma, expression, comma... rBrack 3. Ensure children not undefined
     // 4. Ensure children have same type
     const result = this.initWJSCAst(ctx)
     const expressions = ctx.expression()
     if (expressions.length === 0) {
       this.errorLog.log(result, SemError.IncorrectArgNo, [1, -1])
     } else {
+      const comma = ctx.COMMA()
+      if (expressions.length - 1 !== comma.length) {
+        this.errorLog.log(result, SemError.IncorrectArgNo, [expressions.length - 1, expressions.length - 1])
+      }
       result.children = expressions.map(this.visitExpression)
       const firstChild = result.children[0]
       result.children.forEach((child, index) => {
@@ -709,15 +716,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
       token: text || '',
       type: undefined,
     }
-  }
-
-  private checkChildrenUndefined(result: WJSCAst | WJSCTerminal) {
-    result.children.forEach((child, index) => {
-      // WARNING: Correct check to ensure array size declaration is an int?
-      if (!child.type) {
-        this.errorLog.log(result, SemError.Undefined)
-      }
-    })
   }
 }
 
