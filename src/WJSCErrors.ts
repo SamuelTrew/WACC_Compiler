@@ -42,7 +42,8 @@ class WJSCErrorLog {
         additionalParam instanceof Array) {
         errorMessage +=
           `${token} does not have ${additionalParam[0]}
-             ${additionalParam[1] === -1 ? 'or more' : 'to ' + additionalParam[1].toString()} arguments`
+             ${additionalParam[1] === -1 ? 'or more' : (additionalParam[0] === additionalParam[1] ?
+              '' : 'to ' + additionalParam[1].toString())} arguments`
       }
     } else {
       errorMessage += `Syntactic Error '${error} at ${line}:${column}: `
