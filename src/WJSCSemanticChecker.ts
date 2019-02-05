@@ -292,7 +292,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitBinaryOperator = (ctx: BinaryOperatorContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
-    const binOP = ctx.MINUS() || ctx.PLUS()
+    // Ensure that BinOp is not undefined
+    const binOP = ctx.MINUS() || ctx.PLUS() || ctx.DIVIDE() || ctx.EQUALS() || ctx.GREATER_EQUAL()
+    || ctx.GREATER_THAN() || ctx.LESS_EQUAL() || ctx.LESS_THAN() || ctx.LOGICAL_AND()
+    || ctx.LOGICAL_OR() || ctx.MODULO() || ctx.MULTIPLY() || ctx.NEQUALS() || ctx.NSTRICT_EQUALS()
+    || ctx.STRICT_EQUALS()
     if (binOP) {
       const binopNode = this.visitTerminal(binOP)
       this.symbolTable.checkType(binopNode)
