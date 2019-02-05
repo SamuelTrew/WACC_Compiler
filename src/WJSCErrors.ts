@@ -37,7 +37,7 @@ class WJSCErrorLog {
       if (error === SemError.Undefined) {
         errorMessage += `Type of ${token} is undefined`
       } else if (error === SemError.Mismatch) {
-        errorMessage += `Type of ${token} does not match expected type ${additionalParam}`
+        errorMessage += `Type of ${token}: ${node.type} does not match expected type ${additionalParam}`
       } else if (error === SemError.IncorrectArgNo && additionalParam !== undefined &&
         additionalParam instanceof Array) {
         errorMessage +=

@@ -1,0 +1,3 @@
+
+Semantic Error 'mismatch' at 2:10: Type of 1: undefined does not match expected type undefined
+Semantic Error 'mismatch' at 3:2: Type of x="kotlin sucks": undefined does not match expected type str

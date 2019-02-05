@@ -27,10 +27,24 @@ import {
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
-import { WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal } from './WJSCAst'
+import {
+  WJSCAst,
+  WJSCFunction,
+  WJSCIdentifier,
+  WJSCParam,
+  WJSCParserRules,
+  WJSCTerminal,
+} from './WJSCAst'
 import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
-import { BaseType, hasSameType, MAX_INT, MIN_INT, TerminalKeywords, TerminalOperators } from './WJSCType'
+import {
+  BaseType,
+  hasSameType,
+  MAX_INT,
+  MIN_INT,
+  TerminalKeywords,
+  TerminalOperators,
+} from './WJSCType'
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
 // Result.type?
@@ -160,9 +174,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
           (lhsElems instanceof ArrayElementContext ? this.visitArrayElement(lhsElems) :
             this.visitPairElement(lhsElems)))
       this.pushChild(result, lhsNode)
+
+      // Check identifier already declared
       if (lhsElems instanceof TerminalNode) {
-        const identType = this.visitTerminal(lhsElems)
-        this.symbolTable.checkType(identType)
+        const type = this.symbolTable.globalLookup(lhsNode.token)
+        if (!type) {
+          this.errorLog.log(lhsNode, SemError.Undefined)
+        }
       }
     }
     return this.initWJSCAst(ctx) // result
@@ -296,9 +314,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const result = this.initWJSCAst(ctx)
     // Ensure that BinOp is not undefined
     const binOP = ctx.MINUS() || ctx.PLUS() || ctx.DIVIDE() || ctx.EQUALS() || ctx.GREATER_EQUAL()
-    || ctx.GREATER_THAN() || ctx.LESS_EQUAL() || ctx.LESS_THAN() || ctx.LOGICAL_AND()
-    || ctx.LOGICAL_OR() || ctx.MODULO() || ctx.MULTIPLY() || ctx.NEQUALS() || ctx.NSTRICT_EQUALS()
-    || ctx.STRICT_EQUALS()
+      || ctx.GREATER_THAN() || ctx.LESS_EQUAL() || ctx.LESS_THAN() || ctx.LOGICAL_AND()
+      || ctx.LOGICAL_OR() || ctx.MODULO() || ctx.MULTIPLY() || ctx.NEQUALS() || ctx.NSTRICT_EQUALS()
+      || ctx.STRICT_EQUALS()
     if (binOP) {
       const binopNode = this.visitTerminal(binOP)
       this.symbolTable.checkType(binopNode)
@@ -552,8 +570,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const params = ctx.param()
     params.forEach((parameter) => {
       const type = this.visitParam(parameter)
-      result.paramTypes.push(type)
       this.pushChild(result, type)
+      result.paramTypes.push(result.type)
     })
     return result
   }
@@ -566,10 +584,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     const functions = ctx.func()
     result.children.push(this.visitTerminal(ctx.BEGIN()))
     if (functions) {
-        functions.forEach((child) => {
-          result.children.push(this.visitFunc(child))
-        })
-      }
+      functions.forEach((child) => {
+        result.children.push(this.visitFunc(child))
+      })
+    }
     result.children.push(this.visitStatement(ctx.statement()))
     result.children.push(this.visitTerminal(ctx.END()))
     return result

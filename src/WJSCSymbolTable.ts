@@ -43,22 +43,23 @@ export class WJSCSymbolTable {
   }
 
   // Lookup the WJSCAst node with the given identifier in the local scope
-  public localLookup = (identifier: string): TypeName | undefined => {
+  // Return the type if found
+  public localLookup = (identifier: string): TypeName => {
+    let result
     this.symbolTable.forEach((entry) => {
       if (entry.identifier === identifier) {
         console.log(entry.identifier + ':' + entry.type)
-        return entry.type
+        result = entry.type
       }
     })
-    console.log(undefined)
-    return undefined
+    return result
   }
 
   // Lookup the WJSCAst node with the given identifier in the local scope and
-  // all its parent scopes
-  public globalLookup = (identifier: string): TypeName | undefined => {
+  // all its parent scopes. Return the type if found.
+  public globalLookup = (identifier: string): TypeName => {
     let result = this.localLookup(identifier)
-    if (result === undefined && this.parentLevel !== undefined) {
+    if (!result && this.parentLevel !== undefined) {
       console.log('Recursive lookup')
       result = this.parentLevel.globalLookup(identifier)
     }
