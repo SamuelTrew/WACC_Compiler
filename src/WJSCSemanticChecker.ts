@@ -10,7 +10,7 @@ import {
   AssignLhsContext,
   AssignmentContext,
   AssignRhsContext,
-  BaseTypeContext,
+  BaseTypeContext, BinaryOperatorContext,
   ConditionalBlocksContext,
   ExpressionContext,
   FuncContext,
@@ -290,14 +290,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     return result
   }
 
-  public visitBinaryOperator = (ctx: BinaryOperContext): WJSCAst => {
+  public visitBinaryOperator = (ctx: BinaryOperatorContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
     const binOP = ctx.MINUS() || ctx.PLUS()
     if (binOP) {
       const binopNode = this.visitTerminal(binOP)
       this.symbolTable.checkType(binopNode)
       result.children.push(binopNode)
-      result.type = binopNode.type
     } else {
       this.errorLog.log(result, SemError.Undefined)
     }
