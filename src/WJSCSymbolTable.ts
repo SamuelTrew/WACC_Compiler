@@ -37,9 +37,9 @@ export class WJSCSymbolTable {
   }
 
   // Add an entry to the symbol table
-  public insertSymbol = (identifier: string, type: TypeName) => {
+  public insertSymbol = (identifier: string, type: TypeName, params?: TypeName[]) => {
     console.log(`Inserting key/value pair ${identifier}:${type}`)
-    this.symbolTable.push({ identifier, type })
+    this.symbolTable.push({ identifier, type, params })
   }
 
   // Lookup the WJSCAst node with the given identifier in the local scope
@@ -95,4 +95,5 @@ export class WJSCSymbolTable {
 export interface WJSCSymbolTableEntry {
   identifier: string
   type: TypeName
+  params?: TypeName[]
 }
