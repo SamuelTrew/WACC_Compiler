@@ -61,7 +61,7 @@
   },
   "husky": {
     "hooks": {
-      "commit-msg": "echo $HUSKY_GIT_PARAMS | node ./preflight.js"
+      "commit-msg": "node ./preflight.js"
     }
   }
 }
