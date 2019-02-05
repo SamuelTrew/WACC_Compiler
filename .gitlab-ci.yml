@@ -16,7 +16,7 @@ cache:
 validate:
   stage: validate
   script:
-    - node ./test/postflight.js
+    - echo $(git log -1 --pretty=%B) | node ./test/postflight.js
   
 install:
   stage: install
