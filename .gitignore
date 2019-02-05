@@ -19,3 +19,6 @@ build
 
 #live test server
 test/report
+
+#test output files
+out.json

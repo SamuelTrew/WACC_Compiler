@@ -46,9 +46,11 @@ export class WJSCSymbolTable {
   public localLookup = (identifier: string): TypeName | undefined => {
     this.symbolTable.forEach((entry) => {
       if (entry.identifier === identifier) {
+        console.log(entry.identifier + ':' + entry.type)
         return entry.type
       }
     })
+    console.log(undefined)
     return undefined
   }
 
@@ -57,6 +59,7 @@ export class WJSCSymbolTable {
   public globalLookup = (identifier: string): TypeName | undefined => {
     let result = this.localLookup(identifier)
     if (result === undefined && this.parentLevel !== undefined) {
+      console.log('Recursive lookup')
       result = this.parentLevel.globalLookup(identifier)
     }
     return result
@@ -65,6 +68,7 @@ export class WJSCSymbolTable {
   // Return whether the node given has the same type in the symbol table
   public checkType = (astNode: WJSCAst): boolean => {
     const lookupResult = this.globalLookup(astNode.token)
+    console.log(`${astNode.token} should have type ${lookupResult}, actual type ${astNode.type}.`)
     if (lookupResult === undefined) {
       this.errorLog.log(astNode, SemError.Undefined)
       return false
