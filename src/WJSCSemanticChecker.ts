@@ -1,17 +1,24 @@
-import { Parser, ParserRuleContext } from 'antlr4ts'
-import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
-import { BinaryOperContext } from './grammar/BasicParser'
-import { WJSCLexer } from './grammar/WJSCLexer'
+import {ParserRuleContext} from 'antlr4ts'
+import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
+import {BinaryOperContext} from './grammar/BasicParser'
+import {WJSCLexer} from './grammar/WJSCLexer'
 import {
-  ArgListContext, ArrayElementContext,
+  ArgListContext,
+  ArrayElementContext,
   ArrayLiteralContext,
   ArrayTypeContext,
-  AssignLhsContext, AssignmentContext,
+  AssignLhsContext,
+  AssignmentContext,
   AssignRhsContext,
   BaseTypeContext,
-  ConditionalBlocksContext, ExpressionContext,
-  FuncContext, IntegerLiteralContext,
-  PairElementContext, PairElementTypeContext, PairTypeContext, ParamContext,
+  ConditionalBlocksContext,
+  ExpressionContext,
+  FuncContext,
+  IntegerLiteralContext,
+  PairElementContext,
+  PairElementTypeContext,
+  PairTypeContext,
+  ParamContext,
   ParamListContext,
   ProgramContext,
   StatementContext,
@@ -19,11 +26,11 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
-import { WJSCAst, WJSCFunction, WJSCParameter, WJSCParserRules, WJSCTerminal } from './WJSCAst'
-import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
-import { WJSCSymbolTable } from './WJSCSymbolTable'
-import { BaseType, hasSameType, isBaseType, MAX_INT, MIN_INT, TerminalKeywords, TerminalOperators } from './WJSCType'
+import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
+import {WJSCAst, WJSCFunction, WJSCParameter, WJSCParserRules, WJSCTerminal} from './WJSCAst'
+import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
+import {WJSCSymbolTable} from './WJSCSymbolTable'
+import {BaseType, hasSameType, MAX_INT, MIN_INT, TerminalKeywords, TerminalOperators} from './WJSCType'
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
 // Result.type?
@@ -289,7 +296,17 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   }
 
   public visitBinaryOperator = (ctx: BinaryOperContext): WJSCAst => {
-    return this.initWJSCAst(ctx)
+    const result = this.initWJSCAst(ctx)
+    const binOP = ctx.MINUS() || ctx.PLUS()
+    if (binOP) {
+      const binopNode = this.visitTerminal(binOP)
+      this.symbolTable.checkType(binopNode)
+      result.children.push(binopNode)
+      result.type = binopNode.type
+    } else {
+      this.errorLog.log(result, SemError.Undefined)
+    }
+    return result
   }
 
   public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCAst => {
