@@ -23,7 +23,23 @@ argp.addArgument(
     metavar: '<source.wacc>',
   })
 
+argp.addArgument(
+  ['-o', '--output'],
+  {
+    action: 'store',
+    help: 'Path to output tree.',
+  })
+
+argp.addArgument(
+  ['-e', '--errors'],
+  {
+    action: 'store',
+    help: 'Path to store error log.',
+  })
+
 const args = argp.parseArgs()
+const output = args.output || 'out.json'
+const errors = args.errors || 'err.log'
 
 fs.readFile(args.src, 'utf8', (err, data) => {
   if (err) { throw err }
@@ -32,7 +48,15 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   const tokenStream = new antlr4ts.CommonTokenStream(lexer)
   const parser = new WJSCParser(tokenStream)
   const visitor = new WJSCSemanticChecker()
-  console.log(JSON.stringify(visitor.visit(parser.program()), null, 2))
-  visitor.errorLog.printErrors()
-  visitor.symbolTable.printSymTab()
+  const tree = visitor.visit(parser.program())
+  fs.writeFile(output, JSON.stringify({
+    tree,
+    // tslint:disable-next-line:object-literal-sort-keys
+    symbolTable: visitor.symbolTable.json(),
+  }, null, 2), (writeErr) => {
+    if (writeErr) { throw writeErr }
+  })
+  fs.writeFile(errors, visitor.errorLog.printErrors(), (writeErr) => {
+    if (writeErr) { throw writeErr }
+  })
 })

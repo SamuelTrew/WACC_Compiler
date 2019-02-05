@@ -6,6 +6,16 @@ enum WJSCParserRules {
   Function = 'function',
   Statement = 'statement',
   Terminal = 'terminal',
+  ArgList = 'arg-list',
+  Array = 'array',
+  Assignment = 'assign',
+  Type = 'type',
+  Operator = 'op',
+  Conditional = 'cond',
+  Expression = 'expr',
+  Literal = 'literal',
+  Pair = 'pair',
+  Parameter = 'param',
 }
 
 enum WJSCStandardLibrary {
@@ -22,7 +32,7 @@ interface WJSCAst {
   children: WJSCAst[]
   column: number
   line: number
-  parserRule: string
+  parserRule: WJSCParserRules
   startIndex: number
   token: string
   type: TypeName
@@ -35,17 +45,18 @@ interface WJSCTerminal extends WJSCAst {
 
 interface WJSCFunction extends WJSCAst {
   arguments: string[]
+  identifier: string
 }
 
 interface WJSCStatement extends WJSCAst {
   function: WJSCStandardLibrary
 }
 
-interface WJSCParameter extends WJSCAst {
+interface WJSCIdentifier extends WJSCAst {
   identifier: string
 }
 
 export {
   WJSCParserRules, WJSCAst, WJSCTerminal, WJSCFunction, WJSCStatement,
-  WJSCParameter,
+  WJSCIdentifier,
 }

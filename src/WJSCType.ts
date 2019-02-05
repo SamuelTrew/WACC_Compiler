@@ -64,6 +64,7 @@ const isPairType = (tname: any): tname is PairType =>
   && isBaseType(tname.pairType[1])
 
 const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
+  if (!typeA || !typeB) { return false }
   if (isBaseType(typeA)) {
     return isBaseType(typeB) && typeA === typeB
   } else if (isArrayType(typeA)) {

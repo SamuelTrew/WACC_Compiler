@@ -82,9 +82,9 @@ export class WJSCSymbolTable {
     this.childrenTables.forEach((table) => table.clearParentDependencies())
   }
 
-  public printSymTab = () => {
+  public json = (): object => {
     this.clearParentDependencies()
-    console.log(JSON.stringify(this, null, 2))
+    return this
   }
 }
 

@@ -1,6 +1,4 @@
 begin
-  int func(int arg1, int arg2) is 
-    arg1 = 1
-  end
-  skip
+  int x = 1;
+  x = "kotlin sucks"
 end

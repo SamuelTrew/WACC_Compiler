@@ -1,0 +1,177 @@
+{
+  "tree": {
+    "children": [
+      {
+        "children": [],
+        "column": 0,
+        "line": 1,
+        "parserRule": "terminal",
+        "startIndex": 0,
+        "token": "begin",
+        "terminalType": "program"
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "column": 6,
+                    "line": 2,
+                    "parserRule": "terminal",
+                    "startIndex": 13,
+                    "token": "x",
+                    "type": "int",
+                    "terminalType": "ident",
+                    "value": "x"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "column": 10,
+                            "line": 2,
+                            "parserRule": "literal",
+                            "startIndex": 17,
+                            "token": "1",
+                            "type": "int",
+                            "value": 1
+                          }
+                        ],
+                        "column": 10,
+                        "line": 2,
+                        "parserRule": "expr",
+                        "startIndex": 17,
+                        "token": "1"
+                      }
+                    ],
+                    "column": 10,
+                    "line": 2,
+                    "parserRule": "assign",
+                    "startIndex": 17,
+                    "token": "1"
+                  }
+                ],
+                "column": 2,
+                "line": 2,
+                "parserRule": "assign",
+                "startIndex": 9,
+                "token": "intx=1",
+                "type": "int"
+              }
+            ],
+            "column": 2,
+            "line": 2,
+            "parserRule": "statement",
+            "startIndex": 9,
+            "token": "intx=1"
+          },
+          {
+            "children": [],
+            "column": 11,
+            "line": 2,
+            "parserRule": "terminal",
+            "startIndex": 18,
+            "token": ";"
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "column": 2,
+                    "line": 3,
+                    "parserRule": "undefined",
+                    "startIndex": 23,
+                    "token": "x"
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "column": 6,
+                            "line": 3,
+                            "parserRule": "terminal",
+                            "startIndex": 27,
+                            "token": "\"kotlin sucks\"",
+                            "type": "str",
+                            "terminalType": "str",
+                            "value": "kotlin sucks"
+                          }
+                        ],
+                        "column": 6,
+                        "line": 3,
+                        "parserRule": "expr",
+                        "startIndex": 27,
+                        "token": "\"kotlin sucks\"",
+                        "type": "str"
+                      }
+                    ],
+                    "column": 6,
+                    "line": 3,
+                    "parserRule": "assign",
+                    "startIndex": 27,
+                    "token": "\"kotlin sucks\"",
+                    "type": "str"
+                  }
+                ],
+                "column": 2,
+                "line": 3,
+                "parserRule": "assign",
+                "startIndex": 23,
+                "token": "x=\"kotlin sucks\""
+              }
+            ],
+            "column": 2,
+            "line": 3,
+            "parserRule": "statement",
+            "startIndex": 23,
+            "token": "x=\"kotlin sucks\""
+          }
+        ],
+        "column": 2,
+        "line": 2,
+        "parserRule": "statement",
+        "startIndex": 9,
+        "token": "intx=1;x=\"kotlin sucks\""
+      },
+      {
+        "children": [],
+        "column": 0,
+        "line": 4,
+        "parserRule": "terminal",
+        "startIndex": 43,
+        "token": "end",
+        "terminalType": "program"
+      }
+    ],
+    "column": 0,
+    "line": 1,
+    "parserRule": "program",
+    "startIndex": 0,
+    "token": "beginintx=1;x=\"kotlin sucks\"end<EOF>"
+  },
+  "symbolTable": {
+    "currentScopeLevel": 0,
+    "symbolTable": [
+      {
+        "identifier": "x",
+        "type": "int"
+      }
+    ],
+    "childrenTables": [],
+    "errorLog": {
+      "errorLog": [
+        "Semantic Error 'mismatch' at 2:10: Type of 1 does not match expected type int",
+        "Semantic Error 'undefined' at 3:2: Type of x is undefined"
+      ]
+    }
+  }
+}
