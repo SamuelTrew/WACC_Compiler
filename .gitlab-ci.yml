@@ -1,6 +1,7 @@
 image: charlieharutaka/cetacea:latest
 
 stages:
+- validate
 - install
 - build
 - test
@@ -12,6 +13,11 @@ cache:
   - node_modules/
   - .awcache/
 
+validate:
+  stage: validate
+  script:
+    - node ./test/postflight.js
+  
 install:
   stage: install
   only:
