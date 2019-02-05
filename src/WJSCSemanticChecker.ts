@@ -45,14 +45,17 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   public symbolTable = new WJSCSymbolTable(0, undefined, this.errorLog)
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
-    // 1. Ensure >1 expression 2. Visit expressions
+    // 1. Ensure >1 expression 2. Visit expressions 3. Take type
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.ArgList
     const expressions = ctx.expression()
     if (expressions.length === 0) {
       this.errorLog.log(result, SemError.IncorrectArgNo, [1, -1])
     }
-    result.children = expressions.map(this.visitExpression)
+    expressions.forEach((child, index) => {
+      const childStat = this.visitExpression(child)
+      this.pushChild(result, childStat)
+    })
     return result
   }
 
@@ -70,6 +73,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     result.children = expressions.map(this.visitExpression)
     result.children.forEach((child, index) => {
       hasSameType(child.type, BaseType.Integer)
+      this.pushChild(result, child)
     })
     return result
   }
