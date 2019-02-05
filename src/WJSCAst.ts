@@ -48,6 +48,10 @@ interface WJSCFunction extends WJSCAst {
   identifier: string
 }
 
+interface WJSCParam extends WJSCAst {
+  paramTypes: TypeName[]
+}
+
 interface WJSCStatement extends WJSCAst {
   function: WJSCStandardLibrary
 }
