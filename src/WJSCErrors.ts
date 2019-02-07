@@ -28,8 +28,8 @@ class WJSCErrorLog {
     this.errorLog = []
   }
 
-  public log = (node: WJSCAst, error: SemError | SynError,
-                additionalParam?: (TypeName | number[])) => {
+  public nodeLog = (node: WJSCAst, error: SemError | SynError,
+    additionalParam?: (TypeName | number[])) => {
     let errorMessage = ''
     const { line, column, token } = node
     if (this.isSemantic(error)) {
@@ -37,18 +37,31 @@ class WJSCErrorLog {
       if (error === SemError.Undefined) {
         errorMessage += `Type of ${token} is undefined`
       } else if (error === SemError.Mismatch) {
-        errorMessage += `Type of ${token}: ${node.type} does not match expected type ${additionalParam}`
-      } else if (error === SemError.IncorrectArgNo && additionalParam !== undefined &&
-        additionalParam instanceof Array) {
+        errorMessage += `Type of ${token}: ${node.type}`
+          + `does not match expected type ${additionalParam}`
+      } else if (error === SemError.IncorrectArgNo
+        && additionalParam !== undefined && additionalParam instanceof Array) {
         errorMessage +=
-          `${token} does not have ${additionalParam[0]}
-             ${additionalParam[1] === -1 ? 'or more' : (additionalParam[0] === additionalParam[1] ?
+          `${token} does not have ${additionalParam[0]}`
+          + `${additionalParam[1] === -1 ? 'or more'
+            : (additionalParam[0] === additionalParam[1] ?
               '' : 'to ' + additionalParam[1].toString())} arguments`
       }
     } else {
       errorMessage += `Syntactic Error '${error} at ${line}:${column}: `
     }
     this.errorLog.push(errorMessage)
+  }
+
+  public messageLog = (line: number, column: number, error: SynError,
+    message: string) => {
+    this.errorLog.push(`Syntax Error '${error}' at ${line}:${column}: `
+      + message)
+  }
+
+  public runtimeError = (message: string, stack: string) => {
+    this.errorLog.push(`Runtime error: ${message}. Full stack trace:
+${stack}`)
   }
 
   public pushError = (message: string) => {

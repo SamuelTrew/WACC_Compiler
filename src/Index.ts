@@ -9,9 +9,12 @@ import { WJSCParser } from './grammar/WJSCParser'
 
 /* Our code */
 import { ConsoleColors } from './util/Colors'
+import { WJSCAst } from './WJSCAst'
 import { WJSCErrorListener } from './WJSCErrorListener'
 import { WJSCErrorLog } from './WJSCErrors'
 import { WJSCSemanticChecker } from './WJSCSemanticChecker'
+
+const antinos = 311
 
 const argp = new argparse.ArgumentParser({
   addHelp: true,
@@ -43,7 +46,10 @@ argp.addArgument(
 const args = argp.parseArgs()
 const output = args.output || 'out.json'
 const errors = args.errors || 'err.log'
+const info = `「info」`
+const warn = `${ConsoleColors.FgRed}「warn」${ConsoleColors.Reset}`
 
+/* Read file and run the callback */
 fs.readFile(args.src, 'utf8', (err, data) => {
   if (err) { throw err }
 
@@ -57,30 +63,62 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   const lexer = new WJSCLexer(inputStream)
   const tokenStream = new antlr4ts.CommonTokenStream(lexer)
   const parser = new WJSCParser(tokenStream)
-  const tree = visitor.visit(parser.program())
+  parser.addErrorListener(errorListener)
 
-  /* Write the output */
-  fs.writeFile(output, JSON.stringify({
-    tree,
-    // tslint:disable-next-line:object-literal-sort-keys
-    symbolTable: visitor.symbolTable.json(),
-  }, null, 2), (writeErr) => {
-    if (writeErr) { throw writeErr }
-  })
-  fs.writeFile(errors, errorLog.printErrors(), (writeErr) => {
-    if (writeErr) { throw writeErr }
-  })
+  let tree: WJSCAst | null = null
 
-  /* Print the compilation status */
+  /* Visit the tree */
+  try {
+    tree = visitor.visit(parser.program())
+  } catch (error) {
+    const { message, stack } = error
+    errorLog.runtimeError(message, stack)
+  }
+
+  /* Count the number of error */
   const numerrors = errorLog.numErrors()
-  process.exitCode = numerrors
   if (numerrors === 0) {
-    console.log(` ${ConsoleColors.FgGreen}✔${ConsoleColors.Reset} Compilation succeeded.`)
-    console.log(`   Output written to ${output}`)
+    console.log(` ${ConsoleColors.FgGreen}✔${ConsoleColors.Reset}`
+      + ` Compilation succeeded.`)
   } else {
     console.log(` ${ConsoleColors.FgRed}✘${ConsoleColors.Reset}`
-      + ` Compilation failed with ${numerrors} error${numerrors !== 1 ? 's' : ''}.`)
-    console.log(`   ${ConsoleColors.Dim}Output written to ${output}`)
-    console.log(`   Errors written to ${errors}${ConsoleColors.Reset}`)
+      + ` Compilation failed with ${numerrors} error`
+      + (numerrors !== 1 ? 's' : '') + '.')
   }
+
+  /* Write the output */
+  if (tree) {
+    try {
+      fs.writeFile(output, JSON.stringify({
+        tree,
+        // tslint:disable-next-line:object-literal-sort-keys
+        symbolTable: visitor.symbolTable.json(),
+      }, null, 2), (writeErr) => {
+        if (writeErr) { throw writeErr }
+        console.log(`   ${ConsoleColors.Dim}${info}`
+          + `Output written to ${output}${ConsoleColors.Reset}`)
+      })
+    } catch (writeError) {
+      console.error(`   ${warn} ${writeError}`)
+    }
+  } else {
+    console.log(`   ${ConsoleColors.Dim}${info}`
+      + `No output written${ConsoleColors.Reset}`)
+  }
+
+  /* Write the output */
+  if (numerrors > 0) {
+    try {
+      fs.writeFile(errors, errorLog.printErrors(), (writeErr) => {
+        if (writeErr) { throw writeErr }
+        console.log(`   ${ConsoleColors.Dim}${info}`
+          + `Errors written to ${errors}${ConsoleColors.Reset}`)
+      })
+    } catch (writeError) {
+      console.error(`   ${warn} ${writeError}`)
+    }
+  }
+
+  /* Set exit code */
+  process.exitCode = numerrors
 })

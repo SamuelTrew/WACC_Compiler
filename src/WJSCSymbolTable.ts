@@ -71,11 +71,11 @@ export class WJSCSymbolTable {
     const lookupResult = this.globalLookup(astNode.token)
     console.log(`${astNode.token} should have type ${lookupResult}, actual type ${astNode.type}.`)
     if (lookupResult === undefined) {
-      this.errorLog.log(astNode, SemError.Undefined)
+      this.errorLog.nodeLog(astNode, SemError.Undefined)
       return false
     } else {
       if (!hasSameType(lookupResult, astNode.type)) {
-        this.errorLog.log(astNode, SemError.Mismatch, lookupResult)
+        this.errorLog.nodeLog(astNode, SemError.Mismatch, lookupResult)
         return false
       }
     }
