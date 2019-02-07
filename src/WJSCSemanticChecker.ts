@@ -44,8 +44,8 @@ import {
   MIN_INT,
   TerminalKeywords,
   TerminalOperators,
+  TypeName,
 } from './WJSCType'
-import { accessSync } from 'fs'
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
 // Result.type?
@@ -317,17 +317,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
 
   public visitBinaryOperator = (ctx: BinaryOperatorContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
-    // Ensure that BinOp is not undefined
+    result.parserRule = WJSCParserRules.Operator
     const binOP = ctx.MINUS() || ctx.PLUS() || ctx.DIVIDE() || ctx.EQUALS() || ctx.GREATER_EQUAL()
       || ctx.GREATER_THAN() || ctx.LESS_EQUAL() || ctx.LESS_THAN() || ctx.LOGICAL_AND()
       || ctx.LOGICAL_OR() || ctx.MODULO() || ctx.MULTIPLY() || ctx.NEQUALS() || ctx.NSTRICT_EQUALS()
       || ctx.STRICT_EQUALS()
     if (binOP) {
-      const binopNode = this.visitTerminal(binOP)
-      this.symbolTable.checkType(binopNode)
-      result.children.push(binopNode)
-    } else {
-      this.errorLog.log(result, SemError.Undefined)
+      result.token = binOP.toString()
     }
     return result
   }
@@ -430,17 +426,29 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
             result.children.push(this.visitTerminal(rBracket))
           }
         }
+
+        // Check operators
         const expressions = ctx.expression()
         if (!expressions) {
           this.errorLog.log(result, SemError.Undefined)
         } else {
-          if (ctx.unaryOperator() && expressions.length !== 1) {
-            this.errorLog.log(result, SemError.IncorrectArgNo, [1, 1])
-          } else if (ctx.binaryOperator() && expressions.length !== 2) {
-            this.errorLog.log(result, SemError.IncorrectArgNo, [2, 2])
+          const unaryOperator = ctx.unaryOperator()
+          const binaryOperator = ctx.binaryOperator()
+          if (unaryOperator) {
+            if (expressions.length !== 1) {
+              this.errorLog.log(result, SemError.IncorrectArgNo, [1, 1])
+            } else {
+              result.children.push(this.visitUnaryOperator(unaryOperator))
+            }
+          } else if (binaryOperator) {
+            if (expressions.length !== 2) {
+              this.errorLog.log(result, SemError.IncorrectArgNo, [2, 2])
+            } else {
+              result.children.push(this.visitBinaryOperator(binaryOperator))
+            }
           }
           const childrenExpType = expressions.map(this.visitExpression)
-          childrenExpType.forEach((child, index) => {
+          childrenExpType.forEach((child) => {
             if (!child) {
               this.errorLog.log(result, SemError.Undefined)
             }
@@ -462,18 +470,22 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
     result.identifier = ident.value
     result.type = type
 
+    // Check types of Params and Statements
+    let paramsTypes: TypeName[]
     // Enter child scope
     this.symbolTable = this.symbolTable.enterScope()
     if (paramList) {
-      const paramListType = this.visitParamList(paramList)
-      this.symbolTable.insertSymbol(ident.token, result.type, paramListType.paramTypes)
-      this.pushChild(result, paramListType)
+      const visitedParamList = this.visitParamList(paramList)
+      paramsTypes = visitedParamList.paramTypes
+      this.pushChild(result, visitedParamList)
     } else {
-      this.symbolTable.insertSymbol(ident.token, result.type, [])
+      paramsTypes = []
     }
     result.children.push(this.visitStatement(ctx.statement()))
     // Exit child scope
-    this.symbolTable.exitScope()
+    this.symbolTable = this.symbolTable.exitScope()
+
+    this.symbolTable.insertSymbol(ident.token, result.type, paramsTypes)
 
     return result
   }
@@ -787,6 +799,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst> implements W
   public visitUnaryOperator = (ctx: UnaryOperatorContext): WJSCAst => {
     // 1. Ensure either of ops not undefined 2. visit ops
     const result = this.initWJSCAst(ctx)
+    result.parserRule = WJSCParserRules.Operator
     const op = ctx.LOGICAL_NEGATION() || ctx.MINUS() || ctx.LENGTH() || ctx.ORDER_OF() || ctx.CHARACTER_OF()
     if (!op) {
       this.errorLog.log(result, SemError.Undefined)
