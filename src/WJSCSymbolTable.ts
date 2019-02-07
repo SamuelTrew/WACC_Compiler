@@ -18,10 +18,18 @@ export class WJSCSymbolTable {
     this.errorLog = errorLog
   }
 
+  public getScopeLevel = (): number => {
+    return this.currentScopeLevel
+  }
+
+  public getParentTable = (): WJSCSymbolTable | undefined => {
+    return this.parentLevel
+  }
+
   // Create new child symbol table
   public enterScope = (): WJSCSymbolTable => {
     console.log('Entering scope...')
-    const childTable = new WJSCSymbolTable(this.currentScopeLevel++, this, this.errorLog)
+    const childTable = new WJSCSymbolTable(this.currentScopeLevel + 1, this, this.errorLog)
     this.childrenTables.push(childTable)
     return childTable
   }

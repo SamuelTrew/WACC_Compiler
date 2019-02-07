@@ -1,3 +1,7 @@
 begin
-  int x = 'c'
+  int Hello(int x, int y) is 
+    return x + y
+  end
+  int x = 1;
+  x = call Hello (x, x)
 end
