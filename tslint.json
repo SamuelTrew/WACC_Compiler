@@ -41,8 +41,17 @@
             "check-preblock",
             "check-postbrace"
         ],
-        "one-variable-per-declaration": false,
-        "no-console": false
+        "no-console": false,
+        "max-line-length": [
+            true,
+            80
+        ],
+        "align": [
+            true,
+            "elements",
+            "members",
+            "statements"
+        ]
     },
     "rulesDirectory": []
 }

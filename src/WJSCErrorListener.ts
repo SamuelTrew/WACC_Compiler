@@ -1,5 +1,7 @@
-import { ParserErrorListener } from 'antlr4ts'
-import { WJSCErrorLog } from './WJSCErrors'
+import {
+  ParserErrorListener, RecognitionException, Recognizer, Token,
+} from 'antlr4ts'
+import { SynError, WJSCErrorLog } from './WJSCErrors'
 
 class WJSCErrorListener implements ParserErrorListener {
 
@@ -9,20 +11,11 @@ class WJSCErrorListener implements ParserErrorListener {
     this.errorLog = errorLog
   }
 
-  public syntaxError = () => {
-
-  }
-
-  public reportAmbiguity = () => {
-
-  }
-
-  public reportAttemptingFullContext = () => {
-
-  }
-
-  public reportContextSensitivity = () => {
-
+  public syntaxError = (recognizer: Recognizer<Token, any>,
+    offendingSymbol: Token | undefined, line: number,
+    charPositionInLine: number,
+    msg: string, e: RecognitionException | undefined) => {
+    this.errorLog.messageLog(line, charPositionInLine, SynError.BadToken, msg)
   }
 
 }
