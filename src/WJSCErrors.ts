@@ -61,6 +61,8 @@ class WJSCErrorLog {
     return errors
   }
 
+  public numErrors = (): number => this.errorLog.length
+
   private isSemantic = (error: SemError | SynError): error is SemError =>
     error === SemError.IncorrectArgNo
     || error === SemError.Mismatch
