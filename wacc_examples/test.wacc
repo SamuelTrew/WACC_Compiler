@@ -1,4 +1,7 @@
 begin
+  int Hello(int x, int y) is 
+    return x + y
+  end
   int x = 1;
-  x = "kotlin sucks"
+  x = 'c'
 end
