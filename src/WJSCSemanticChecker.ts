@@ -463,13 +463,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           const binaryOperator = ctx.binaryOperator()
           if (unaryOperator) {
             if (expressions.length !== 1) {
-              this.errorLog.log(result, SemError.IncorrectArgNo, [1, 1])
+              this.errorLog.nodeLog(result, SemError.IncorrectArgNo, [1, 1])
             } else {
               result.children.push(this.visitUnaryOperator(unaryOperator))
             }
           } else if (binaryOperator) {
             if (expressions.length !== 2) {
-              this.errorLog.log(result, SemError.IncorrectArgNo, [2, 2])
+              this.errorLog.nodeLog(result, SemError.IncorrectArgNo, [2, 2])
             } else {
               result.children.push(this.visitBinaryOperator(binaryOperator))
             }
