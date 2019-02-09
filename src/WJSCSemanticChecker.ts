@@ -699,6 +699,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         }
       } else if (singleExp) {
         const expression = ctx.expression()
+        result.children.push(this.visitStdlib(singleExp))
         if (!expression) {
           this.errorLog.nodeLog(result, SemError.Undefined)
         } else {
@@ -744,7 +745,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   public visitStdlib = (ctx: StdlibContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
     const lib = ctx.FREE()
-      || ctx.RETURN()
       || ctx.RETURN()
       || ctx.EXIT()
       || ctx.PRINT()
