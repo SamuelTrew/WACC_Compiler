@@ -3,5 +3,5 @@ begin
     return x + y
   end
   int x = 1;
-  x = 'a'
+  x = call Hello (x, x)
 end

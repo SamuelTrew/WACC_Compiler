@@ -234,6 +234,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         const visitedPair = this.visitPairElement(pairElem)
         this.pushChild(result, visitedPair)
       } else if (call) {
+        // Function call
         result.children.push(this.visitTerminal(call))
         const ident = ctx.IDENTIFIER()
         const argList = ctx.argList()
@@ -241,10 +242,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.nodeLog(result, SemError.Undefined)
         } else {
           const visitedIdent = this.visitTerminal(ident)
+          visitedIdent.type = this.symbolTable.globalLookup(visitedIdent.value)
+          console.log('Visited ident value: ' + visitedIdent.value)
+          console.log('Visited ident type: ' + visitedIdent.type)
           this.pushChild(result, visitedIdent)
         }
         if (argList) {
-          this.pushChild(result, this.visitArgList(argList))
+          result.children.push(this.visitArgList(argList))
         }
       } else {
         // These are all the children with expr in it
@@ -296,9 +300,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       const visitedRhs = this.visitAssignRhs(rhs)
       if (lhs) {
         // Reassignment
-        this.pushChild(result, this.visitAssignLhs(lhs))
-        if (!hasSameType(this.visitAssignLhs(lhs).type, visitedRhs.type)) {
-          this.errorLog.nodeLog(result, SemError.Mismatch, visitedRhs.type)
+        const visitedLhs = this.visitAssignLhs(lhs)
+        this.pushChild(result, visitedLhs)
+        if (!hasSameType(visitedLhs.type, visitedRhs.type)) {
+          this.errorLog.nodeLog(visitedRhs, SemError.Mismatch, visitedLhs.type)
         }
       } else if (lhsType && lhsIdent) {
         // Assignment
@@ -496,11 +501,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // 4. visit type of ident, paramList, statement
     // 5. insert function to symbol table
     const result = this.initWJSCAst(ctx) as WJSCFunction
-    const { type } = this.visitType(ctx.type())
+    const visitedType = this.visitType(ctx.type()).type
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     const paramList = ctx.paramList()
     result.identifier = ident.value
-    result.type = type
+    result.type = visitedType
 
     // Check types of Params and Statements
     let paramsTypes: TypeName[]
@@ -517,7 +522,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
 
-    this.symbolTable.insertSymbol(ident.token, result.type, paramsTypes)
+    this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
 
     return result
   }
@@ -905,7 +910,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // WARNING: PushChild must find type of child if child is an ident!
     // WARNING: PushChild needs to know how to deal if child is pairType!
     result.type = child.type
-    console.log('Child Type: ' + result.type)
     result.children.push(child)
   }
 }
