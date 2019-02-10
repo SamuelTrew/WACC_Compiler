@@ -79,6 +79,6 @@ const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
 }
 
 export {
-  MAX_INT, MIN_INT, TypeName, BaseType, ArrayType, PairType, isBaseType, isArrayType,
-  isPairType, hasSameType, TerminalKeywords, TerminalOperators,
+  MAX_INT, MIN_INT, TypeName, BaseType, ArrayType, PairType, isBaseType,
+  isArrayType, isPairType, hasSameType, TerminalKeywords, TerminalOperators,
 }

@@ -1,6 +1,6 @@
-import { ParserRuleContext} from 'antlr4ts'
-import { AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
-import { WJSCLexer} from './grammar/WJSCLexer'
+import { ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArrayElementContext,
@@ -26,11 +26,28 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import { WJSCParserVisitor} from './grammar/WJSCParserVisitor'
-import { WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal} from './WJSCAst'
-import { SemError, SynError, WJSCErrorLog} from './WJSCErrors'
-import { WJSCSymbolTable} from './WJSCSymbolTable'
-import { ArrayType, BaseType, hasSameType, MAX_INT, MIN_INT, TerminalKeywords, TerminalOperators, TypeName} from './WJSCType'
+import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
+import {
+  WJSCAst,
+  WJSCFunction,
+  WJSCIdentifier,
+  WJSCParam,
+  WJSCParserRules,
+  WJSCTerminal,
+} from './WJSCAst'
+import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
+import { WJSCSymbolTable } from './WJSCSymbolTable'
+import {
+  ArrayType,
+  BaseType,
+  hasSameType,
+  MAX_INT,
+  MIN_INT,
+  PairType,
+  TerminalKeywords,
+  TerminalOperators,
+  TypeName,
+} from './WJSCType'
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
 // Result.type?
@@ -245,19 +262,29 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             this.pushChild(result, expressions[0])
           }
         } else if (expressions.length === 2) {
+          // New pair assignment
           const newpair = ctx.NEW_PAIR()
           if (!newpair) {
             this.errorLog.nodeLog(result, SemError.Undefined)
           } else {
-            if (!expressions[0]) {
+            const firstElem = expressions[0]
+            const secondElem = expressions[1]
+            if (!firstElem) {
               this.errorLog.nodeLog(result, SemError.Undefined)
             } else {
-              this.pushChild(result, expressions[0])
+              this.symbolTable.globalLookup(firstElem.token) ?
+                result.children.push(firstElem) :
+                this.errorLog.nodeLog(firstElem, SemError.Undefined)
             }
-            if (!expressions[1]) {
+            if (!secondElem) {
               this.errorLog.nodeLog(result, SemError.Undefined)
             } else {
-              this.pushChild(result, expressions[1])
+              this.symbolTable.globalLookup(secondElem.token) ?
+                result.children.push(secondElem) :
+                this.errorLog.nodeLog(secondElem, SemError.Undefined)
+            }
+            result.type = {
+              pairType: [firstElem.type, secondElem.type],
             }
           }
         } else {
@@ -269,7 +296,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   public visitAssignment = (ctx: AssignmentContext): WJSCAst => {
-    // 1. Both lhs and rhs not undefined 2. visit lhs and rhs
+    // 1. Both lhs and rhs not undefined
+    // 2. visit lhs and rhs
     // 3. If an assignment, Add this assignment to the lookup
     // 4. (Check that can be removed later): Ensure ident is in table
     // 5. visit types of lhs and rhs 6. Ensure lhs and rhs have the same types
@@ -584,17 +612,25 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   public visitPairType = (ctx: PairTypeContext): WJSCAst => {
-    //  1. visit 'pair', brackets, pairs, comma 2. visitTypes of pairElemTypes
+    // 1. visit 'pair', brackets, pairs, comma
+    // 2. visitTypes of pairElemTypes
     // BRACKETS
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Pair
     const pairs = ctx.pairElementType()
     result.children.push(this.visitTerminal(ctx.PAIR()))
     result.children.push(this.visitTerminal(ctx.LPAREN()))
-    this.pushChild(result, this.visitPairElementType(pairs[0]))
     result.children.push(this.visitTerminal(ctx.COMMA()))
-    this.pushChild(result, this.visitPairElementType(pairs[1]))
     result.children.push(this.visitTerminal(ctx.RPAREN()))
+
+    const firstElem = this.visitPairElementType(pairs[0])
+    result.children.push(firstElem)
+    const secondElem = this.visitPairElementType(pairs[1])
+    result.children.push(secondElem)
+
+    result.type = {
+      pairType: [firstElem.type, secondElem.type],
+    }
     return result
   }
 
@@ -837,6 +873,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else if (type === WJSCLexer.IDENTIFIER) {
       terminal.terminalType = TerminalKeywords.Identifier
       terminal.value = token
+      terminal.type = this.symbolTable.globalLookup(token)
     }
     return terminal
   }
@@ -922,10 +959,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           binOpInputs[index].forEach((potInput, potIndex) => {
             if (potInput === exp1.type && potInput === exp2.type) {
               matchAnyType = true
-            } else if (potInput !== exp1.type && potInput === exp2.type) {
-              this.errorLog.nodeLog(result, SemError.Mismatch, potInput)
-              matchButFaulty = true
-            } else if (potInput === exp1.type && potInput !== exp2.type) {
+            } else if (potInput !== exp1.type && potInput === exp2.type
+                || potInput === exp1.type && potInput !== exp2.type) {
               this.errorLog.nodeLog(result, SemError.Mismatch, potInput)
               matchButFaulty = true
             }
