@@ -1,6 +1,6 @@
-import {ParserRuleContext} from 'antlr4ts'
-import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
-import {WJSCLexer} from './grammar/WJSCLexer'
+import { ParserRuleContext} from 'antlr4ts'
+import { AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
+import { WJSCLexer} from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArrayElementContext,
@@ -26,11 +26,11 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
-import {WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal} from './WJSCAst'
-import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
-import {WJSCSymbolTable} from './WJSCSymbolTable'
-import {BaseType, hasSameType, MAX_INT, MIN_INT, TerminalKeywords, TerminalOperators, TypeName} from './WJSCType'
+import { WJSCParserVisitor} from './grammar/WJSCParserVisitor'
+import { WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal} from './WJSCAst'
+import { SemError, SynError, WJSCErrorLog} from './WJSCErrors'
+import { WJSCSymbolTable} from './WJSCSymbolTable'
+import { ArrayType, BaseType, hasSameType, MAX_INT, MIN_INT, TerminalKeywords, TerminalOperators, TypeName} from './WJSCType'
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
 // Result.type?
