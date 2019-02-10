@@ -78,7 +78,16 @@ const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
   }
 }
 
+const getFstInPair = (tname: PairType): TypeName => {
+  return tname.pairType[0]
+}
+
+const getSndInPair = (tname: PairType): TypeName => {
+  return tname.pairType[1]
+}
+
 export {
   MAX_INT, MIN_INT, TypeName, BaseType, ArrayType, PairType, isBaseType,
   isArrayType, isPairType, hasSameType, TerminalKeywords, TerminalOperators,
+  getFstInPair, getSndInPair,
 }

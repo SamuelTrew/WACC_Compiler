@@ -39,11 +39,11 @@ import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 import {
   ArrayType,
-  BaseType,
+  BaseType, getFstInPair, getSndInPair,
   hasSameType,
+  isPairType,
   MAX_INT,
   MIN_INT,
-  PairType,
   TerminalKeywords,
   TerminalOperators,
   TypeName,
@@ -272,16 +272,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             if (!firstElem) {
               this.errorLog.nodeLog(result, SemError.Undefined)
             } else {
-              this.symbolTable.globalLookup(firstElem.token) ?
-                result.children.push(firstElem) :
-                this.errorLog.nodeLog(firstElem, SemError.Undefined)
+              // TODO if identifier must have been declared
+              // this.symbolTable.globalLookup(firstElem.token) ?
+                result.children.push(firstElem)
             }
             if (!secondElem) {
               this.errorLog.nodeLog(result, SemError.Undefined)
             } else {
-              this.symbolTable.globalLookup(secondElem.token) ?
-                result.children.push(secondElem) :
-                this.errorLog.nodeLog(secondElem, SemError.Undefined)
+              // TODO if identifier must have been declared
+              // this.symbolTable.globalLookup(secondElem.token) ?
+                result.children.push(secondElem)
             }
             result.type = {
               pairType: [firstElem.type, secondElem.type],
@@ -577,17 +577,25 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // 1. Ensure order and expressions not undefined
     // 2. visit childOrder and childExp
     // 3. visitType of childExp
+    // Expression must be of type 'pair'
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Pair
     const order = ctx.FIRST() || ctx.SECOND()
-    const expressions = ctx.expression()
-    if (!expressions || !order) {
+    const expression = ctx.expression()
+    if (!expression || !order) {
       this.errorLog.nodeLog(result, SemError.Undefined)
     } else {
       result.children.push(this.visitTerminal(order))
-      const childExp = this.visitExpression(expressions)
-      result.children.push(childExp)
-      this.pushChild(result, childExp)
+      const visitedExpr = this.visitExpression(expression)
+      // Expression must be of type 'pair'
+      if (!isPairType(visitedExpr.type)) {
+        this.errorLog.nodeLog(visitedExpr, SemError.Mismatch, BaseType.Pair)
+      } else if (ctx.FIRST()) {
+        result.type = getFstInPair(visitedExpr.type)
+      } else if (ctx.SECOND()) {
+        result.type = getSndInPair(visitedExpr.type)
+      }
+      result.children.push(visitedExpr)
     }
     return result
   }
