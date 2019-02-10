@@ -1,6 +1,6 @@
-import { ParserRuleContext } from 'antlr4ts'
-import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
-import { WJSCLexer } from './grammar/WJSCLexer'
+import {ParserRuleContext} from 'antlr4ts'
+import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
+import {WJSCLexer} from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArrayElementContext,
@@ -26,26 +26,11 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
-import {
-  WJSCAst,
-  WJSCFunction,
-  WJSCIdentifier,
-  WJSCParam,
-  WJSCParserRules,
-  WJSCTerminal,
-} from './WJSCAst'
-import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
-import { WJSCSymbolTable } from './WJSCSymbolTable'
-import {
-  BaseType,
-  hasSameType,
-  MAX_INT,
-  MIN_INT,
-  TerminalKeywords,
-  TerminalOperators,
-  TypeName,
-} from './WJSCType'
+import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
+import {WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal} from './WJSCAst'
+import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
+import {WJSCSymbolTable} from './WJSCSymbolTable'
+import {BaseType, hasSameType, MAX_INT, MIN_INT, TerminalKeywords, TerminalOperators, TypeName} from './WJSCType'
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
 // Result.type?
@@ -298,6 +283,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.nodeLog(result, SemError.Undefined)
     } else {
       const visitedRhs = this.visitAssignRhs(rhs)
+      console.log('The rhs is: ' + visitedRhs.token)
+      console.log('The type is: ' + visitedRhs.type)
       if (lhs) {
         // Reassignment
         const visitedLhs = this.visitAssignLhs(lhs)
@@ -478,7 +465,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             if (expressions.length !== 2) {
               this.errorLog.nodeLog(result, SemError.IncorrectArgNo, [2, 2])
             } else {
-              result.children.push(this.visitBinaryOperator(binaryOperator))
+              const visitedBinOp = this.visitBinaryOperator(binaryOperator)
+              result.children.push(visitedBinOp)
             }
           }
           const childrenExpType = expressions.map(this.visitExpression)
@@ -879,6 +867,74 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       startIndex: -1,
       token: 'default',
       type: undefined,
+    }
+  }
+
+  private checkOperator = (op: WJSCAst, exp1: WJSCAst, exp2?: WJSCAst):
+      void => {
+    const unOps = ['!', '-', 'len', 'ord', 'chr']
+    const unOpInputs =
+      [[BaseType.Boolean], [BaseType.Integer], [BaseType.Pair],
+       [BaseType.Character], [BaseType.Integer]]
+    const unOpOutputs = [BaseType.Boolean, BaseType.Integer,
+                         BaseType.Integer, BaseType.Integer, BaseType.Character]
+    const binOps = ['*', '/', '%', '+', '-', '>', '>=',
+                    '<', '<=', '==', '!=', '&&', '||']
+    const binOpInputs =
+        [[BaseType.Integer], [BaseType.Integer],
+         [BaseType.Integer], [BaseType.Integer],
+         [BaseType.Integer], [BaseType.Integer, BaseType.Character],
+         [BaseType.Integer, BaseType.Character],
+         [BaseType.Integer, BaseType.Character],
+         [BaseType.Integer, BaseType.Character],
+         [BaseType.Integer, BaseType.Character,
+          BaseType.Boolean, BaseType.Pair, ArrayType],
+         [BaseType.Integer, BaseType.Character,
+          BaseType.Boolean, BaseType.Pair, ArrayType],
+         [BaseType.Boolean], [BaseType.Boolean]]
+    const binOpOutputs = [BaseType.Integer, BaseType.Integer, BaseType.Integer,
+                          BaseType.Integer, BaseType.Integer, BaseType.Boolean,
+                          BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
+                          BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
+                          BaseType.Boolean]
+    if (exp2 === undefined) {
+      // unOp
+      unOps.forEach((child, index) => {
+        if (child === op.type) {
+          let matchAnyType = false
+          unOpInputs[index].forEach((potInput, potIndex) => {
+            if (potInput === exp1.type) {
+              matchAnyType = true
+            }
+          })
+          if (!matchAnyType) {
+            // unOp operator has the wrong type
+            this.errorLog.nodeLog(result, SemError.Mismatch, unOpInputs[index])
+          }
+        }
+      })
+    } else {
+      // binOp
+      binOps.forEach((child, index) => {
+        if (child === op.type) {
+          let matchAnyType = false
+          let matchButFaulty = false
+          binOpInputs[index].forEach((potInput, potIndex) => {
+            if (potInput === exp1.type && potInput === exp2.type) {
+              matchAnyType = true
+            } else if (potInput !== exp1.type && potInput === exp2.type) {
+              this.errorLog.nodeLog(result, SemError.Mismatch, potInput)
+              matchButFaulty = true
+            } else if (potInput === exp1.type && potInput !== exp2.type) {
+              this.errorLog.nodeLog(result, SemError.Mismatch, potInput)
+              matchButFaulty = true
+            }
+          })
+          if (!matchAnyType && !matchButFaulty) {
+            this.errorLog.nodeLog(result, SemError.Mismatch, binOpInputs[index])
+          }
+        }
+      })
     }
   }
 
