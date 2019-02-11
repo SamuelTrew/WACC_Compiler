@@ -14,7 +14,7 @@ import { WJSCErrorListener } from './WJSCErrorListener'
 import { WJSCErrorLog } from './WJSCErrors'
 import { WJSCSemanticChecker } from './WJSCSemanticChecker'
 
-const antinos = 311
+const antinos = 'HXLY' + 311
 
 const argp = new argparse.ArgumentParser({
   addHelp: true,
@@ -46,8 +46,8 @@ argp.addArgument(
 const args = argp.parseArgs()
 const output = args.output || 'out.json'
 const errors = args.errors || 'err.log'
-const info = `「info」`
-const warn = `${ConsoleColors.FgRed}「warn」${ConsoleColors.Reset}`
+const info = `[info]`
+const warn = `${ConsoleColors.FgRed}[warn]${ConsoleColors.Reset}`
 
 /* Read file and run the callback */
 fs.readFile(args.src, 'utf8', (err, data) => {
@@ -78,10 +78,10 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   /* Count the number of error */
   const numerrors = errorLog.numErrors()
   if (numerrors === 0) {
-    console.log(` ${ConsoleColors.FgGreen}✔${ConsoleColors.Reset}`
+    console.log(`  ${ConsoleColors.FgGreen}[OK]${ConsoleColors.Reset}`
       + ` Compilation succeeded.`)
   } else {
-    console.log(` ${ConsoleColors.FgRed}✘${ConsoleColors.Reset}`
+    console.log(`  ${ConsoleColors.FgRed}[NG]${ConsoleColors.Reset}`
       + ` Compilation failed with ${numerrors} error`
       + (numerrors !== 1 ? 's' : '') + '.')
   }
@@ -95,14 +95,14 @@ fs.readFile(args.src, 'utf8', (err, data) => {
         symbolTable: visitor.symbolTable.json(),
       }, null, 2), (writeErr) => {
         if (writeErr) { throw writeErr }
-        console.log(`   ${ConsoleColors.Dim}${info}`
+        console.log(`${ConsoleColors.Dim}${info} `
           + `Output written to ${output}${ConsoleColors.Reset}`)
       })
     } catch (writeError) {
-      console.error(`   ${warn} ${writeError}`)
+      console.error(`${warn} ${writeError}`)
     }
   } else {
-    console.log(`   ${ConsoleColors.Dim}${info}`
+    console.log(`${ConsoleColors.Dim}${info} `
       + `No output written${ConsoleColors.Reset}`)
   }
 
@@ -111,11 +111,11 @@ fs.readFile(args.src, 'utf8', (err, data) => {
     try {
       fs.writeFile(errors, errorLog.printErrors(), (writeErr) => {
         if (writeErr) { throw writeErr }
-        console.log(`   ${ConsoleColors.Dim}${info}`
-          + `Errors written to ${errors}${ConsoleColors.Reset}`)
+        console.log(`${ConsoleColors.Dim}${info}`
+          + ` Errors written to ${errors}${ConsoleColors.Reset}`)
       })
     } catch (writeError) {
-      console.error(`   ${warn} ${writeError}`)
+      console.error(`${warn} ${writeError}`)
     }
   }
 
