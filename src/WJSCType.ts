@@ -62,25 +62,40 @@ const isArrayType = (tname: any): tname is ArrayType =>
 
 const isPairType = (tname: any): tname is PairType =>
   tname.pairType !== undefined
-  && isBaseType(tname.pairType[0])
-  && isBaseType(tname.pairType[1])
 
+// Check if the given types are the same or equivalent.
+// 'pair' can be element of a pair and is equivalent to a PairType
 const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
   if (!typeA || !typeB) { return false }
-  if (isBaseType(typeA)) {
-    return isBaseType(typeB) && typeA === typeB
-  } else if (isArrayType(typeA)) {
-    return isArrayType(typeB) && typeA.arrayType === typeB.arrayType
+  if (isBaseType(typeA) && isBaseType(typeB)) {
+    return typeA === typeB
   } else if (isPairType(typeA)) {
-    return isPairType(typeB)
-      && typeA.pairType[0] === typeB.pairType[0]
-      && typeA.pairType[1] === typeB.pairType[1]
+    return hasSameType(typeB, BaseType.Pair)
+      || isPairType(typeB)
+      && hasSameType(typeA.pairType[0], typeB.pairType[0])
+      && hasSameType(typeA.pairType[1], typeB.pairType[1])
+  } else if (isPairType(typeB)) {
+    return hasSameType(typeA, BaseType.Pair)
+      || isPairType(typeA)
+      && hasSameType(typeA.pairType[0], typeB.pairType[0])
+      && hasSameType(typeA.pairType[1], typeB.pairType[1])
   } else {
     return false
   }
 }
 
+// Return type of the first element of a pair
+const getFstInPair = (pairType: PairType): TypeName => {
+  return pairType.pairType[0]
+}
+
+// Return type of the second element of a pair
+const getSndInPair = (pairType: PairType): TypeName => {
+  return pairType.pairType[1]
+}
+
 export {
-  MAX_INT, MIN_INT, TypeName, BaseType, PairType, isBaseType, isArrayType,
-  isPairType, hasSameType, TerminalKeywords, TerminalOperators,
+  MAX_INT, MIN_INT, TypeName, BaseType, ArrayType, PairType, isBaseType,
+  isArrayType, isPairType, hasSameType, TerminalKeywords, TerminalOperators,
+  getFstInPair, getSndInPair,
 }

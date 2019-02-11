@@ -76,7 +76,7 @@ export class WJSCSymbolTable {
   }
 
   // Lookup the WJSCAst node with the given identifier in the local scope and
-  // all its parent scopes. Return the type if found.
+  // all its parent scopes. Return the type if found, undefined otherwise.
   public globalLookup = (identifier: string): TypeName => {
     let result = this.localLookup(identifier)
     if (!result && this.parentLevel !== undefined) {

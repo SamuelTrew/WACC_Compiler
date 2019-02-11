@@ -29,7 +29,7 @@ class WJSCErrorLog {
   }
 
   public nodeLog = (node: WJSCAst, error: SemError | SynError,
-    additionalParam?: (TypeName | number[])) => {
+    additionalParam?: (TypeName | TypeName[] | number[])) => {
     let errorMessage = ''
     const { line, column, token } = node
     if (this.isSemantic(error)) {
@@ -37,15 +37,16 @@ class WJSCErrorLog {
       if (error === SemError.Undefined) {
         errorMessage += `Type of ${token} is undefined`
       } else if (error === SemError.Mismatch) {
-        errorMessage += `Type of ${token}: ${node.type}`
-          + `does not match expected type ${additionalParam}`
+        errorMessage += `Type of ${token}: ${JSON.stringify(node.type)}`
+          + ` does not match expected type ${JSON.stringify(additionalParam)}`
       } else if (error === SemError.IncorrectArgNo
         && additionalParam !== undefined && additionalParam instanceof Array) {
+        const secondParam = additionalParam[1]
         errorMessage +=
-          `${token} does not have ${additionalParam[0]}`
-          + `${additionalParam[1] === -1 ? 'or more'
-            : (additionalParam[0] === additionalParam[1] ?
-              '' : 'to ' + additionalParam[1].toString())} arguments`
+              `${token} does not have ${additionalParam[0]}`
+              + `${additionalParam[1] === -1 ? 'or more'
+              : (additionalParam[0] === additionalParam[1] ?
+                  '' : 'to ' + secondParam)} arguments`
       }
     } else {
       errorMessage += `Syntactic Error '${error} at ${line}:${column}: `
