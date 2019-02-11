@@ -310,8 +310,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.nodeLog(result, SemError.Undefined)
     } else {
       const visitedRhs = this.visitAssignRhs(rhs)
-      console.log('The rhs is: ' + visitedRhs.token)
-      console.log('The type is: ' + visitedRhs.type)
       if (lhs) {
         // Reassignment
         const visitedLhs = this.visitAssignLhs(lhs)
@@ -328,7 +326,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
         /* Ensure RHS has same type as LHS */
         if (!hasSameType(visitedRhs.type, visitedLhsType)) {
-          console.log(JSON.stringify(visitedLhsType))
           this.errorLog.nodeLog(visitedRhs, SemError.Mismatch, visitedLhsType)
         }
         /* Insert type into symbol table */
@@ -498,7 +495,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               result.children.push(visitedOp)
               const exp1 = this.visitExpression(expressions[0])
               result.children.push(exp1)
-              this.checkOperator(visitedOp, exp1)
+              result.type = this.checkOperator(visitedOp, exp1)
             }
           } else if (binaryOperator) {
             if (expressions.length !== 2) {
@@ -510,7 +507,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               const exp2 = this.visitExpression(expressions[1])
               result.children.push(exp1)
               result.children.push(exp2)
-              this.checkOperator(visitedOp, exp1, exp2)
+              result.type = this.checkOperator(visitedOp, exp1, exp2)
             }
           }
         }
@@ -927,7 +924,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   private checkOperator = (op: WJSCAst, exp1: WJSCAst, exp2?: WJSCAst):
-     void => {
+     TypeName => {
+      let outputType
       const unOps = ['!', '-', 'len', 'ord', 'chr']
       const unOpInputs =
           [[BaseType.Boolean], [BaseType.Integer], [BaseType.Pair],
@@ -960,10 +958,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // unOp
         unOps.forEach((child, index) => {
           let matchAnyType = false
-          if (child === op.toString()) {
+          if (child.toString() === op.token) {
             unOpInputs[index].forEach((potInput, potIndex) => {
               if (potInput === exp1.type) {
                 matchAnyType = true
+                outputType = unOpOutputs[index]
               }
             })
             if (!matchAnyType) {
@@ -975,12 +974,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       } else {
         // binOp
         binOps.forEach((child, index) => {
-          if (child === op.toString()) {
+          if (child.toString() === op.token) {
             let matchAnyType = false
             let matchButFaulty = false
             binOpInputs[index].forEach((potInput, potIndex) => {
               if (potInput === exp1.type && potInput === exp2.type) {
                 matchAnyType = true
+                outputType = unOpOutputs[index]
               } else if (potInput !== exp1.type && potInput === exp2.type
                   && !matchButFaulty) { // <- We dont want 2 warnings
                 this.errorLog.nodeLog(exp1, SemError.Mismatch, potInput)
@@ -996,6 +996,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               // Special check for mismatched array types
               if (isArrayType(exp1.type) && isArrayType(exp2.type)) {
                 matchAnyType = true
+                outputType = BaseType.Boolean
               } else if (!isArrayType(exp1.type) && isArrayType(exp2.type)) {
                 const { line, column, token } = exp1
                 this.errorLog.pushError(`Type of ${token}:
@@ -1018,6 +1019,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           }
         })
       }
+      return outputType
     }
 
   private initWJSCAst = (ctx: ParserRuleContext | TerminalNode):
