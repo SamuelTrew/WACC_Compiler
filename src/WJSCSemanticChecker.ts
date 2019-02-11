@@ -1,6 +1,6 @@
-import {ParserRuleContext} from 'antlr4ts'
-import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
-import {WJSCLexer} from './grammar/WJSCLexer'
+import { ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArrayElementContext,
@@ -26,10 +26,11 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
-import {WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal,} from './WJSCAst'
-import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
-import {WJSCSymbolTable} from './WJSCSymbolTable'
+import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
+import { WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam,
+  WJSCParserRules, WJSCTerminal } from './WJSCAst'
+import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
+import { WJSCSymbolTable } from './WJSCSymbolTable'
 import {
   BaseType,
   getFstInPair,
@@ -1068,7 +1069,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           const functionName = this.symbolTable.getFunctionName() || 'main'
           const functionType = this.symbolTable.globalLookup(functionName)
           if (!hasSameType(functionType, visitedExpr.type)) {
-            this.errorLog.nodeLog(visitedStdlib, SemError.Mismatch, functionType)
+            this.errorLog.nodeLog(visitedStdlib,
+                SemError.Mismatch, functionType)
           }
         }
 
