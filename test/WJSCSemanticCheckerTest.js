@@ -21,39 +21,122 @@ const errorlistener = new WJSCErrorListener(errorlog);
 recursive(
   path.resolve("wacc_examples", "valid"),
   ["*.wacc~", "*.in", "*.output"],
-  function (error, validFiles) {
-    describe("WJSC Frontend", function () {
-      describe("Valid files", function () {
-        validFiles.forEach(filename => {
-          it(`should not produce errors for source file ${path.relative(
-            "wacc_examples",
-            filename
-          )}`, function (done) {
-            /* Read the file */
-            fs.readFile(filename, "utf8", function (readError, data) {
-              errorlog.clear()
-              let error
-              if (readError) done(readError);
-              const parser = new WJSCParser(
-                new antlr4ts.CommonTokenStream(
-                  new WJSCLexer(new antlr4ts.ANTLRInputStream(data))
-                )
-              );
-              sinon.stub(console, "log")
-              parser.addErrorListener(errorlistener);
-              try {
-                checker.visit(parser.program());
-              } catch (parseError) {
-                error = parseError
-              }
-              console.log.restore();
-              /* Assert no errors */
-              assert(errorlog.numErrors() === 0, errorlog.printErrors());
-              if (error) { done(error) } else { done() }
+  function (validError, validFiles) {
+    if (validError) throw validError
+    recursive(
+      path.resolve("wacc_examples", "invalid", "semanticErr"),
+      ["*.wacc~", "*.in", "*.output"],
+      function (semErrError, semanticErrFiles) {
+        if (semErrError) throw validError
+        recursive(
+          path.resolve("wacc_examples", "invalid", "syntaxErr"),
+          ["*.wacc~", "*.in", "*.output"],
+          function (synErrError, syntaxErrFiles) {
+            if (synErrError) throw (synErrError)
+            describe("WJSC Frontend", function () {
+              describe("Valid files", function () {
+                validFiles.forEach(filename => {
+                  it(`should not produce errors for source file ${path.relative(
+                    "wacc_examples",
+                    filename
+                  )}`, function (done) {
+                    /* Read the file */
+                    fs.readFile(filename, "utf8", function (readError, data) {
+                      errorlog.clear()
+                      let error
+                      if (readError) done(readError);
+                      const parser = new WJSCParser(
+                        new antlr4ts.CommonTokenStream(
+                          new WJSCLexer(new antlr4ts.ANTLRInputStream(data))
+                        )
+                      );
+                      sinon.stub(console, "log")
+                      parser.addErrorListener(errorlistener);
+                      try {
+                        const ctx = parser.program();
+                        if (errorlog.numErrors() === 0) {
+                          checker.visit(ctx)
+                        }
+                      } catch (parseError) {
+                        error = parseError
+                      }
+                      console.log.restore();
+                      /* Assert no errors */
+                      assert(errorlog.numErrors() === 0, errorlog.printErrors());
+                      if (error) { done(error) } else { done() }
+                    });
+                  });
+                });
+              });
+              describe("Semantically invalid files", function () {
+                semanticErrFiles.forEach(filename => {
+                  it(`should produce errors for source file ${path.relative(
+                    "wacc_examples",
+                    filename
+                  )}`, function (done) {
+                    /* Read the file */
+                    fs.readFile(filename, "utf8", function (readError, data) {
+                      errorlog.clear()
+                      let error
+                      if (readError) done(readError);
+                      const parser = new WJSCParser(
+                        new antlr4ts.CommonTokenStream(
+                          new WJSCLexer(new antlr4ts.ANTLRInputStream(data))
+                        )
+                      );
+                      sinon.stub(console, "log")
+                      parser.addErrorListener(errorlistener);
+                      try {
+                        const ctx = parser.program();
+                        if (errorlog.numErrors() === 0) {
+                          checker.visit(ctx)
+                        }
+                      } catch (parseError) {
+                        error = parseError
+                      }
+                      console.log.restore();
+                      /* Assert no errors */
+                      assert(errorlog.numErrors() > 0, 'No Error Produced');
+                      if (error) { done(error) } else { done() }
+                    });
+                  });
+                });
+              });
+              describe("Syntactically invalid files", function () {
+                syntaxErrFiles.forEach(filename => {
+                  it(`should produce errors for source file ${path.relative(
+                    "wacc_examples",
+                    filename
+                  )}`, function (done) {
+                    /* Read the file */
+                    fs.readFile(filename, "utf8", function (readError, data) {
+                      errorlog.clear()
+                      let error
+                      if (readError) done(readError);
+                      const parser = new WJSCParser(
+                        new antlr4ts.CommonTokenStream(
+                          new WJSCLexer(new antlr4ts.ANTLRInputStream(data))
+                        )
+                      );
+                      sinon.stub(console, "log")
+                      parser.addErrorListener(errorlistener);
+                      try {
+                        const ctx = parser.program();
+                        if (errorlog.numErrors() === 0) {
+                          checker.visit(ctx)
+                        }
+                      } catch (parseError) {
+                        error = parseError
+                      }
+                      console.log.restore();
+                      /* Assert no errors */
+                      assert(errorlog.numErrors() > 0, 'No Error Produced');
+                      if (error) { done(error) } else { done() }
+                    });
+                  });
+                });
+              });
             });
           });
-        });
       });
-    }
-    );
   });

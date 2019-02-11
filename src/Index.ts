@@ -69,7 +69,11 @@ fs.readFile(args.src, 'utf8', (err, data) => {
 
   /* Visit the tree */
   try {
-    tree = visitor.visit(parser.program())
+    const ctx = parser.program()
+    if (errorLog.numErrors() === 0) {
+      tree = visitor.visit(ctx)
+      if (errorLog.numErrors() > 0) { process.exitCode = 200 }
+    } else { process.exitCode = 100 }
   } catch (error) {
     const { message, stack } = error
     errorLog.runtimeError(message, stack)
@@ -118,7 +122,4 @@ fs.readFile(args.src, 'utf8', (err, data) => {
       console.error(`${warn} ${writeError}`)
     }
   }
-
-  /* Set exit code */
-  process.exitCode = numerrors
 })
