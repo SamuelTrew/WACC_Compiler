@@ -2,46 +2,46 @@ import {ParserRuleContext} from 'antlr4ts'
 import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
 import {WJSCLexer} from './grammar/WJSCLexer'
 import {
-  ArgListContext,
-  ArrayElementContext,
-  ArrayLiteralContext,
-  ArrayTypeContext,
-  AssignLhsContext,
-  AssignmentContext,
-  AssignRhsContext,
-  BaseTypeContext,
-  BinaryOperatorContext,
-  ConditionalBlocksContext,
-  ExpressionContext,
-  FuncContext,
-  IntegerLiteralContext,
-  PairElementContext,
-  PairElementTypeContext,
-  PairTypeContext,
-  ParamContext,
-  ParamListContext,
-  ProgramContext,
-  StatementContext,
-  StdlibContext,
-  TypeContext,
-  UnaryOperatorContext,
+    ArgListContext,
+    ArrayElementContext,
+    ArrayLiteralContext,
+    ArrayTypeContext,
+    AssignLhsContext,
+    AssignmentContext,
+    AssignRhsContext,
+    BaseTypeContext,
+    BinaryOperatorContext,
+    ConditionalBlocksContext,
+    ExpressionContext,
+    FuncContext,
+    IntegerLiteralContext,
+    PairElementContext,
+    PairElementTypeContext,
+    PairTypeContext,
+    ParamContext,
+    ParamListContext,
+    ProgramContext,
+    StatementContext,
+    StdlibContext,
+    TypeContext,
+    UnaryOperatorContext,
 } from './grammar/WJSCParser'
 import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
 import {WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal} from './WJSCAst'
 import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
 import {WJSCSymbolTable} from './WJSCSymbolTable'
 import {
-  BaseType,
-  getFstInPair,
-  getSndInPair,
-  hasSameType,
-  isArrayType,
-  isPairType,
-  MAX_INT,
-  MIN_INT,
-  TerminalKeywords,
-  TerminalOperators,
-  TypeName,
+    BaseType,
+    getFstInPair,
+    getSndInPair,
+    hasSameType,
+    isArrayType,
+    isPairType,
+    MAX_INT,
+    MIN_INT,
+    TerminalKeywords,
+    TerminalOperators,
+    TypeName,
 } from './WJSCType'
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
@@ -94,10 +94,29 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.nodeLog(result, SemError.IncorrectArgNo, [1, -1])
     }
     result.children = expressions.map(this.visitExpression)
+    let currElemType = this.symbolTable.globalLookup(identType.token)
+    let depthIndex = 0
+    let elemTotal = this.symbolTable.globalLookup(identType.token)
+    let depthTotal = 0 // To deal with edge cases with string
     result.children.forEach((child, index) => {
       hasSameType(child.type, BaseType.Integer)
-      this.pushChild(result, child)
+      result.children.push(child)
+      if (index !== 0) {
+          if (isArrayType(currElemType)) {
+              depthIndex = index
+              currElemType = currElemType.arrayType
+          } else {
+              this.errorLog.nodeLog(result, SemError.Undefined)
+          }
+      }
     })
+    while (isArrayType(elemTotal)) {
+        elemTotal = elemTotal.arrayType
+        depthTotal++
+    }
+    result.type =
+        (currElemType === BaseType.String && (depthIndex === depthIndex) ?
+            BaseType.Character : currElemType)
     return result
   }
 
