@@ -39,7 +39,9 @@ import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 import {
   ArrayType,
-  BaseType, getFstInPair, getSndInPair,
+  BaseType,
+  getFstInPair,
+  getSndInPair,
   hasSameType,
   isPairType,
   MAX_INT,
@@ -273,15 +275,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               this.errorLog.nodeLog(result, SemError.Undefined)
             } else {
               // TODO if identifier must have been declared
-              // this.symbolTable.globalLookup(firstElem.token) ?
-                result.children.push(firstElem)
+              result.children.push(firstElem)
             }
             if (!secondElem) {
               this.errorLog.nodeLog(result, SemError.Undefined)
             } else {
               // TODO if identifier must have been declared
-              // this.symbolTable.globalLookup(secondElem.token) ?
-                result.children.push(secondElem)
+              result.children.push(secondElem)
             }
             result.type = {
               pairType: [firstElem.type, secondElem.type],
@@ -322,16 +322,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         }
       } else if (lhsType && lhsIdent) {
         // Assignment
-        const visitedType = this.visitType(lhsType).type
+        const visitedLhsType = this.visitType(lhsType).type
         const visitedIdentifier = this.visitTerminal(lhsIdent)
-        /* Insert type into symbol table */
-        this.symbolTable.insertSymbol(visitedIdentifier.value, visitedType)
-        visitedIdentifier.type = visitedType
+        visitedIdentifier.type = visitedLhsType
         this.pushChild(result, visitedIdentifier)
+
         /* Ensure RHS has same type as LHS */
-        if (!hasSameType(visitedRhs.type, visitedType)) {
-          this.errorLog.nodeLog(visitedRhs, SemError.Mismatch, visitedType)
+        if (!hasSameType(visitedRhs.type, visitedLhsType)) {
+          console.log(JSON.stringify(visitedLhsType))
+          this.errorLog.nodeLog(visitedRhs, SemError.Mismatch, visitedLhsType)
         }
+        /* Insert type into symbol table */
+        this.symbolTable.insertSymbol(visitedIdentifier.value, visitedLhsType)
       }
       this.pushChild(result, visitedRhs)
     }
