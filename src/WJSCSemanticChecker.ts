@@ -1,6 +1,6 @@
-import {ParserRuleContext} from 'antlr4ts'
-import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
-import {WJSCLexer} from './grammar/WJSCLexer'
+import { ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArrayElementContext,
@@ -26,10 +26,17 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
-import {WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal} from './WJSCAst'
-import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
-import {WJSCSymbolTable} from './WJSCSymbolTable'
+import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
+import {
+  WJSCAst,
+  WJSCFunction,
+  WJSCIdentifier,
+  WJSCParam,
+  WJSCParserRules,
+  WJSCTerminal
+} from './WJSCAst'
+import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
+import { WJSCSymbolTable } from './WJSCSymbolTable'
 import {
   BaseType,
   getFstInPair,
@@ -977,23 +984,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           if (child.toString() === op.token) {
             let matchAnyType = false
             let matchButFaulty = false
-            binOpInputs[index].forEach((potInput, potIndex) => {
-              if (potInput === exp1.type && potInput === exp2.type) {
-                matchAnyType = true
-                outputType = binOpOutputs[index]
-              } else if (potInput !== exp1.type && potInput === exp2.type
-                  && !matchButFaulty) { // <- We dont want 2 warnings
-                this.errorLog.nodeLog(exp1, SemError.Mismatch, potInput)
-                matchButFaulty = true
-              } else if (potInput === exp1.type && potInput !== exp2.type
-                  && !matchButFaulty) { // <- We dont want 2 warnings
-                this.errorLog.nodeLog(exp2, SemError.Mismatch, potInput)
-                matchButFaulty = true
-              }
-            })
             if (index === 9 || index === 10
                 && !matchAnyType && !matchButFaulty) {
               // Special check for mismatched array types
+              if (!hasSameType(exp1.type, exp2.type)) {
+                this.errorLog.nodeLog(exp1, SemError.Mismatch, exp2.type)
+              } else {
+                matchAnyType = true
+                outputType = BaseType.Boolean
+              }
+              /*
               if (isArrayType(exp1.type) && isArrayType(exp2.type)) {
                 matchAnyType = true
                 outputType = BaseType.Boolean
@@ -1010,6 +1010,22 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
                     ` does not match expected type array`)
                 matchButFaulty = true
               }
+              */
+            } else {
+              binOpInputs[index].forEach((potInput, potIndex) => {
+                if (potInput === exp1.type && potInput === exp2.type) {
+                  matchAnyType = true
+                  outputType = binOpOutputs[index]
+                } else if (potInput !== exp1.type && potInput === exp2.type
+                    && !matchButFaulty) { // <- We dont want 2 warnings
+                  this.errorLog.nodeLog(exp1, SemError.Mismatch, potInput)
+                  matchButFaulty = true
+                } else if (potInput === exp1.type && potInput !== exp2.type
+                    && !matchButFaulty) { // <- We dont want 2 warnings
+                  this.errorLog.nodeLog(exp2, SemError.Mismatch, potInput)
+                  matchButFaulty = true
+                }
+              })
             }
             if (!matchAnyType && !matchButFaulty) {
               // binOp operator has two arguments of incorrect type
@@ -1057,12 +1073,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   private checkStdlibExpressionType
     = (visitedStdlib: WJSCAst, visitedExpr: WJSCAst): void => {
       if (visitedStdlib.token === 'free'
-        && !isPairType(visitedExpr)
-        && !isArrayType(visitedExpr)) {
+          && !isPairType(visitedExpr.type)
+          && !isArrayType(visitedExpr.type)) {
         // Free can only be called on pair or array type.
-        this.errorLog.messageLog(visitedExpr.line,
-          visitedExpr.column, SynError.BadToken,
-          'free can only be called on pair or array type.')
+        console.log('Is pair type: ' + isPairType(visitedExpr.type))
+        this.errorLog.pushError('Semantic Error at ' +
+          `${visitedExpr.line}:${visitedExpr.column}` +
+            ': free can only be called on a pair or array.')
       } else if (visitedStdlib.token === 'return') {
         // Return cannot only be in body of non-main function
         // Type of expression must match the return type of the function

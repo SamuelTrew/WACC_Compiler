@@ -80,7 +80,7 @@ const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
       && hasSameType(typeA.pairType[0], typeB.pairType[0])
       && hasSameType(typeA.pairType[1], typeB.pairType[1])
   } else if (isArrayType(typeA) && isArrayType(typeB)) {
-    return typeA.arrayType === typeB.arrayType
+    return hasSameType(typeA.arrayType, typeB.arrayType)
   } else {
     return false
   }
