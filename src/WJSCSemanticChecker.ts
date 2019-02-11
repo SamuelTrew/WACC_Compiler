@@ -980,7 +980,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             binOpInputs[index].forEach((potInput, potIndex) => {
               if (potInput === exp1.type && potInput === exp2.type) {
                 matchAnyType = true
-                outputType = unOpOutputs[index]
+                outputType = binOpOutputs[index]
               } else if (potInput !== exp1.type && potInput === exp2.type
                   && !matchButFaulty) { // <- We dont want 2 warnings
                 this.errorLog.nodeLog(exp1, SemError.Mismatch, potInput)
