@@ -8,6 +8,8 @@ enum BaseType {
   Character = 'char',
   String = 'str',
   Pair = 'pair',
+  Any = 'any',
+  None = 'none',
 }
 
 interface ArrayType {

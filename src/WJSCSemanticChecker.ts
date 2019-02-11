@@ -557,16 +557,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   public visitParam = (ctx: ParamContext): WJSCIdentifier => {
-    // 1. visit types and ident 2. Ensure ident is in lookup 3. visit type of types and ident
     const result = this.initWJSCAst(ctx) as WJSCIdentifier
     result.parserRule = WJSCParserRules.Parameter
     const visitedType = this.visitType(ctx.type())
-    this.pushChild(result, visitedType)
     const visitedIdent = this.visitTerminal(ctx.IDENTIFIER())
-    // WARNING: result.identifier should be set by pushChild???
     result.identifier = visitedIdent.value
-    visitedIdent.type = visitedType.type
-    this.pushChild(result, visitedIdent)
+    result.type = visitedType.type
     this.symbolTable.insertSymbol(result.identifier, visitedIdent.type)
     return result
   }
