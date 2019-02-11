@@ -68,7 +68,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   constructor(errorLog: WJSCErrorLog) {
     super()
     this.errorLog = errorLog
-    this.symbolTable = new WJSCSymbolTable(0, undefined, errorLog)
+    this.symbolTable = new WJSCSymbolTable(0, undefined, false, errorLog)
   }
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
@@ -919,73 +919,73 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       type: undefined,
     }
   }
-
-  private checkOperator = (op: WJSCAst, exp1: WJSCAst, exp2?: WJSCAst):
-      void => {
-    const unOps = ['!', '-', 'len', 'ord', 'chr']
-    const unOpInputs =
-      [[BaseType.Boolean], [BaseType.Integer], [BaseType.Pair],
-       [BaseType.Character], [BaseType.Integer]]
-    const unOpOutputs = [BaseType.Boolean, BaseType.Integer,
-                         BaseType.Integer, BaseType.Integer, BaseType.Character]
-    const binOps = ['*', '/', '%', '+', '-', '>', '>=',
-                    '<', '<=', '==', '!=', '&&', '||']
-    const binOpInputs =
-        [[BaseType.Integer], [BaseType.Integer],
-         [BaseType.Integer], [BaseType.Integer],
-         [BaseType.Integer], [BaseType.Integer, BaseType.Character],
-         [BaseType.Integer, BaseType.Character],
-         [BaseType.Integer, BaseType.Character],
-         [BaseType.Integer, BaseType.Character],
-         [BaseType.Integer, BaseType.Character,
-          BaseType.Boolean, BaseType.Pair, ArrayType],
-         [BaseType.Integer, BaseType.Character,
-          BaseType.Boolean, BaseType.Pair, ArrayType],
-         [BaseType.Boolean], [BaseType.Boolean]]
-    const binOpOutputs = [BaseType.Integer, BaseType.Integer, BaseType.Integer,
-                          BaseType.Integer, BaseType.Integer, BaseType.Boolean,
-                          BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
-                          BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
-                          BaseType.Boolean]
-    if (exp2 === undefined) {
-      // unOp
-      unOps.forEach((child, index) => {
-        if (child === op.type) {
-          let matchAnyType = false
-          unOpInputs[index].forEach((potInput, potIndex) => {
-            if (potInput === exp1.type) {
-              matchAnyType = true
+  /*
+    private checkOperator = (op: WJSCAst, exp1: WJSCAst, exp2?: WJSCAst):
+        void => {
+      const unOps = ['!', '-', 'len', 'ord', 'chr']
+      const unOpInputs =
+        [[BaseType.Boolean], [BaseType.Integer], [BaseType.Pair],
+         [BaseType.Character], [BaseType.Integer]]
+      const unOpOutputs = [BaseType.Boolean, BaseType.Integer,
+                           BaseType.Integer, BaseType.Integer, BaseType.Character]
+      const binOps = ['*', '/', '%', '+', '-', '>', '>=',
+                      '<', '<=', '==', '!=', '&&', '||']
+      const binOpInputs =
+          [[BaseType.Integer], [BaseType.Integer],
+           [BaseType.Integer], [BaseType.Integer],
+           [BaseType.Integer], [BaseType.Integer, BaseType.Character],
+           [BaseType.Integer, BaseType.Character],
+           [BaseType.Integer, BaseType.Character],
+           [BaseType.Integer, BaseType.Character],
+           [BaseType.Integer, BaseType.Character,
+            BaseType.Boolean, BaseType.Pair, ArrayType],
+           [BaseType.Integer, BaseType.Character,
+            BaseType.Boolean, BaseType.Pair, ArrayType],
+           [BaseType.Boolean], [BaseType.Boolean]]
+      const binOpOutputs = [BaseType.Integer, BaseType.Integer, BaseType.Integer,
+                            BaseType.Integer, BaseType.Integer, BaseType.Boolean,
+                            BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
+                            BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
+                            BaseType.Boolean]
+      if (exp2 === undefined) {
+        // unOp
+        unOps.forEach((child, index) => {
+          if (child === op.type) {
+            let matchAnyType = false
+            unOpInputs[index].forEach((potInput, potIndex) => {
+              if (potInput === exp1.type) {
+                matchAnyType = true
+              }
+            })
+            if (!matchAnyType) {
+              // unOp operator has the wrong type
+              this.errorLog.nodeLog(result, SemError.Mismatch, unOpInputs[index])
             }
-          })
-          if (!matchAnyType) {
-            // unOp operator has the wrong type
-            this.errorLog.nodeLog(result, SemError.Mismatch, unOpInputs[index])
           }
-        }
-      })
-    } else {
-      // binOp
-      binOps.forEach((child, index) => {
-        if (child === op.type) {
-          let matchAnyType = false
-          let matchButFaulty = false
-          binOpInputs[index].forEach((potInput, potIndex) => {
-            if (potInput === exp1.type && potInput === exp2.type) {
-              matchAnyType = true
-            } else if (potInput !== exp1.type && potInput === exp2.type
-                || potInput === exp1.type && potInput !== exp2.type) {
-              this.errorLog.nodeLog(result, SemError.Mismatch, potInput)
-              matchButFaulty = true
+        })
+      } else {
+        // binOp
+        binOps.forEach((child, index) => {
+          if (child === op.type) {
+            let matchAnyType = false
+            let matchButFaulty = false
+            binOpInputs[index].forEach((potInput, potIndex) => {
+              if (potInput === exp1.type && potInput === exp2.type) {
+                matchAnyType = true
+              } else if (potInput !== exp1.type && potInput === exp2.type
+                  || potInput === exp1.type && potInput !== exp2.type) {
+                this.errorLog.nodeLog(result, SemError.Mismatch, potInput)
+                matchButFaulty = true
+              }
+            })
+            if (!matchAnyType && !matchButFaulty) {
+              this.errorLog.nodeLog(result, SemError.Mismatch, binOpInputs[index])
             }
-          })
-          if (!matchAnyType && !matchButFaulty) {
-            this.errorLog.nodeLog(result, SemError.Mismatch, binOpInputs[index])
           }
-        }
-      })
+        })
+      }
     }
-  }
-
+  */
   private initWJSCAst = (ctx: ParserRuleContext | TerminalNode):
     WJSCAst | WJSCTerminal => {
     let charPositionInLine
@@ -1019,30 +1019,30 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   // Check the expressions given to stdlib functions free, return, exit, print
   // and println are of the correct type
   private checkStdlibExpressionType
-      = (visitedStdlib: WJSCAst, visitedExpr: WJSCAst): void => {
-    if (visitedStdlib.token === 'free'
+    = (visitedStdlib: WJSCAst, visitedExpr: WJSCAst): void => {
+      if (visitedStdlib.token === 'free'
         && !isPairType(visitedExpr)
         && !isArrayType(visitedExpr)) {
-      // Free can only be called on pair or array type.
-      this.errorLog.messageLog(visitedExpr.line,
+        // Free can only be called on pair or array type.
+        this.errorLog.messageLog(visitedExpr.line,
           visitedExpr.column, SynError.BadToken,
           'free can only be called on pair or array type.')
-    } else if (visitedStdlib.token === 'return') {
-      // Return cannot only be in body of non-main function
-      // Type of expression must match the return type of the function
-      if (!this.symbolTable.inFunction()) {
-        this.errorLog.pushError(`Semantic Error at ${visitedStdlib.line}:
+      } else if (visitedStdlib.token === 'return') {
+        // Return cannot only be in body of non-main function
+        // Type of expression must match the return type of the function
+        if (!this.symbolTable.inFunction()) {
+          this.errorLog.pushError(`Semantic Error at ${visitedStdlib.line}:
         ${visitedStdlib.column}: return must be in body of non-main function.`)
-      } else {
-        const functionName = this.symbolTable.getFunctionName() || 'main'
-        const functionType = this.symbolTable.globalLookup(functionName)
-        if (!hasSameType(functionType, visitedExpr.type)) {
-          this.errorLog.nodeLog(visitedStdlib, SemError.Mismatch, functionType)
+        } else {
+          const functionName = this.symbolTable.getFunctionName() || 'main'
+          const functionType = this.symbolTable.globalLookup(functionName)
+          if (!hasSameType(functionType, visitedExpr.type)) {
+            this.errorLog.nodeLog(visitedStdlib, SemError.Mismatch, functionType)
+          }
         }
-      }
 
+      }
     }
-  }
 }
 
 export { WJSCSemanticChecker }

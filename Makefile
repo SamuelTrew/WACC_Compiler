@@ -1,6 +1,6 @@
 .PHONY: all install build build-grammar build-src test clean
 
-all: install build test
+all: install build
 
 install:
 	npm install

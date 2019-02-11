@@ -21,15 +21,17 @@ enum SemError {
 }
 
 class WJSCErrorLog {
-
   private errorLog: string[]
 
   constructor() {
     this.errorLog = []
   }
 
-  public nodeLog = (node: WJSCAst, error: SemError | SynError,
-    additionalParam?: (TypeName | TypeName[] | number[])) => {
+  public nodeLog = (
+    node: WJSCAst,
+    error: SemError | SynError,
+    additionalParam?: TypeName | TypeName[] | number[],
+  ) => {
     let errorMessage = ''
     const { line, column, token } = node
     if (this.isSemantic(error)) {
@@ -37,16 +39,24 @@ class WJSCErrorLog {
       if (error === SemError.Undefined) {
         errorMessage += `Type of ${token} is undefined`
       } else if (error === SemError.Mismatch) {
-        errorMessage += `Type of ${token}: ${JSON.stringify(node.type)}`
-          + ` does not match expected type ${JSON.stringify(additionalParam)}`
-      } else if (error === SemError.IncorrectArgNo
-        && additionalParam !== undefined && additionalParam instanceof Array) {
+        errorMessage +=
+          `Type of ${token}: ${JSON.stringify(node.type)}` +
+          ` does not match expected type ${JSON.stringify(additionalParam)}`
+      } else if (
+        error === SemError.IncorrectArgNo &&
+        additionalParam !== undefined &&
+        additionalParam instanceof Array
+      ) {
         const secondParam = additionalParam[1]
         errorMessage +=
-              `${token} does not have ${additionalParam[0]}`
-              + `${additionalParam[1] === -1 ? 'or more'
-              : (additionalParam[0] === additionalParam[1] ?
-                  '' : 'to ' + secondParam)} arguments`
+          `${token} does not have ${additionalParam[0]}` +
+          `${
+          additionalParam[1] === -1
+            ? 'or more'
+            : additionalParam[0] === additionalParam[1]
+              ? ''
+              : 'to ' + secondParam
+          } arguments`
       }
     } else {
       errorMessage += `Syntactic Error '${error} at ${line}:${column}: `
@@ -54,10 +64,15 @@ class WJSCErrorLog {
     this.errorLog.push(errorMessage)
   }
 
-  public messageLog = (line: number, column: number, error: SynError,
-    message: string) => {
-    this.errorLog.push(`Syntax Error '${error}' at ${line}:${column}: `
-      + message)
+  public messageLog = (
+    line: number,
+    column: number,
+    error: SynError,
+    message: string,
+  ) => {
+    this.errorLog.push(
+      `Syntax Error '${error}' at ${line}:${column}: ` + message,
+    )
   }
 
   public runtimeError = (message: string, stack: string) => {
@@ -71,17 +86,20 @@ ${stack}`)
 
   public printErrors = (): string => {
     let errors = ''
-    this.errorLog.forEach((error) => errors += '\n' + error)
+    this.errorLog.forEach((error) => (errors += '\n' + error))
     return errors
   }
 
   public numErrors = (): number => this.errorLog.length
 
-  private isSemantic = (error: SemError | SynError): error is SemError =>
-    error === SemError.IncorrectArgNo
-    || error === SemError.Mismatch
-    || error === SemError.Undefined
+  public clear = () => {
+    this.errorLog = []
+  }
 
+  private isSemantic = (error: SemError | SynError): error is SemError =>
+    error === SemError.IncorrectArgNo ||
+    error === SemError.Mismatch ||
+    error === SemError.Undefined
 }
 
 export { WJSCErrorLog, ErrType, SemError, SynError }
