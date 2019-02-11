@@ -1,6 +1,6 @@
-import { ParserRuleContext } from 'antlr4ts'
-import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
-import { WJSCLexer } from './grammar/WJSCLexer'
+import {ParserRuleContext} from 'antlr4ts'
+import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
+import {WJSCLexer} from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArrayElementContext,
@@ -26,19 +26,11 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
+import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
+import {WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal,} from './WJSCAst'
+import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
+import {WJSCSymbolTable} from './WJSCSymbolTable'
 import {
-  WJSCAst,
-  WJSCFunction,
-  WJSCIdentifier,
-  WJSCParam,
-  WJSCParserRules,
-  WJSCTerminal,
-} from './WJSCAst'
-import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
-import { WJSCSymbolTable } from './WJSCSymbolTable'
-import {
-  ArrayType,
   BaseType,
   getFstInPair,
   getSndInPair,
@@ -373,6 +365,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // 5. Ensure childStats not undefined
     // 6. Ensure childExps are booleans
     // 7. visit types of childStats and childExps
+    // 8. set type of conditional to boolean
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Conditional
     const ifB = ctx.IF()
@@ -425,6 +418,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         }
       }
     }
+    result.type = BaseType.Boolean
     return result
   }
 
@@ -746,7 +740,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           result.children.push(visitedExpr)
         }
       } else if (conditionals) {
-        result.children.push(this.visitConditionalBlocks(conditionals))
+        // result.children.push(this.visitConditionalBlocks(conditionals))
+        this.pushChild(result, this.visitConditionalBlocks(conditionals))
       } else if (begin) {
         const stat = ctx.statement()
         const end = ctx.END()
