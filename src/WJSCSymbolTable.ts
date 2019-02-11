@@ -1,6 +1,6 @@
 import { WJSCAst } from './WJSCAst'
 import { SemError, WJSCErrorLog } from './WJSCErrors'
-import { hasSameType, TypeName } from './WJSCType'
+import { BaseType, hasSameType, TypeName } from './WJSCType'
 
 export class WJSCSymbolTable {
 
@@ -11,6 +11,15 @@ export class WJSCSymbolTable {
   private parentLevel?: WJSCSymbolTable
   private isInFunction: boolean
   private readonly errorLog: WJSCErrorLog
+  private readonly STDLIB_FUNCTIONS: WJSCSymbolTableEntry[] = [
+    {
+      identifier: 'free',
+      params: [
+        BaseType.Pair,
+      ],
+      type: BaseType.None,
+    },
+  ]
 
   constructor(scopeLevel: number,
               parentLevel: WJSCSymbolTable | undefined,
@@ -67,9 +76,8 @@ export class WJSCSymbolTable {
   }
 
   // Add an entry to the symbol table
-  public insertSymbol = (identifier: string,
-                         type: TypeName,
-                         params?: TypeName[]) => {
+  public insertSymbol = (identifier: string, type: TypeName,
+    params?: TypeName[]) => {
     console.log(`Inserting key/value pair ${identifier}:${type}`)
     this.symbolTable.push({ identifier, type, params })
   }
@@ -101,8 +109,8 @@ export class WJSCSymbolTable {
   // Return whether the node given has the same type in the symbol table
   public checkType = (astNode: WJSCAst): boolean => {
     const lookupResult = this.globalLookup(astNode.token)
-    console.log(`${astNode.token} should have type ${lookupResult},
-      actual type ${astNode.type}.`)
+    console.log(`${astNode.token} should have type ${lookupResult},`
+      + ` actual type ${astNode.type}.`)
     if (lookupResult === undefined) {
       this.errorLog.nodeLog(astNode, SemError.Undefined)
       return false
