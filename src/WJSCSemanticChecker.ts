@@ -1,5 +1,6 @@
 import { ParserRuleContext } from 'antlr4ts'
 import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import {arrayify} from 'tslint/lib/utils'
 import { WJSCLexer } from './grammar/WJSCLexer'
 import {
     ArgListContext,
@@ -38,6 +39,7 @@ import {
 import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 import {
+    ArrayType,
     BaseType,
     getFstInPair,
     getSndInPair,
@@ -157,7 +159,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         this.errorLog.nodeLog(result, SemError.Undefined)
       }
       // This is the expr that must be present
-      this.pushChild(result, firstChild)
+      result.children.push(firstChild)
       const length = expressions.length - 1 >= comma.length ?
         expressions.length - 1 : comma.length
       let index = 0
@@ -175,11 +177,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             this.errorLog.nodeLog(result, SemError.Mismatch, firstChild.type)
           }
           // result.children.push(result, childStat)
-          this.pushChild(result, childStat)
+          result.children.push(childStat)
         }
         index++
       }
       result.children.push(this.visitTerminal(ctx.RBRACK()))
+      result.type = { arrayType: firstChild.type }
     }
     return result
   }
@@ -199,7 +202,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         (type instanceof BaseTypeContext) ? this.visitBaseType(type) :
           (type instanceof ArrayTypeContext) ? this.visitArrayType(type) :
             this.visitPairType(type)
-      this.pushChild(result, typeNode)
+      result.children.push(typeNode)
+      result.type = { arrayType: typeNode.type }
     }
     result.children.push(this.visitTerminal(ctx.RBRACK()))
     return result
@@ -338,7 +342,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         }
       } else if (lhsType && lhsIdent) {
         // Assignment
+        console.log('here')
         const visitedLhsType = this.visitType(lhsType).type
+        console.log(visitedLhsType)
         const visitedIdentifier = this.visitTerminal(lhsIdent)
         visitedIdentifier.type = visitedLhsType
         this.pushChild(result, visitedIdentifier)
