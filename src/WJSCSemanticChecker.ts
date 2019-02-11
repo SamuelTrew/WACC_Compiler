@@ -1,6 +1,6 @@
-import { ParserRuleContext } from 'antlr4ts'
-import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
-import { WJSCLexer } from './grammar/WJSCLexer'
+import {ParserRuleContext} from 'antlr4ts'
+import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
+import {WJSCLexer} from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArrayElementContext,
@@ -26,11 +26,10 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
-import { WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam,
-  WJSCParserRules, WJSCTerminal } from './WJSCAst'
-import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
-import { WJSCSymbolTable } from './WJSCSymbolTable'
+import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
+import {WJSCAst, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCTerminal} from './WJSCAst'
+import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
+import {WJSCSymbolTable} from './WJSCSymbolTable'
 import {
   BaseType,
   getFstInPair,
@@ -924,7 +923,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       let outputType
       const unOps = ['!', '-', 'len', 'ord', 'chr']
       const unOpInputs =
-          [[BaseType.Boolean], [BaseType.Integer], [BaseType.Pair],
+          [[BaseType.Boolean], [BaseType.Integer],
+           [BaseType.String], // Can take array too
            [BaseType.Character], [BaseType.Integer]]
       const unOpOutputs =
           [BaseType.Boolean, BaseType.Integer,
@@ -939,9 +939,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
            [BaseType.Integer, BaseType.Character],
            [BaseType.Integer, BaseType.Character],
            [BaseType.Integer, BaseType.Character],
-           [BaseType.Integer, BaseType.Character,
+           [BaseType.Integer, BaseType.Character, BaseType.String,
             BaseType.Boolean, BaseType.Pair], // Can take array too
-           [BaseType.Integer, BaseType.Character,
+           [BaseType.Integer, BaseType.Character, BaseType.String,
             BaseType.Boolean, BaseType.Pair], // Can take array too
            [BaseType.Boolean], [BaseType.Boolean]]
       const binOpOutputs =
@@ -961,6 +961,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
                 outputType = unOpOutputs[index]
               }
             })
+            if (index === 2 && isArrayType(exp1.type)) {
+              matchAnyType = true
+            }
             if (!matchAnyType) {
               // unOp operator has the wrong argument type
               this.errorLog.nodeLog(exp1, SemError.Mismatch, unOpInputs[index])
