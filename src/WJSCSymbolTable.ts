@@ -4,19 +4,23 @@ import { hasSameType, TypeName } from './WJSCType'
 
 export class WJSCSymbolTable {
 
+  private functionName?: string
   private currentScopeLevel: number
   private symbolTable: WJSCSymbolTableEntry[]
   private childrenTables: WJSCSymbolTable[]
   private parentLevel?: WJSCSymbolTable
+  private isInFunction: boolean
   private readonly errorLog: WJSCErrorLog
 
   constructor(scopeLevel: number,
               parentLevel: WJSCSymbolTable | undefined,
+              isInFunction: boolean,
               errorLog: WJSCErrorLog) {
     this.currentScopeLevel = scopeLevel
     this.symbolTable = []
     this.childrenTables = []
     this.parentLevel = parentLevel
+    this.isInFunction = isInFunction
     this.errorLog = errorLog
   }
 
@@ -28,12 +32,27 @@ export class WJSCSymbolTable {
     return this.parentLevel
   }
 
+  public inFunction = (): boolean => {
+    return this.isInFunction
+  }
+
+  public getFunctionName = (): string | undefined => {
+    return this.functionName
+  }
+
   // Create new child symbol table
   public enterScope = (): WJSCSymbolTable => {
     console.log('Entering scope...')
     const childTable = new WJSCSymbolTable(
-      this.currentScopeLevel + 1, this, this.errorLog)
+      this.currentScopeLevel + 1, this, this.isInFunction, this.errorLog)
     this.childrenTables.push(childTable)
+    return childTable
+  }
+
+  public enterFuncScope = (functionName: string): WJSCSymbolTable => {
+    const childTable = this.enterScope()
+    childTable.functionName = functionName
+    childTable.isInFunction = true
     return childTable
   }
 

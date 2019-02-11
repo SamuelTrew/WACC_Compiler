@@ -43,6 +43,7 @@ import {
   getFstInPair,
   getSndInPair,
   hasSameType,
+  isArrayType,
   isPairType,
   MAX_INT,
   MIN_INT,
@@ -528,7 +529,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // Check types of Params and Statements
     let paramsTypes: TypeName[]
     // Enter child scope
-    this.symbolTable = this.symbolTable.enterScope()
+    this.symbolTable = this.symbolTable.enterFuncScope(ident.value)
     if (paramList) {
       const visitedParamList = this.visitParamList(paramList)
       paramsTypes = visitedParamList.paramTypes
@@ -536,10 +537,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else {
       paramsTypes = []
     }
+    // Insert inside for recursive call check
+    this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
     result.children.push(this.visitStatement(ctx.statement()))
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
-
     this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
 
     return result
@@ -694,10 +696,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   public visitStatement = (ctx: StatementContext): WJSCAst => {
-    /** Ensure either skip, Assignments, read, singleExp, conditional,
+    /** Ensure either skip, Assignments, read, stdlib, conditional,
      * begin/end or semicolon
      * not undefined
-     * If read, ensures lhs not undefined 3. If singleExp,
+     * If read, ensures lhs not undefined 3. If stdlib,
      * ensures expr not undefined
      * If begin, ensures stat and end not undefined, and stat == 1
      * If semicolon, ensure stat not undefined, stat == 1
@@ -710,12 +712,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const skip = ctx.WSKIP()
     const assignment = ctx.assignment()
     const read = ctx.READ()
-    const singleExp = ctx.stdlib()
+    const stdlib = ctx.stdlib()
     const conditionals = ctx.conditionalBlocks()
     const begin = ctx.BEGIN()
     const semicolon = ctx.SEMICOLON()
     if (!result && !skip && !assignment
-      && !read && !singleExp && !conditionals && !begin
+      && !read && !stdlib && !conditionals && !begin
       && !semicolon) {
       this.errorLog.nodeLog(result, SemError.Undefined)
     } else {
@@ -731,13 +733,17 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           result.children.push(this.visitTerminal(read))
           this.pushChild(result, this.visitAssignLhs(lhs))
         }
-      } else if (singleExp) {
+      } else if (stdlib) {
         const expression = ctx.expression()
-        result.children.push(this.visitStdlib(singleExp))
+        const visitedStdlib = this.visitStdlib(stdlib)
+        result.children.push(visitedStdlib)
         if (!expression) {
           this.errorLog.nodeLog(result, SemError.Undefined)
         } else {
-          result.children.push(this.visitExpression(expression))
+          const visitedExpr = this.visitExpression(expression)
+          // TODO Implement type check
+          this.checkStdlibExpressionType(visitedStdlib, visitedExpr)
+          result.children.push(visitedExpr)
         }
       } else if (conditionals) {
         result.children.push(this.visitConditionalBlocks(conditionals))
@@ -786,7 +792,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     if (!lib) {
       this.errorLog.nodeLog(result, SemError.Undefined)
     } else {
-      // TODO Implement type check
       result.children.push(this.visitTerminal(lib))
     }
     return result
@@ -1012,6 +1017,34 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // TODO: PushChild must find type of child if child is an ident
     result.type = child.type
     result.children.push(child)
+  }
+
+  // Check the expressions given to stdlib functions free, return, exit, print
+  // and println are of the correct type
+  private checkStdlibExpressionType
+      = (visitedStdlib: WJSCAst, visitedExpr: WJSCAst): void => {
+    if (visitedStdlib.token === 'free'
+        && !isPairType(visitedExpr)
+        && !isArrayType(visitedExpr)) {
+      // Free can only be called on pair or array type.
+      this.errorLog.messageLog(visitedExpr.line,
+          visitedExpr.column, SynError.BadToken,
+          'free can only be called on pair or array type.')
+    } else if (visitedStdlib.token === 'return') {
+      // Return cannot only be in body of non-main function
+      // Type of expression must match the return type of the function
+      if (!this.symbolTable.inFunction()) {
+        this.errorLog.pushError(`Semantic Error at ${visitedStdlib.line}:
+        ${visitedStdlib.column}: return must be in body of non-main function.`)
+      } else {
+        const functionName = this.symbolTable.getFunctionName() || 'main'
+        const functionType = this.symbolTable.globalLookup(functionName)
+        if (!hasSameType(functionType, visitedExpr.type)) {
+          this.errorLog.nodeLog(visitedStdlib, SemError.Mismatch, functionType)
+        }
+      }
+
+    }
   }
 }
 
