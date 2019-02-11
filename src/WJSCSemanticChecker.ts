@@ -886,7 +886,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       const str = strRegexTest.exec(token)
       if (str) {
         terminal.value = str[0]
-      } else {
+      } else if (!token) {
         this.errorLog.nodeLog(terminal, SynError.IllegalStr)
       }
     } else if (WJSCLexer.INTEGER <= type && type <= WJSCLexer.PAIR) {
