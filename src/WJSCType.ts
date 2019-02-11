@@ -6,7 +6,7 @@ enum BaseType {
   Integer = 'int',
   Boolean = 'bool',
   Character = 'char',
-  String = 'str',
+  String = 'string',
   Pair = 'pair',
   Any = 'any',
   None = 'none',

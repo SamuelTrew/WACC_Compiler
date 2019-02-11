@@ -248,8 +248,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         } else {
           const visitedIdent = this.visitTerminal(ident)
           visitedIdent.type = this.symbolTable.globalLookup(visitedIdent.value)
-          console.log('Visited ident value: ' + visitedIdent.value)
-          console.log('Visited ident type: ' + visitedIdent.type)
           this.pushChild(result, visitedIdent)
         }
         if (argList) {
