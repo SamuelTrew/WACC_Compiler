@@ -963,6 +963,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             })
             if (index === 2 && isArrayType(exp1.type)) {
               matchAnyType = true
+              outputType = BaseType.Integer
             }
             if (!matchAnyType) {
               // unOp operator has the wrong argument type
