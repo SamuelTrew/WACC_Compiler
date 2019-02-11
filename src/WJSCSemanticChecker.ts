@@ -148,6 +148,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           if (!hasSameType(childStat.type, firstChild.type)) {
             this.errorLog.nodeLog(result, SemError.Mismatch, firstChild.type)
           }
+          // result.children.push(result, childStat)
           this.pushChild(result, childStat)
         }
         index++
@@ -305,9 +306,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       if (lhs) {
         // Reassignment
         const visitedLhs = this.visitAssignLhs(lhs)
-        this.pushChild(result, visitedLhs)
         if (!hasSameType(visitedLhs.type, visitedRhs.type)) {
-          this.errorLog.nodeLog(visitedRhs, SemError.Mismatch, visitedLhs.type)
+            this.errorLog.nodeLog(visitedRhs,
+                SemError.Mismatch, visitedLhs.type)
         }
       } else if (lhsType && lhsIdent) {
         // Assignment
@@ -315,7 +316,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         const visitedIdentifier = this.visitTerminal(lhsIdent)
         visitedIdentifier.type = visitedLhsType
         this.pushChild(result, visitedIdentifier)
-
         /* Ensure RHS has same type as LHS */
         if (!hasSameType(visitedRhs.type, visitedLhsType)) {
           this.errorLog.nodeLog(visitedRhs, SemError.Mismatch, visitedLhsType)
