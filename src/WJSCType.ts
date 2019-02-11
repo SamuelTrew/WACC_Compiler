@@ -61,6 +61,8 @@ const isArrayType = (tname: any): tname is ArrayType =>
 const isPairType = (tname: any): tname is PairType =>
   tname.pairType !== undefined
 
+// Check if the given types are the same or equivalent.
+// 'pair' can be element of a pair and is equivalent to a PairType
 const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
   if (!typeA || !typeB) { return false }
   if (isBaseType(typeA) && isBaseType(typeB)) {
@@ -80,10 +82,12 @@ const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
   }
 }
 
+// Return type of the first element of a pair
 const getFstInPair = (pairType: PairType): TypeName => {
   return pairType.pairType[0]
 }
 
+// Return type of the second element of a pair
 const getSndInPair = (pairType: PairType): TypeName => {
   return pairType.pairType[1]
 }

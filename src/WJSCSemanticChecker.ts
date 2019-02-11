@@ -786,6 +786,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     if (!lib) {
       this.errorLog.nodeLog(result, SemError.Undefined)
     } else {
+      // TODO Implement type check
       result.children.push(this.visitTerminal(lib))
     }
     return result
@@ -1006,10 +1007,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
   }
 
-  /* Pushes a child to result and inherits its type */
+  /* Pushes a child to result and copies its type */
   private pushChild = (result: WJSCAst, child: WJSCAst) => {
-    // WARNING: PushChild must find type of child if child is an ident!
-    // WARNING: PushChild needs to know how to deal if child is pairType!
+    // TODO: PushChild must find type of child if child is an ident
     result.type = child.type
     result.children.push(child)
   }
