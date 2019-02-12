@@ -20,9 +20,7 @@ interface PairType {
   pairType: [TypeName, TypeName]
 }
 
-export type TerminalType = TerminalKeywords
-  | TerminalOperators
-  | BaseType
+export type TerminalType = TerminalKeywords | TerminalOperators | BaseType
 
 enum TerminalKeywords {
   Program = 'program',
@@ -51,21 +49,20 @@ enum TerminalOperators {
   Assignment = 'assign',
 }
 
-const MIN_INT = - Math.pow(2, 31)
-const MAX_INT = (- MIN_INT) - 1
+const MIN_INT = -Math.pow(2, 31)
+const MAX_INT = -MIN_INT - 1
 
 const isWJSCType = (tname: any): tname is TypeName =>
   isBaseType(tname) || isArrayType(tname) || isPairType(tname)
 
 const isBaseType = (tname: any): tname is BaseType =>
-  typeof tname === 'string' && (
-    tname === 'int'
-    || tname === 'bool'
-    || tname === 'char'
-    || tname === 'string'
-    || tname === 'pair'
-    || tname === 'any'
-  )
+  typeof tname === 'string' &&
+  (tname === 'int' ||
+    tname === 'bool' ||
+    tname === 'char' ||
+    tname === 'string' ||
+    tname === 'pair' ||
+    tname === 'any')
 
 const isArrayType = (tname: any): tname is ArrayType =>
   tname.arrayType !== undefined && isWJSCType(tname.arrayType)
@@ -74,19 +71,25 @@ const isPairType = (tname: any): tname is PairType =>
   tname.pairType !== undefined
 
 const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
-  if (!typeA || !typeB) { return false }
+  if (!typeA || !typeB) {
+    return false
+  }
   if (isBaseType(typeA) && isBaseType(typeB)) {
     return typeA === typeB || typeA === BaseType.Any || typeB === BaseType.Any
   } else if (isPairType(typeA)) {
-    return hasSameType(typeB, BaseType.Pair)
-      || isPairType(typeB)
-      && hasSameType(typeA.pairType[0], typeB.pairType[0])
-      && hasSameType(typeA.pairType[1], typeB.pairType[1])
+    return (
+      hasSameType(typeB, BaseType.Pair) ||
+      (isPairType(typeB) &&
+        hasSameType(typeA.pairType[0], typeB.pairType[0]) &&
+        hasSameType(typeA.pairType[1], typeB.pairType[1]))
+    )
   } else if (isPairType(typeB)) {
-    return hasSameType(typeA, BaseType.Pair)
-      || isPairType(typeA)
-      && hasSameType(typeA.pairType[0], typeB.pairType[0])
-      && hasSameType(typeA.pairType[1], typeB.pairType[1])
+    return (
+      hasSameType(typeA, BaseType.Pair) ||
+      (isPairType(typeA) &&
+        hasSameType(typeA.pairType[0], typeB.pairType[0]) &&
+        hasSameType(typeA.pairType[1], typeB.pairType[1]))
+    )
   } else if (isArrayType(typeA) && hasSameType(typeB, BaseType.String)) {
     return typeA.arrayType === BaseType.Character
   } else if (isArrayType(typeB) && hasSameType(typeA, BaseType.String)) {
@@ -107,7 +110,19 @@ const getSndInPair = (pairType: PairType): TypeName => {
 }
 
 export {
-  MAX_INT, MIN_INT, TypeName, BaseType, ArrayType, PairType, isBaseType,
-  isArrayType, isPairType, hasSameType, TerminalKeywords, TerminalOperators,
-  getFstInPair, getSndInPair, Stdlib,
+  MAX_INT,
+  MIN_INT,
+  TypeName,
+  BaseType,
+  ArrayType,
+  PairType,
+  isBaseType,
+  isArrayType,
+  isPairType,
+  hasSameType,
+  TerminalKeywords,
+  TerminalOperators,
+  getFstInPair,
+  getSndInPair,
+  Stdlib,
 }

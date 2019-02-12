@@ -61,6 +61,11 @@ interface WJSCIdentifier extends WJSCAst {
 }
 
 export {
-  WJSCParserRules, WJSCAst, WJSCTerminal, WJSCFunction, WJSCStatement,
-  WJSCIdentifier, WJSCParam,
+  WJSCParserRules,
+  WJSCAst,
+  WJSCTerminal,
+  WJSCFunction,
+  WJSCStatement,
+  WJSCIdentifier,
+  WJSCParam,
 }

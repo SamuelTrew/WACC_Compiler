@@ -3,7 +3,6 @@ import { SemError, WJSCErrorLog } from './WJSCErrors'
 import { BaseType, hasSameType, TypeName } from './WJSCType'
 
 export class WJSCSymbolTable {
-
   private functionName?: string
   private currentScopeLevel: number
   private symbolTable: WJSCSymbolTableEntry[]
@@ -12,8 +11,12 @@ export class WJSCSymbolTable {
   private isInFunction: boolean
   private readonly errorLog: WJSCErrorLog
 
-  constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined,
-    isInFunction: boolean, errorLog: WJSCErrorLog) {
+  constructor(
+    scopeLevel: number,
+    parentLevel: WJSCSymbolTable | undefined,
+    isInFunction: boolean,
+    errorLog: WJSCErrorLog,
+  ) {
     this.currentScopeLevel = scopeLevel
     this.symbolTable = []
     this.childrenTables = []
@@ -42,7 +45,11 @@ export class WJSCSymbolTable {
   public enterScope = (): WJSCSymbolTable => {
     console.log('Entering scope...')
     const childTable = new WJSCSymbolTable(
-      this.currentScopeLevel + 1, this, this.isInFunction, this.errorLog)
+      this.currentScopeLevel + 1,
+      this,
+      this.isInFunction,
+      this.errorLog,
+    )
     this.childrenTables.push(childTable)
     return childTable
   }
@@ -65,8 +72,11 @@ export class WJSCSymbolTable {
   }
 
   // Add an entry to the symbol table
-  public insertSymbol = (identifier: string, type: TypeName,
-    params?: TypeName[]) => {
+  public insertSymbol = (
+    identifier: string,
+    type: TypeName,
+    params?: TypeName[],
+  ) => {
     console.log(`Inserting key/value pair ${identifier}:${type}`)
     this.symbolTable.push({ identifier, type, params })
   }
@@ -98,8 +108,10 @@ export class WJSCSymbolTable {
   // Return whether the node given has the same type in the symbol table
   public checkType = (astNode: WJSCAst): boolean => {
     const lookupResult = this.globalLookup(astNode.token)
-    console.log(`${astNode.token} should have type ${lookupResult},`
-      + ` actual type ${astNode.type}.`)
+    console.log(
+      `${astNode.token} should have type ${lookupResult},` +
+        ` actual type ${astNode.type}.`,
+    )
     if (lookupResult === undefined) {
       this.errorLog.semErr(astNode, SemError.Undefined)
       return false

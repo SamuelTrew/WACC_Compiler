@@ -63,7 +63,6 @@ import {
  */
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   implements WJSCParserVisitor<WJSCAst> {
-
   public errorLog: WJSCErrorLog
   public symbolTable: WJSCSymbolTable
 
@@ -74,7 +73,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   public visitArithmeticOperator = (ctx: ArithmeticOperatorContext) => {
-    return this.initWJSCAst(ctx)
+    const result = this.initWJSCAst(ctx)
+    result.parserRule = WJSCParserRules.Operator
+    const operator =
+      ctx.MINUS() ||
+      ctx.PLUS() ||
+      ctx.DIVIDE() ||
+      ctx.MULTIPLY() ||
+      ctx.MODULO()
+    if (operator) {
+      result.token = operator.toString()
+    }
+    return result
   }
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
@@ -118,7 +128,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         currElemType = BaseType.Character
       } else if (isArrayType(currElemType)) {
         currElemType = currElemType.arrayType
-      } else  {
+      } else {
         this.errorLog.semErr(result, SemError.Undefined)
       }
     })
@@ -140,17 +150,25 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       }
     } else {
       const comma = ctx.COMMA()
-      if (expressions.length - 1 !== comma.length
-        && expressions.length - 1 >= comma.length) {
+      if (
+        expressions.length - 1 !== comma.length &&
+        expressions.length - 1 >= comma.length
+      ) {
         // ^ There are less commas than expected for the given number of exprs
-        this.errorLog.semErr(result, SemError.IncorrectArgNo,
-          [expressions.length - 1, expressions.length - 1])
-      } else if (expressions.length - 1 !== comma.length
-        && expressions.length - 1 < comma.length) {
+        this.errorLog.semErr(result, SemError.IncorrectArgNo, [
+          expressions.length - 1,
+          expressions.length - 1,
+        ])
+      } else if (
+        expressions.length - 1 !== comma.length &&
+        expressions.length - 1 < comma.length
+      ) {
         // ^ Else if there are less expressions than expected for the given
         // number of commas
-        this.errorLog.semErr(result, SemError.IncorrectArgNo,
-          [comma.length + 1, comma.length + 1])
+        this.errorLog.semErr(result, SemError.IncorrectArgNo, [
+          comma.length + 1,
+          comma.length + 1,
+        ])
       }
       result.children.push(this.visitTerminal(ctx.LBRACK()))
       const firstChild = this.visitExpression(expressions[0])
@@ -162,8 +180,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       result.type = {
         arrayType: firstChild.type,
       }
-      const length = expressions.length - 1 >= comma.length ?
-        expressions.length - 1 : comma.length
+      const length =
+        expressions.length - 1 >= comma.length
+          ? expressions.length - 1
+          : comma.length
       let index = 0
       while (index !== length) {
         if (index < comma.length) {
@@ -201,9 +221,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
       const arrayNode =
-        (type instanceof BaseTypeContext) ? this.visitBaseType(type) :
-          (type instanceof ArrayTypeContext) ? this.visitArrayType(type) :
-            this.visitPairType(type)
+        type instanceof BaseTypeContext
+          ? this.visitBaseType(type)
+          : type instanceof ArrayTypeContext
+          ? this.visitArrayType(type)
+          : this.visitPairType(type)
       result.type = {
         arrayType: arrayNode.type,
       }
@@ -222,10 +244,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
       const lhsNode =
-        (lhsElems instanceof TerminalNode ? this.visitTerminal(lhsElems) :
-          (lhsElems instanceof ArrayElementContext ?
-            this.visitArrayElement(lhsElems) :
-            this.visitPairElement(lhsElems)))
+        lhsElems instanceof TerminalNode
+          ? this.visitTerminal(lhsElems)
+          : lhsElems instanceof ArrayElementContext
+          ? this.visitArrayElement(lhsElems)
+          : this.visitPairElement(lhsElems)
       this.pushChild(result, lhsNode)
 
       // Check identifier already declared
@@ -250,8 +273,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // WARNING: ENSURE ARG LIST MATCHES PARAM LIST
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Assignment
-    const possibles = ctx.arrayLiteral() || ctx.pairElement() || ctx.CALL()
-      || ctx.expression()
+    const possibles =
+      ctx.arrayLiteral() || ctx.pairElement() || ctx.CALL() || ctx.expression()
     if (!possibles) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
@@ -281,7 +304,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         }
       } else {
         // These are all the children with expr in it
-        const expressions = (ctx.expression()).map(this.visitExpression)
+        const expressions = ctx.expression().map(this.visitExpression)
         if (expressions.length === 1) {
           if (!expressions[0]) {
             this.errorLog.semErr(result, SemError.Undefined)
@@ -340,8 +363,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // Reassignment
         const visitedLhs = this.visitAssignLhs(lhs)
         if (!hasSameType(visitedLhs.type, visitedRhs.type)) {
-          this.errorLog.semErr(visitedRhs,
-            SemError.Mismatch, visitedLhs.type)
+          this.errorLog.semErr(visitedRhs, SemError.Mismatch, visitedLhs.type)
         }
       } else if (lhsType && lhsIdent) {
         // Assignment
@@ -369,8 +391,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // 1. Ensure one of base type 2. visit these types 3. visit types of types
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Type
-    const base = ctx.INTEGER() || ctx.BOOLEAN() || ctx.CHARACTER()
-      || ctx.STRING()
+    const base =
+      ctx.INTEGER() || ctx.BOOLEAN() || ctx.CHARACTER() || ctx.STRING()
     if (!base) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
@@ -379,20 +401,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
     return result
   }
-
-  /*public visitBinaryOperator = (ctx: BinaryOperatorContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx)
-    result.parserRule = WJSCParserRules.Operator
-    const binOP = ctx.MINUS() || ctx.PLUS() || ctx.DIVIDE() || ctx.EQUALS()
-      || ctx.GREATER_EQUAL() || ctx.GREATER_THAN() || ctx.LESS_EQUAL()
-      || ctx.LESS_THAN() || ctx.LOGICAL_AND() || ctx.LOGICAL_OR()
-      || ctx.MODULO() || ctx.MULTIPLY() || ctx.NEQUALS() || ctx.NSTRICT_EQUALS()
-      || ctx.STRICT_EQUALS()
-    if (binOP) {
-      result.token = binOP.toString()
-    }
-    return result
-  } */
 
   public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCAst => {
     // 1. Ensure either ifThenElseFi or whileDoDone
@@ -414,10 +422,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const doneB = ctx.DONE()
     const childExp = ctx.expression()
     const childStat = ctx.statement()
-    const ifThenElseFi = (ifB) && (thenB) && (elseB) && (fiB)
-      && (childExp) && (childStat)
-    const whileDoDone = (whileB) && (doB) && (doneB)
-      && (childExp) && (childStat)
+    const ifThenElseFi = ifB && thenB && elseB && fiB && childExp && childStat
+    const whileDoDone = whileB && doB && doneB && childExp && childStat
     if (!ifThenElseFi && !whileDoDone) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
@@ -441,13 +447,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             this.errorLog.semErr(result, SemError.Undefined)
           }
         })
-        if ((ifB) && (thenB) && (elseB) && (fiB)) {
+        if (ifB && thenB && elseB && fiB) {
           // <- tsLint wont allow ifThen...
           // visiting ifThenElseFi's unique children
           result.children.push(this.visitTerminal(ifB))
           result.children.push(this.visitTerminal(thenB))
           result.children.push(this.visitTerminal(fiB))
-        } else if ((whileB) && (doB) && (doneB)) {
+        } else if (whileB && doB && doneB) {
           // visiting whileDoDone's unique children
           result.children.push(this.visitTerminal(whileB))
           result.children.push(this.visitTerminal(doB))
@@ -460,11 +466,28 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   public visitBooleanOperator = (ctx: BooleanOperatorContext) => {
-    return this.initWJSCAst(ctx)
+    const result = this.initWJSCAst(ctx)
+    result.parserRule = WJSCParserRules.Operator
+    const operator = ctx.LOGICAL_AND() || ctx.LOGICAL_OR()
+    if (operator) {
+      result.token = operator.toString()
+    }
+    return result
   }
 
   public visitComparisonOperator = (ctx: ComparisonOperatorContext) => {
-    return this.initWJSCAst(ctx)
+    const result = this.initWJSCAst(ctx)
+    result.parserRule = WJSCParserRules.Operator
+    const operator =
+      ctx.EQUALS() ||
+      ctx.GREATER_EQUAL() ||
+      ctx.LESS_EQUAL() ||
+      ctx.LESS_THAN() ||
+      ctx.NEQUALS()
+    if (operator) {
+      result.token = operator.toString()
+    }
+    return result
   }
 
   public visitExpression = (ctx: ExpressionContext): WJSCAst => {
@@ -478,15 +501,27 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Expression
     const intLiterals = ctx.integerLiteral()
-    const literals = ctx.BOOLEAN_LITERAL() || ctx.CHARACTER_LITERAL()
-      || ctx.STRING_LITERAL() || ctx.PAIR_LITERAL()
+    const literals =
+      ctx.BOOLEAN_LITERAL() ||
+      ctx.CHARACTER_LITERAL() ||
+      ctx.STRING_LITERAL() ||
+      ctx.PAIR_LITERAL()
     const ident = ctx.IDENTIFIER()
     const arrayElem = ctx.arrayElement()
-    const operators = ctx.unaryOperator() || ctx.arithmeticOperator()
-      || ctx.comparisonOperator() || ctx.booleanOperator()
+    const operators =
+      ctx.unaryOperator() ||
+      ctx.arithmeticOperator() ||
+      ctx.comparisonOperator() ||
+      ctx.booleanOperator()
     const bracket = ctx.LPAREN()
-    if (!intLiterals && !literals && !ident && !arrayElem && !operators
-      && !bracket) {
+    if (
+      !intLiterals &&
+      !literals &&
+      !ident &&
+      !arrayElem &&
+      !operators &&
+      !bracket
+    ) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
       if (literals) {
@@ -535,7 +570,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               result.children.push(exp1)
               result.type = this.checkOperator(visitedOp, exp1)
             }
-          } else if (operators) {
+          } else if (operators !== undefined) {
             if (expressions.length !== 2) {
               this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
             } else {
@@ -618,11 +653,19 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.value = value
     result.type = BaseType.Integer
     if (value > MAX_INT) {
-      this.errorLog.synErr(result.line, result.column, SynError.Overflow,
-        'Integer Overflow')
+      this.errorLog.synErr(
+        result.line,
+        result.column,
+        SynError.Overflow,
+        'Integer Overflow',
+      )
     } else if (value < MIN_INT) {
-      this.errorLog.synErr(result.line, result.column, SynError.Underflow,
-        'Integer Underflow')
+      this.errorLog.synErr(
+        result.line,
+        result.column,
+        SynError.Underflow,
+        'Integer Underflow',
+      )
     }
     return result
   }
@@ -665,9 +708,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
       const possiblesType =
-        (possibles instanceof BaseTypeContext) ? this.visitBaseType(possibles) :
-          (possibles instanceof ArrayTypeContext) ?
-            this.visitArrayType(possibles) : this.visitTerminal(possibles)
+        possibles instanceof BaseTypeContext
+          ? this.visitBaseType(possibles)
+          : possibles instanceof ArrayTypeContext
+          ? this.visitArrayType(possibles)
+          : this.visitTerminal(possibles)
       this.pushChild(result, possiblesType)
     }
     return result
@@ -764,9 +809,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const conditionals = ctx.conditionalBlocks()
     const begin = ctx.BEGIN()
     const semicolon = ctx.SEMICOLON()
-    if (!result && !skip && !assignment
-      && !read && !stdlib && !conditionals && !begin
-      && !semicolon) {
+    if (
+      !result &&
+      !skip &&
+      !assignment &&
+      !read &&
+      !stdlib &&
+      !conditionals &&
+      !begin &&
+      !semicolon
+    ) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
       if (skip) {
@@ -835,11 +887,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   public visitStdlib = (ctx: StdlibContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
-    const lib = ctx.FREE()
-      || ctx.RETURN()
-      || ctx.EXIT()
-      || ctx.PRINT()
-      || ctx.PRINTLN()
+    const lib =
+      ctx.FREE() || ctx.RETURN() || ctx.EXIT() || ctx.PRINT() || ctx.PRINTLN()
     if (!lib) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
@@ -856,9 +905,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
       const childType =
-        (type instanceof BaseTypeContext) ? this.visitBaseType(type) :
-          (type instanceof ArrayTypeContext) ? this.visitArrayType(type) :
-            this.visitPairType(type)
+        type instanceof BaseTypeContext
+          ? this.visitBaseType(type)
+          : type instanceof ArrayTypeContext
+          ? this.visitArrayType(type)
+          : this.visitPairType(type)
       this.pushChild(result, childType)
     }
     return result
@@ -885,23 +936,29 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       terminal.terminalType = TerminalOperators.Operator
     } else if (type === WJSCLexer.ASSIGNMENT) {
       terminal.terminalType = TerminalOperators.Assignment
-    } else if (WJSCLexer.LOGICAL_NEGATION <= type
-      && type <= WJSCLexer.CHARACTER_OF) {
+    } else if (
+      WJSCLexer.LOGICAL_NEGATION <= type &&
+      type <= WJSCLexer.CHARACTER_OF
+    ) {
       terminal.terminalType = TerminalOperators.Operator
     } else if (type === WJSCLexer.BOOLEAN_LITERAL) {
       terminal.terminalType = terminal.type = BaseType.Boolean
-      terminal.value = (token === 'true')
+      terminal.value = token === 'true'
     } else if (type === WJSCLexer.CHARACTER_LITERAL) {
       terminal.terminalType = terminal.type = BaseType.Character
-      const charRegexTest
+      const charRegexTest =
         // tslint:disable-next-line:max-line-length
-        = /(?<=')([\u0000-\u0021]|[\u0023-\u0026]|[\u0028-\u005b]|[\u005d-\u007f]|\\(0|b|t|n|f|r|'|\\|"))(?=')/
+        /(?<=')([\u0000-\u0021]|[\u0023-\u0026]|[\u0028-\u005b]|[\u005d-\u007f]|\\(0|b|t|n|f|r|'|\\|"))(?=')/
       const char = charRegexTest.exec(token)
       if (char) {
         terminal.value = char[0]
       } else {
-        this.errorLog.synErr(terminal.line, terminal.column,
-          SynError.IllegalChar, 'Illegal Character')
+        this.errorLog.synErr(
+          terminal.line,
+          terminal.column,
+          SynError.IllegalChar,
+          'Illegal Character',
+        )
       }
     } else if (type === WJSCLexer.DIGIT) {
       terminal.terminalType = terminal.type = BaseType.Integer
@@ -911,31 +968,35 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       terminal.value = null
     } else if (type === WJSCLexer.STRING_LITERAL) {
       terminal.terminalType = terminal.type = BaseType.String
-      const strRegexTest
+      const strRegexTest =
         // tslint:disable-next-line:max-line-length
-        = /(?<=")([\u0000-\u0021]|[\u0023-\u0026]|[\u0028-\u005b]|[\u005d-\u007f]|\\(0|b|t|n|f|r|'|\\|"))+(?=")/
+        /(?<=")([\u0000-\u0021]|[\u0023-\u0026]|[\u0028-\u005b]|[\u005d-\u007f]|\\(0|b|t|n|f|r|'|\\|"))+(?=")/
       const str = strRegexTest.exec(token)
       if (str) {
         terminal.value = str[0]
       } else if (!token) {
-        this.errorLog.synErr(terminal.line, terminal.column,
-          SynError.IllegalStr, 'Illegal String')
+        this.errorLog.synErr(
+          terminal.line,
+          terminal.column,
+          SynError.IllegalStr,
+          'Illegal String',
+        )
       }
     } else if (WJSCLexer.INTEGER <= type && type <= WJSCLexer.PAIR) {
       switch (type) {
-        case (WJSCLexer.INTEGER):
+        case WJSCLexer.INTEGER:
           terminal.terminalType = terminal.type = BaseType.Integer
           break
-        case (WJSCLexer.BOOLEAN):
+        case WJSCLexer.BOOLEAN:
           terminal.terminalType = terminal.type = BaseType.Boolean
           break
-        case (WJSCLexer.CHARACTER):
+        case WJSCLexer.CHARACTER:
           terminal.terminalType = terminal.type = BaseType.Character
           break
-        case (WJSCLexer.STRING):
+        case WJSCLexer.STRING:
           terminal.terminalType = terminal.type = BaseType.String
           break
-        case (WJSCLexer.PAIR):
+        case WJSCLexer.PAIR:
           terminal.terminalType = terminal.type = BaseType.Pair
           break
       }
@@ -951,11 +1012,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // 1. Ensure either of ops not undefined 2. visit ops
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Operator
-    const op = ctx.LOGICAL_NEGATION()
-      || ctx.MINUS()
-      || ctx.LENGTH()
-      || ctx.ORDER_OF()
-      || ctx.CHARACTER_OF()
+    const op =
+      ctx.LOGICAL_NEGATION() ||
+      ctx.MINUS() ||
+      ctx.LENGTH() ||
+      ctx.ORDER_OF() ||
+      ctx.CHARACTER_OF()
     if (!op) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
@@ -976,38 +1038,84 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
   }
 
-  private checkOperator = (op: WJSCAst, exp1: WJSCAst, exp2?: WJSCAst):
-    TypeName => {
+  private checkOperator = (
+    op: WJSCAst,
+    exp1: WJSCAst,
+    exp2?: WJSCAst,
+  ): TypeName => {
     let outputType
     const unOps = ['!', '-', 'len', 'ord', 'chr']
-    const unOpInputs =
-      [[BaseType.Boolean], [BaseType.Integer],
-       [BaseType.String], // Can take array too
-       [BaseType.Character], [BaseType.Integer]]
-    const unOpOutputs =
-      [BaseType.Boolean, BaseType.Integer,
-       BaseType.Integer, BaseType.Integer,
-       BaseType.Character]
-    const binOps = ['*', '/', '%', '+', '-', '>', '>=',
-                    '<', '<=', '==', '!=', '&&', '||']
-    const binOpInputs =
-      [[BaseType.Integer], [BaseType.Integer],
-       [BaseType.Integer], [BaseType.Integer],
-       [BaseType.Integer], [BaseType.Integer, BaseType.Character],
-       [BaseType.Integer, BaseType.Character],
-       [BaseType.Integer, BaseType.Character],
-       [BaseType.Integer, BaseType.Character],
-       [BaseType.Integer, BaseType.Character, BaseType.String,
-        BaseType.Boolean, BaseType.Pair], // Can take array too
-       [BaseType.Integer, BaseType.Character, BaseType.String,
-        BaseType.Boolean, BaseType.Pair], // Can take array too
-       [BaseType.Boolean], [BaseType.Boolean]]
-    const binOpOutputs =
-      [BaseType.Integer, BaseType.Integer, BaseType.Integer,
-       BaseType.Integer, BaseType.Integer, BaseType.Boolean,
-       BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
-       BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
-       BaseType.Boolean]
+    const unOpInputs = [
+      [BaseType.Boolean],
+      [BaseType.Integer],
+      [BaseType.String], // Can take array too
+      [BaseType.Character],
+      [BaseType.Integer],
+    ]
+    const unOpOutputs = [
+      BaseType.Boolean,
+      BaseType.Integer,
+      BaseType.Integer,
+      BaseType.Integer,
+      BaseType.Character,
+    ]
+    const binOps = [
+      '*',
+      '/',
+      '%',
+      '+',
+      '-',
+      '>',
+      '>=',
+      '<',
+      '<=',
+      '==',
+      '!=',
+      '&&',
+      '||',
+    ]
+    const binOpInputs = [
+      [BaseType.Integer],
+      [BaseType.Integer],
+      [BaseType.Integer],
+      [BaseType.Integer],
+      [BaseType.Integer],
+      [BaseType.Integer, BaseType.Character],
+      [BaseType.Integer, BaseType.Character],
+      [BaseType.Integer, BaseType.Character],
+      [BaseType.Integer, BaseType.Character],
+      [
+        BaseType.Integer,
+        BaseType.Character,
+        BaseType.String,
+        BaseType.Boolean,
+        BaseType.Pair,
+      ], // Can take array too
+      [
+        BaseType.Integer,
+        BaseType.Character,
+        BaseType.String,
+        BaseType.Boolean,
+        BaseType.Pair,
+      ], // Can take array too
+      [BaseType.Boolean],
+      [BaseType.Boolean],
+    ]
+    const binOpOutputs = [
+      BaseType.Integer,
+      BaseType.Integer,
+      BaseType.Integer,
+      BaseType.Integer,
+      BaseType.Integer,
+      BaseType.Boolean,
+      BaseType.Boolean,
+      BaseType.Boolean,
+      BaseType.Boolean,
+      BaseType.Boolean,
+      BaseType.Boolean,
+      BaseType.Boolean,
+      BaseType.Boolean,
+    ]
     if (exp2 === undefined) {
       // unOp
       unOps.forEach((child, index) => {
@@ -1035,8 +1143,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         if (child.toString() === op.token) {
           let matchAnyType = false
           let matchButFaulty = false
-          if (index === 9 || index === 10
-            && !matchAnyType && !matchButFaulty) {
+          if (
+            index === 9 ||
+            (index === 10 && !matchAnyType && !matchButFaulty)
+          ) {
             // Special check for mismatched array types
             if (!hasSameType(exp1.type, exp2.type)) {
               this.errorLog.semErr(exp1, SemError.Mismatch, exp2.type)
@@ -1049,12 +1159,20 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               if (potInput === exp1.type && potInput === exp2.type) {
                 matchAnyType = true
                 outputType = binOpOutputs[index]
-              } else if (potInput !== exp1.type && potInput === exp2.type
-                && !matchButFaulty) { // <- We dont want 2 warnings
+              } else if (
+                potInput !== exp1.type &&
+                potInput === exp2.type &&
+                !matchButFaulty
+              ) {
+                // <- We dont want 2 warnings
                 this.errorLog.semErr(exp1, SemError.Mismatch, potInput)
                 matchButFaulty = true
-              } else if (potInput === exp1.type && potInput !== exp2.type
-                && !matchButFaulty) { // <- We dont want 2 warnings
+              } else if (
+                potInput === exp1.type &&
+                potInput !== exp2.type &&
+                !matchButFaulty
+              ) {
+                // <- We dont want 2 warnings
                 this.errorLog.semErr(exp2, SemError.Mismatch, potInput)
                 matchButFaulty = true
               }
@@ -1071,8 +1189,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return outputType
   }
 
-  private initWJSCAst = (ctx: ParserRuleContext | TerminalNode):
-    WJSCAst | WJSCTerminal => {
+  private initWJSCAst = (
+    ctx: ParserRuleContext | TerminalNode,
+  ): WJSCAst | WJSCTerminal => {
     let charPositionInLine
     let line
     let startIndex
@@ -1103,34 +1222,37 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   // Check the expressions given to stdlib functions free, return, exit, print
   // and println are of the correct type
-  private checkStdlibExpressionType
-    = (visitedStdlib: WJSCAst, visitedExpr: WJSCAst): void => {
-      if (visitedStdlib.token === 'free'
-        && !isPairType(visitedExpr.type)
-        && !isArrayType(visitedExpr.type)) {
-        // Free can only be called on pair or array type.
-        console.log('Is pair type: ' + isPairType(visitedExpr.type))
-        this.errorLog.semErr(visitedExpr, SemError.BadStdlibArgs, Stdlib.Free)
-      } else if (visitedStdlib.token === 'return') {
-        // Return cannot only be in body of non-main function
-        // Type of expression must match the return type of the function
-        if (!this.symbolTable.inFunction()) {
-          this.errorLog.semErr(visitedStdlib, SemError.NoReturn)
-        } else {
-          const functionName = this.symbolTable.getFunctionName() || 'main'
-          const functionType = this.symbolTable.globalLookup(functionName)
-          if (!hasSameType(functionType, visitedExpr.type)) {
-            this.errorLog.semErr(visitedStdlib,
-              SemError.Mismatch, functionType)
-          }
+  private checkStdlibExpressionType = (
+    visitedStdlib: WJSCAst,
+    visitedExpr: WJSCAst,
+  ): void => {
+    if (
+      visitedStdlib.token === 'free' &&
+      !isPairType(visitedExpr.type) &&
+      !isArrayType(visitedExpr.type)
+    ) {
+      // Free can only be called on pair or array type.
+      console.log('Is pair type: ' + isPairType(visitedExpr.type))
+      this.errorLog.semErr(visitedExpr, SemError.BadStdlibArgs, Stdlib.Free)
+    } else if (visitedStdlib.token === 'return') {
+      // Return cannot only be in body of non-main function
+      // Type of expression must match the return type of the function
+      if (!this.symbolTable.inFunction()) {
+        this.errorLog.semErr(visitedStdlib, SemError.NoReturn)
+      } else {
+        const functionName = this.symbolTable.getFunctionName() || 'main'
+        const functionType = this.symbolTable.globalLookup(functionName)
+        if (!hasSameType(functionType, visitedExpr.type)) {
+          this.errorLog.semErr(visitedStdlib, SemError.Mismatch, functionType)
         }
-      } else if (visitedStdlib.token === 'exit'
-          && !hasSameType(visitedExpr.type, BaseType.Integer)) {
-
-        // Exit must return exit code of type 'int'
-        this.errorLog.semErr(visitedExpr, SemError.Mismatch,
-            BaseType.Integer)
       }
+    } else if (
+      visitedStdlib.token === 'exit' &&
+      !hasSameType(visitedExpr.type, BaseType.Integer)
+    ) {
+      // Exit must return exit code of type 'int'
+      this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Integer)
+    }
   }
 }
 
