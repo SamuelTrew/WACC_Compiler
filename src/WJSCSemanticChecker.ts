@@ -1240,14 +1240,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         const functionType = this.symbolTable.globalLookup(functionName)
         if (!hasSameType(functionType, visitedExpr.type)) {
           this.errorLog.semErr(visitedStdlib, SemError.Mismatch, functionType)
-        } else if (
-          // visitedStdlib.token === 'exit' &&
-          !hasSameType(visitedExpr.type, BaseType.Integer)
-        ) {
-          // Exit must return exit code of type 'int'
-          this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Integer)
         }
       }
+    } else if (
+      visitedStdlib.token === 'exit' &&
+      !hasSameType(visitedExpr.type, BaseType.Integer)
+    ) {
+      // Exit must return exit code of type 'int'
+      this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Integer)
     }
   }
 }
