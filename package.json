@@ -2,7 +2,7 @@
   "name": "wjsc",
   "version": "1.0.0",
   "description": "WACC JavaScript Compiler",
-  "main": "build/index.js",
+  "main": "build/Index.js",
   "directories": {
     "lib": "lib"
   },

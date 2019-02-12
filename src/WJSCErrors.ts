@@ -12,6 +12,7 @@ enum SynError {
   IllegalStr = 'illegal string',
   Overflow = 'overflow',
   Underflow = 'underflow',
+  NoReturn = 'no return',
 }
 
 enum SemError {
@@ -19,7 +20,7 @@ enum SemError {
   Mismatch = 'mismatch',
   IncorrectArgNo = 'incorrect arg no',
   BadStdlibArgs = 'bad arguments for stdlib function',
-  NoReturn = 'no return',
+  BadReturn = 'bad return',
   DoubleDeclare = 'double declare',
 }
 
@@ -71,7 +72,7 @@ class WJSCErrorLog {
           this.runtimeError(new Error('Did not expect error'))
           break
       }
-    } else if (error === SemError.NoReturn) {
+    } else if (error === SemError.BadReturn) {
       errorMessage += 'return must be in body of non-main function.'
     } else if (
       error === SemError.IncorrectArgNo &&

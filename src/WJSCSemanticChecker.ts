@@ -32,10 +32,9 @@ import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import {
   WJSCAst,
   WJSCFunction,
-  WJSCIdentifier,
+  WJSCIdentifier, WJSCOperators,
   WJSCParam,
   WJSCParserRules,
-  WJSCStatement,
   WJSCTerminal,
 } from './WJSCAst'
 import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
@@ -73,8 +72,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     this.symbolTable = new WJSCSymbolTable(0, undefined, false, errorLog)
   }
 
-  public visitArithmeticOperator = (ctx: ArithmeticOperatorContext) => {
-    const result = this.initWJSCAst(ctx)
+  public visitArithmeticOperator = (ctx: ArithmeticOperatorContext):
+      WJSCOperators => {
+    const result = this.initWJSCAst(ctx) as WJSCOperators
     result.parserRule = WJSCParserRules.Operator
     const operator =
       ctx.MINUS() ||
@@ -383,7 +383,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // Assignment
         const visitedLhsType = this.visitType(lhsType).type
         const visitedIdentifier = this.visitTerminal(lhsIdent)
-        // TODO check for double declaration
+        // Check for double declaration
         const possibleEntry
             = this.symbolTable.getLocalEntry(visitedIdentifier.value)
         if (possibleEntry && !possibleEntry.params) {
@@ -481,8 +481,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
-  public visitBooleanOperator = (ctx: BooleanOperatorContext) => {
-    const result = this.initWJSCAst(ctx)
+  public visitBooleanOperator = (ctx: BooleanOperatorContext):
+      WJSCOperators => {
+    const result = this.initWJSCAst(ctx) as WJSCOperators
     result.parserRule = WJSCParserRules.Operator
     const operator = ctx.LOGICAL_AND() || ctx.LOGICAL_OR()
     if (operator) {
@@ -491,8 +492,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
-  public visitComparisonOperator = (ctx: ComparisonOperatorContext) => {
-    const result = this.initWJSCAst(ctx)
+  public visitComparisonOperator = (ctx: ComparisonOperatorContext):
+      WJSCOperators => {
+    const result = this.initWJSCAst(ctx) as WJSCOperators
     result.parserRule = WJSCParserRules.Operator
     const operator =
       ctx.EQUALS() ||
@@ -639,6 +641,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // Insert inside for recursive call check
     this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
     const statements = this.visitStatement(ctx.statement())
+    if (!this.containsReturnStatement(statements)) {
+      this.errorLog.synErr(
+        result.line,
+        result.column,
+        SynError.NoReturn,
+        'statement missing return statement',
+      )
+    }
     result.children.push(statements)
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
@@ -1031,9 +1041,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return terminal
   }
 
-  public visitUnaryOperator = (ctx: UnaryOperatorContext): WJSCAst => {
+  public visitUnaryOperator = (ctx: UnaryOperatorContext): WJSCOperators => {
     // 1. Ensure either of ops not undefined 2. visit ops
-    const result = this.initWJSCAst(ctx)
+    const result = this.initWJSCAst(ctx) as WJSCOperators
     result.parserRule = WJSCParserRules.Operator
     const op =
       ctx.LOGICAL_NEGATION() ||
@@ -1061,10 +1071,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
   }
 
-  private checkOperator = (
-    op: WJSCAst,
-    exp1: WJSCAst,
-    exp2?: WJSCAst,
+  private checkOperator = (op: WJSCOperators, exp1: WJSCAst, exp2?: WJSCAst,
   ): TypeName => {
     let outputType
     const unOps = ['!', '-', 'len', 'ord', 'chr']
@@ -1083,19 +1090,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       BaseType.Character,
     ]
     const binOps = [
-      '*',
-      '/',
-      '%',
-      '+',
-      '-',
-      '>',
-      '>=',
-      '<',
-      '<=',
-      '==',
-      '!=',
-      '&&',
-      '||',
+      '*', '/', '%', '+', '-', '>', '>=', '<',
+      '<=', '==', '!=', '&&', '||',
     ]
     const binOpInputs = [
       [BaseType.Integer],
@@ -1263,7 +1259,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       // Return cannot only be in body of non-main function
       // Type of expression must match the return type of the function
       if (!this.symbolTable.inFunction()) {
-        this.errorLog.semErr(visitedStdlib, SemError.NoReturn)
+        this.errorLog.semErr(visitedStdlib, SemError.BadReturn)
       } else {
         const functionName = this.symbolTable.getFunctionName() || 'main'
         const functionType = this.symbolTable.globalLookup(functionName)
@@ -1280,8 +1276,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
   }
 
-  private containsReturnStatement = (ast: WJSCStatement): boolean => {
-    return true
+  private containsReturnStatement = (ast: WJSCAst): boolean => {
+    if (ast.token === 'return') {
+      return true
+    } else {
+      let found = false
+      ast.children.forEach((child: WJSCAst) => {
+        if (!found && this.containsReturnStatement(child)) {
+          found = true
+        }
+      })
+      return found
+    }
   }
 }
 
