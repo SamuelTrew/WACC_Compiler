@@ -462,7 +462,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // 7. visit types of childStats and childExps
     // 8. set type of conditional to boolean
     const result = this.initWJSCAst(ctx)
-    result.parserRule = WJSCParserRules.Conditional
     const ifB = ctx.IF()
     const thenB = ctx.THEN()
     const elseB = ctx.ELSE()
@@ -482,34 +481,30 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       } else if (whileDoDone && childStat.length !== 1) {
         this.errorLog.semErr(result, SemError.IncorrectArgNo, [1, 1])
       } else {
-        // Visit childExps and childStats, checking 5. and 6.
-        // WARNING: Assumes order in which they are pushed to the result does
-        // not matter. redo later
         const childExpType = this.visitExpression(childExp)
         if (!hasSameType(childExpType.type, BaseType.Boolean)) {
           this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
         }
         this.pushChild(result, childExpType)
-        childStat.forEach((child, index) => {
+        if (ifThenElseFi) {
+          const [trueBranch, falseBranch] = childStat
+          /* Ensure that children[0] = true, children[1] = false */
           this.symbolTable = this.symbolTable.enterScope()
-          const childStatType = this.visitStatement(child)
+          const visitedTrueBranch = this.visitStatement(trueBranch)
+          this.symbolTable = this.symbolTable.exitScope()
+          this.symbolTable = this.symbolTable.enterScope()
+          const visitedFalseBranch = this.visitStatement(falseBranch)
+          this.symbolTable = this.symbolTable.exitScope()
+          this.pushChild(result, visitedTrueBranch, true)
+          this.pushChild(result, visitedFalseBranch, true)
+        } else {
+          this.symbolTable = this.symbolTable.enterScope()
+          const childStatType = this.visitStatement(childStat[0])
           this.symbolTable = this.symbolTable.exitScope()
           this.pushChild(result, childStatType)
           if (!childStatType) {
             this.errorLog.semErr(result, SemError.Undefined)
           }
-        })
-        if (ifB && thenB && elseB && fiB) {
-          // <- tsLint wont allow ifThen...
-          // visiting ifThenElseFi's unique children
-          result.children.push(this.visitTerminal(ifB))
-          result.children.push(this.visitTerminal(thenB))
-          result.children.push(this.visitTerminal(fiB))
-        } else if (whileB && doB && doneB) {
-          // visiting whileDoDone's unique children
-          result.children.push(this.visitTerminal(whileB))
-          result.children.push(this.visitTerminal(doB))
-          result.children.push(this.visitTerminal(doneB))
         }
       }
     }
@@ -691,7 +686,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // Insert inside for recursive call check
     // code this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
     const statements = this.visitStatement(ctx.statement())
-    if (!this.containsReturnStatement(statements)) {
+    if (!this.containsNeverStatement(statements)) {
       this.errorLog.synErr(
         result.line,
         result.column,
@@ -1298,10 +1293,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   /* Pushes a child to result and copies its type */
-  private pushChild = (result: WJSCAst, child: WJSCAst) => {
+  private pushChild = (result: WJSCAst, child: WJSCAst, unshift = false) => {
     // TODO: PushChild must find type of child if child is an ident
     result.type = child.type
-    result.children.push(child)
+    if (unshift) {
+      result.children.unshift(child)
+    } else {
+      result.children.push(child)
+    }
   }
 
   // Check the expressions given to stdlib functions free, return, exit, print
@@ -1345,7 +1344,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   /** Check that all function paths end in a `never` function (return/exit) */
   private checkNever = (ast: WJSCAst): boolean => {
-
+    return false
   }
 
   private containsNeverStatement = (ast: WJSCAst): boolean => {
@@ -1364,8 +1363,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   private isNeverStatement = (ast: WJSCAst): boolean =>
-    _.find(ast.children, { token: 'return' }) !== undefined ||
-    _.find(ast.children, { token: 'exit' }) !== undefined
+    _.find(ast.children, { token: 'return' }) !== undefined
 }
 
 export { WJSCSemanticChecker }
