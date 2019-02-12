@@ -1,6 +1,6 @@
-import {ParserRuleContext} from 'antlr4ts'
-import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
-import {WJSCLexer} from './grammar/WJSCLexer'
+import { ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArithmeticOperatorContext,
@@ -28,7 +28,7 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
+import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import {
   WJSCAst,
   WJSCFunction,
@@ -38,8 +38,8 @@ import {
   WJSCParserRules,
   WJSCTerminal,
 } from './WJSCAst'
-import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
-import {WJSCSymbolTable} from './WJSCSymbolTable'
+import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
+import { WJSCSymbolTable } from './WJSCSymbolTable'
 import {
   BaseType,
   getFstInPair,
@@ -116,7 +116,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Array
     const ident = this.visitTerminal(ctx.IDENTIFIER())
-    this.symbolTable.checkType(ident)
+    if (!this.symbolTable.checkType(ident)) {
+      this.errorLog.semErr(result, SemError.Undefined)
+    }
+    if (this.symbolTable.checkType(ident)) {
+      const entry = this.symbolTable.getGlobalEntry(ident.value)
+      if (entry && entry.params) {
+        this.errorLog.semErr(result, SemError.BadFunctionUse)
+      }
+    }
     const expressions = ctx.expression()
     if (expressions.length === 0) {
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [1, -1])
@@ -248,6 +256,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     if (!lhsElems) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
+      if (lhsElems instanceof TerminalNode) {
+        const ident = this.visitTerminal(lhsElems)
+        const entry = this.symbolTable.getGlobalEntry(ident.value)
+        if (entry && entry.params) {
+          this.errorLog.semErr(result, SemError.BadFunctionUse)
+        }
+      }
       const lhsNode =
         lhsElems instanceof TerminalNode
           ? this.visitTerminal(lhsElems)
@@ -387,6 +402,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // Assignment
         const visitedLhsType = this.visitType(lhsType).type
         const visitedIdentifier = this.visitTerminal(lhsIdent)
+        if (this.symbolTable.checkType(visitedIdentifier)) {
+          const entry = this.symbolTable.getGlobalEntry(visitedIdentifier.value)
+          if (entry && entry.params) {
+            this.errorLog.semErr(result, SemError.BadFunctionUse)
+          }
+        }
         // Check for double declaration
         const possibleEntry
             = this.symbolTable.getLocalEntry(visitedIdentifier.value)
@@ -634,12 +655,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // 4. visit type of ident, paramList, statement
     // 5. insert function to symbol table
     const result = this.initWJSCAst(ctx) as WJSCFunction
+    result.parserRule = WJSCParserRules.Function
     const visitedType = this.visitType(ctx.type()).type
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     const paramList = ctx.paramList()
     result.identifier = ident.value
     result.type = visitedType
-
     // Check types of Params and Statements
     let paramsTypes: TypeName[]
     // Enter child scope

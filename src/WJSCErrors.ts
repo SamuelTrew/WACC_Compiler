@@ -22,6 +22,7 @@ enum SemError {
   BadStdlibArgs = 'bad arguments for stdlib function',
   BadReturn = 'bad return',
   DoubleDeclare = 'double declare',
+  BadFunctionUse = 'function of this name declared',
 }
 
 class WJSCErrorLog {
@@ -91,6 +92,8 @@ class WJSCErrorLog {
         } arguments`
     } else if (error === SemError.DoubleDeclare) {
       errorMessage += `${token} has already been declared`
+    } else if (error === SemError.BadFunctionUse) {
+      errorMessage += `${token} is a function being used inappropriately`
     }
     this.semanticErrors.push(errorMessage)
   }
