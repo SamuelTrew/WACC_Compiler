@@ -939,6 +939,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           // TODO: check expression isn't undefined for case sensitivity
           // TODO: but it's already check?????
           const visitedExpr = this.visitExpression(expression)
+          if (!visitedExpr.type) {
+            this.errorLog.semErr(result, SemError.Undefined)
+          }
           // Check stdLib function argument types
           this.checkStdlibExpressionType(visitedStdlib, visitedExpr)
           result.children.push(visitedExpr)
