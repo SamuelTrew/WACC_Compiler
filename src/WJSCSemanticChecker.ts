@@ -804,7 +804,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             if (!stat[0]) {
               this.errorLog.semErr(result, SemError.Undefined)
             }
+            this.symbolTable = this.symbolTable.enterScope()
             this.pushChild(result, this.visitStatement(stat[0]))
+            this.symbolTable = this.symbolTable.exitScope()
           }
           result.children.push(this.visitTerminal(end))
         }
@@ -1118,9 +1120,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               SemError.Mismatch, functionType)
           }
         }
+      } else if (visitedStdlib.token === 'exit'
+          && !hasSameType(visitedExpr.type, BaseType.Integer)) {
 
+        // Exit must return exit code of type 'int'
+        this.errorLog.semErr(visitedExpr, SemError.Mismatch,
+            BaseType.Integer)
       }
-    }
+  }
 }
 
 export { WJSCSemanticChecker }
