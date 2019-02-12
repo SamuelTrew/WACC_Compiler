@@ -101,6 +101,7 @@ export class WJSCSymbolTable {
       console.log('Recursive lookup')
       result = this.parentLevel.globalLookup(identifier)
     }
+    console.log(identifier + ' ' + result)
     return result
   }
 
