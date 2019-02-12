@@ -993,7 +993,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             const firstStatement = this.visitStatement(stat[0])
             const lastStatement = this.visitStatement(stat[1])
             this.pushChild(result, firstStatement)
-            if (this.isReturnStatement(firstStatement)) {
+            if (this.isNeverStatement(firstStatement)) {
               this.errorLog.synErr(
                 firstStatement.line,
                 firstStatement.column,
@@ -1340,13 +1340,19 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // }
   }
 
-  private containsReturnStatement = (ast: WJSCAst): boolean => {
-    if (ast.token === 'return') {
+  /** Check that all function paths end in a `never` function (return/exit) */
+  private checkNever = (ast: WJSCAst): boolean => {
+
+  }
+
+  private containsNeverStatement = (ast: WJSCAst): boolean => {
+    if (this.isNeverStatement(ast)) {
       return true
     } else {
       let found = false
       ast.children.forEach((child: WJSCAst) => {
-        if (!found && this.containsReturnStatement(child)) {
+        /* if !found is false, short circuits the forEach */
+        if (!found && this.containsNeverStatement(child)) {
           found = true
         }
       })
@@ -1354,8 +1360,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
   }
 
-  private isReturnStatement = (ast: WJSCAst): boolean =>
-    _.find(ast.children, { token: 'return' }) !== undefined
+  private isNeverStatement = (ast: WJSCAst): boolean =>
+    _.find(ast.children, { token: 'return' }) !== undefined ||
+    _.find(ast.children, { token: 'exit' }) !== undefined
 }
 
 export { WJSCSemanticChecker }
