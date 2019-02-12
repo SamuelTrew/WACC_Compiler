@@ -913,6 +913,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         if (!lhs) {
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
+          const visitLhs = this.visitAssignLhs(lhs)
+          if (visitLhs.type !== BaseType.Integer
+            && visitLhs.type !== BaseType.Character) {
+            this.errorLog.semErr(result, SemError.Mismatch)
+          }
           result.children.push(this.visitTerminal(read))
           this.pushChild(result, this.visitAssignLhs(lhs))
         }
