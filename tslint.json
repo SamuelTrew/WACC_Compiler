@@ -51,6 +51,10 @@
             "elements",
             "members",
             "statements"
+        ],
+        "max-union-size": [
+            true, 
+            4
         ]
     },
     "rulesDirectory": []

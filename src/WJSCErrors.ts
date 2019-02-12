@@ -1,5 +1,5 @@
 import { WJSCAst } from './WJSCAst'
-import { TypeName } from './WJSCType'
+import { BaseType, Stdlib, TypeName } from './WJSCType'
 
 enum ErrType {
   Semantic = 'semantic',
@@ -18,82 +18,107 @@ enum SemError {
   Undefined = 'undefined',
   Mismatch = 'mismatch',
   IncorrectArgNo = 'incorrect arg no',
+  BadStdlibArgs = 'bad arguments for stdlib function',
+  NoReturn = 'no return',
 }
 
 class WJSCErrorLog {
-  private errorLog: string[]
+
+  private runtimeErrors: string[]
+  private semanticErrors: string[]
+  private syntaxErrors: string[]
 
   constructor() {
-    this.errorLog = []
+    this.runtimeErrors = []
+    this.semanticErrors = []
+    this.syntaxErrors = []
   }
 
-  public nodeLog = (
-    node: WJSCAst,
-    error: SemError | SynError,
-    additionalParam?: TypeName | TypeName[] | number[],
-  ) => {
+  public semErr = (node: WJSCAst, error: SemError,
+    additionalParam?: TypeName | TypeName[] | number[] | Stdlib) => {
     let errorMessage = ''
     const { line, column, token } = node
-    if (this.isSemantic(error)) {
-      errorMessage += `Semantic Error '${error}' at ${line}:${column}: `
-      if (error === SemError.Undefined) {
-        errorMessage += `Type of ${token} is undefined`
-      } else if (error === SemError.Mismatch) {
-        errorMessage +=
-          `Type of ${token}: ${JSON.stringify(node.type)}` +
-          ` does not match expected type ${JSON.stringify(additionalParam)}`
-      } else if (
-        error === SemError.IncorrectArgNo &&
-        additionalParam !== undefined &&
-        additionalParam instanceof Array
-      ) {
-        const secondParam = additionalParam[1]
-        errorMessage +=
-          `${token} does not have ${additionalParam[0]}` +
-          `${
-          additionalParam[1] === -1
-            ? 'or more'
-            : additionalParam[0] === additionalParam[1]
-              ? ''
-              : 'to ' + secondParam
-          } arguments`
+    errorMessage += `Semantic Error '${error}' at ${line}:${column}: `
+    if (error === SemError.Undefined) {
+      errorMessage += `Type of ${token} is undefined`
+    } else if (error === SemError.Mismatch) {
+      errorMessage +=
+        `Type of ${token}: ${JSON.stringify(node.type)} ` +
+        `does not match expected type ${JSON.stringify(additionalParam)}`
+    } else if (error === SemError.BadStdlibArgs) {
+      const stdlibfunc = additionalParam as Stdlib
+      errorMessage +=
+        `Type of ${token} does not match expected type for stdlib function `
+        + `${stdlibfunc}: got ${JSON.stringify(node.type)}, expected `
+      switch (stdlibfunc) {
+        case Stdlib.Exit:
+          errorMessage += BaseType.Integer
+          break
+        case Stdlib.Free:
+          errorMessage += BaseType.Pair + ' or '
+            + JSON.stringify({ arrayType: BaseType.Any })
+          break
+        case Stdlib.Fst:
+        case Stdlib.Snd:
+          errorMessage += BaseType.Pair
+          break
+        case Stdlib.Print:
+        case Stdlib.Println:
+        default:
+          this.runtimeError(new Error('Did not expect error'))
+          break
       }
-    } else {
-      errorMessage += `Syntactic Error '${error} at ${line}:${column}: `
+    } else if (error === SemError.NoReturn) {
+      errorMessage += 'return must be in body of non-main function.'
+    } else if (
+      error === SemError.IncorrectArgNo &&
+      additionalParam !== undefined &&
+      additionalParam instanceof Array
+    ) {
+      const secondParam = additionalParam[1]
+      errorMessage +=
+        `${token} does not have ${additionalParam[0]}` +
+        `${
+        additionalParam[1] === -1
+          ? 'or more'
+          : additionalParam[0] === additionalParam[1]
+            ? ''
+            : 'to ' + secondParam
+        } arguments`
     }
-    this.errorLog.push(errorMessage)
+    this.semanticErrors.push(errorMessage)
   }
 
-  public messageLog = (
-    line: number,
-    column: number,
-    error: SynError,
-    message: string,
-  ) => {
-    this.errorLog.push(
-      `Syntax Error '${error}' at ${line}:${column}: ` + message,
-    )
+  public synErr = (line: number, column: number, error: SynError,
+    message: string) => {
+    this.syntaxErrors.push(`Syntax Error '${error}' at ${line}:${column}: `
+      + message)
   }
 
-  public runtimeError = (message: string, stack: string) => {
-    this.errorLog.push(`Runtime error: ${message}. Full stack trace:
-${stack}`)
-  }
-
-  public pushError = (message: string) => {
-    this.errorLog.push(message)
+  public runtimeError = (error: Error) => {
+    this.runtimeErrors.push(`Runtime error: ${error.message}.`
+      + `Full stack trace: ${error.stack}`)
   }
 
   public printErrors = (): string => {
     let errors = ''
-    this.errorLog.forEach((error) => (errors += '\n' + error))
+    this.runtimeErrors.forEach((error) => (errors += '\n' + error))
+    this.syntaxErrors.forEach((error) => (errors += '\n' + error))
+    this.semanticErrors.forEach((error) => (errors += '\n' + error))
     return errors
   }
 
-  public numErrors = (): number => this.errorLog.length
+  public numErrors = (): number =>
+    this.numSemanticErrors() + this.numSyntaxErrors()
+
+  public numSyntaxErrors = (): number => this.syntaxErrors.length
+
+  public numSemanticErrors = (): number => this.semanticErrors.length
 
   public clear = () => {
-    this.errorLog = []
+    this.semanticErrors = []
+    this.syntaxErrors = []
+    this.runtimeErrors = []
   }
 
   private isSemantic = (error: SemError | SynError): error is SemError =>
