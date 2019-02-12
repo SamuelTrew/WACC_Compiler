@@ -20,6 +20,7 @@ enum SemError {
   IncorrectArgNo = 'incorrect arg no',
   BadStdlibArgs = 'bad arguments for stdlib function',
   NoReturn = 'no return',
+  DoubleDeclare = 'double declare',
 }
 
 class WJSCErrorLog {
@@ -85,6 +86,8 @@ class WJSCErrorLog {
             ? ''
             : 'to ' + secondParam
         } arguments`
+    } else if (error === SemError.DoubleDeclare) {
+      errorMessage += `${token} has already been declared`
     }
     this.semanticErrors.push(errorMessage)
   }
