@@ -298,9 +298,20 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           const visitedIdent = this.visitTerminal(ident)
           visitedIdent.type = this.symbolTable.globalLookup(visitedIdent.value)
           this.pushChild(result, visitedIdent)
-        }
-        if (argList) {
-          result.children.push(this.visitArgList(argList))
+          if (argList) {
+            // TODO Check args are of the right type
+            const visitedArgList = this.visitArgList(argList)
+            result.children.push(visitedArgList)
+            const funcType = this.symbolTable.getGlobalEntry(visitedIdent.value)
+            if (funcType) {
+              const params = funcType.params
+              visitedArgList.children.forEach((child, index) => {
+                if (!hasSameType(child.type, params[index])) {
+                  this.errorLog.semErr(child, SemError.Mismatch, params[index])
+                }
+              })
+            }
+          }
         }
       } else {
         // These are all the children with expr in it
