@@ -64,8 +64,8 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   parser.removeErrorListeners()
   parser.addErrorListener(errorListener)
 
-  /* Allocate the tree, may be null */
-  let tree: WJSCAst | null = null
+  /* Allocate the tree, may be undefined */
+  let tree: WJSCAst | undefined
 
   /* Visit the tree */
   try {

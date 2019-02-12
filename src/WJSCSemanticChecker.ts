@@ -372,9 +372,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         const visitedLhsType = this.visitType(lhsType).type
         const visitedIdentifier = this.visitTerminal(lhsIdent)
         // TODO check for double declaration
-        // if (this.symbolTable.localLookup(visitedIdentifier.value)) {
-        //   this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
-        // }
+        if (this.symbolTable.localLookup(visitedIdentifier.value)) {
+           this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
+        }
         visitedIdentifier.type = visitedLhsType
         this.pushChild(result, visitedIdentifier)
         /* Ensure RHS has same type as LHS */
@@ -791,7 +791,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
-  public visitStatement = (ctx: StatementContext): WJSCStatement => {
+  public visitStatement = (ctx: StatementContext): WJSCAst => {
     /** Ensure either skip, Assignments, read, stdlib, conditional,
      * begin/end or semicolon
      * not undefined
@@ -1200,7 +1200,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     let startIndex
     let text
     if (ctx instanceof ParserRuleContext) {
-      ({ start: { charPositionInLine, line, startIndex }, text} = ctx)
+      ({
+        start: { charPositionInLine, line, startIndex },
+        text,
+      } = ctx)
     } else {
       ({ charPositionInLine, line, startIndex, text } = ctx.symbol)
     }
@@ -1258,7 +1261,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   private containsReturnStatement = (ast: WJSCStatement): boolean => {
-    
+    return true
   }
 }
 
