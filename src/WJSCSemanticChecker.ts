@@ -472,7 +472,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         }
         this.pushChild(result, childExpType)
         childStat.forEach((child, index) => {
+          this.symbolTable = this.symbolTable.enterScope()
           const childStatType = this.visitStatement(child)
+          this.symbolTable = this.symbolTable.exitScope()
           this.pushChild(result, childStatType)
           if (!childStatType) {
             this.errorLog.semErr(result, SemError.Undefined)
