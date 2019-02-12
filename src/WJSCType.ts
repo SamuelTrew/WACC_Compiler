@@ -65,10 +65,11 @@ const isBaseType = (tname: any): tname is BaseType =>
     tname === 'any')
 
 const isArrayType = (tname: any): tname is ArrayType =>
-  tname.arrayType !== undefined && isWJSCType(tname.arrayType)
+  tname !== undefined && tname.arrayType !== undefined
+    && isWJSCType(tname.arrayType)
 
 const isPairType = (tname: any): tname is PairType =>
-  tname.pairType !== undefined
+  tname !== undefined && tname.pairType !== undefined
 
 const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
   if (!typeA || !typeB) {

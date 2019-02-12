@@ -314,19 +314,32 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           visitedIdent.type = this.symbolTable.globalLookup(visitedIdent.value)
           this.pushChild(result, visitedIdent)
           if (argList) {
-            // TODO Check args are of the right type
             const visitedArgList = this.visitArgList(argList)
             result.children.push(visitedArgList)
             const funcType = this.symbolTable.getGlobalEntry(visitedIdent.value)
+            // For each argList, we need to check:
+            // 1. They are of appropriate size to what is expected
+            // 2. Each of the arguments is of matching type
             if (funcType) {
               const params = funcType.params
               if (params) {
-                visitedArgList.children.forEach((child, i) => {
-                  if (!hasSameType(child.type, params[i])) {
-                    this.errorLog.semErr(child, SemError.Mismatch, params[i])
-                  }
-                })
+                if (params.length !== visitedArgList.children.length) {
+                  this.errorLog.semErr(visitedArgList, SemError.IncorrectArgNo,
+                      [params.length, params.length])
+                } else {
+                  visitedArgList.children.forEach((child, i) => {
+                    if (!hasSameType(child.type, params[i])) {
+                      this.errorLog.semErr(child, SemError.Mismatch, params[i])
+                    }
+                  })
+                }
+              } else {
+                // This should NEVER happen, implies function not set properly
+                this.errorLog.semErr(result, SemError.Undefined)
               }
+            } else {
+              // This should NEVER happen, implies function not there to begin
+              this.errorLog.semErr(result, SemError.Undefined)
             }
           }
         }
@@ -1175,10 +1188,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               [BaseType.Integer, BaseType.Character])
           error = true
         }
+        console.log(exp2.type)
         if (isArrayType(exp2.type)) {
           this.errorLog.semErr(exp2, SemError.Mismatch,
               [BaseType.Integer, BaseType.Character])
-        } else if (!error) {
+          error = true
+        }
+        if (!error) {
           op.inputs.forEach((potInput) => {
             if (potInput === exp1.type && potInput === exp2.type) {
               matchAnyType = true
