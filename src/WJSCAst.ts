@@ -16,6 +16,7 @@ enum WJSCParserRules {
   Literal = 'literal',
   Pair = 'pair',
   Parameter = 'param',
+  Stdlib = 'stdlib',
 }
 
 enum WJSCStandardLibrary {
