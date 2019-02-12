@@ -408,6 +408,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         /* Ensure RHS has same type as LHS */
         if (!hasSameType(visitedRhs.type, visitedLhsType)) {
           this.errorLog.semErr(visitedRhs, SemError.Mismatch, visitedLhsType)
+          console.log('ERROR HERE')
         }
         /* Insert type into symbol table */
         this.symbolTable.insertSymbol(visitedIdentifier.value, visitedLhsType)
@@ -668,10 +669,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const statements = this.visitStatement(ctx.statement())
     if (!this.containsReturnStatement(statements)) {
       this.errorLog.synErr(
-        result.line,
-        result.column,
-        SynError.NoReturn,
-        'statement missing return statement',
+          result.line,
+          result.column,
+          SynError.NoReturn,
+          'statement missing return statement',
       )
     }
     result.children.push(statements)
@@ -686,6 +687,28 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
 
     return result
+  }
+
+  public visitFuncDec = (ctx: FuncContext): void => {
+    const visitedType = this.visitType(ctx.type()).type
+    const ident = this.visitTerminal(ctx.IDENTIFIER())
+    const paramList = ctx.paramList()
+    let paramTypes: TypeName[]
+    this.symbolTable = this.symbolTable.enterFuncScope(ident.value)
+    if (paramList) {
+      const visitedParamList = this.visitParamList(paramList)
+      paramTypes = visitedParamList.paramTypes
+    } else {
+      paramTypes = []
+    }
+    // Double insertion check
+    const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
+    if (possibleEntry && possibleEntry.params) {
+      this.errorLog.semErr(ident, SemError.DoubleDeclare)
+    } else {
+      this.symbolTable.insertSymbol(ident.token, visitedType, paramTypes)
+    }
+    this.symbolTable = this.symbolTable.exitScope()
   }
 
   public visitIntegerLiteral = (ctx: IntegerLiteralContext): WJSCTerminal => {
@@ -837,6 +860,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const functions = ctx.func()
     result.children.push(this.visitTerminal(ctx.BEGIN()))
     if (functions) {
+      // Preliminary func dec checker
+      functions.forEach((child) => {
+        this.visitFuncDec(child)
+      })
+      // Actual func exploration
       functions.forEach((child) => {
         result.children.push(this.visitFunc(child))
       })
