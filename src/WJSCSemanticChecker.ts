@@ -1193,10 +1193,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               [BaseType.Integer, BaseType.Character])
           error = true
         }
+        console.log(exp2.type)
         if (isArrayType(exp2.type)) {
           this.errorLog.semErr(exp2, SemError.Mismatch,
               [BaseType.Integer, BaseType.Character])
-        } else if (!error) {
+          error = true
+        }
+        if (!error) {
           op.inputs.forEach((potInput) => {
             if (potInput === exp1.type && potInput === exp2.type) {
               matchAnyType = true
