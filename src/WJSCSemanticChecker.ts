@@ -101,29 +101,21 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
     result.children = expressions.map(this.visitExpression)
     let currElemType = this.symbolTable.globalLookup(ident.token)
-    let depthIndex = 0
-    let elemTotal = this.symbolTable.globalLookup(ident.token)
-    let depthTotal = 0 // To deal with edge cases with string
-    result.children.forEach((child, index) => {
-      hasSameType(child.type, BaseType.Integer)
+
+    result.children.forEach((child) => {
+      if (!hasSameType(child.type, BaseType.Integer)) {
+        this.errorLog.nodeLog(child, SemError.Mismatch, BaseType.Integer)
+      }
       result.children.push(child)
-      if (isArrayType(currElemType)) {
-        depthIndex = index + 1
-        currElemType = currElemType.arrayType
-      } else if (hasSameType(currElemType, BaseType.String)) {
-        depthIndex = index + 1
+      if (hasSameType(currElemType, BaseType.String)) {
         currElemType = BaseType.Character
-      } else {
+      } else if (isArrayType(currElemType)) {
+        currElemType = currElemType.arrayType
+      } else  {
         this.errorLog.nodeLog(result, SemError.Undefined)
       }
     })
-    while (isArrayType(elemTotal)) {
-      elemTotal = elemTotal.arrayType
-      depthTotal++
-    }
-    result.type =
-        (currElemType === BaseType.String && (depthIndex === depthTotal) ?
-            BaseType.Character : currElemType)
+    result.type = currElemType
     return result
   }
 
@@ -135,7 +127,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Array
     const expressions = ctx.expression()
-    if (expressions.length !== 0) {
+    if (expressions.length === 0) {
+      result.type = {
+        arrayType: BaseType.Any,
+      }
+    } else {
       const comma = ctx.COMMA()
       if (expressions.length - 1 !== comma.length
         && expressions.length - 1 >= comma.length) {
@@ -155,7 +151,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         this.errorLog.nodeLog(result, SemError.Undefined)
       }
       // This is the expr that must be present
-      this.pushChild(result, firstChild)
+      result.children.push(firstChild)
+      result.type = {
+        arrayType: firstChild.type,
+      }
       const length = expressions.length - 1 >= comma.length ?
         expressions.length - 1 : comma.length
       let index = 0
@@ -173,10 +172,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             this.errorLog.nodeLog(result, SemError.Mismatch, firstChild.type)
           }
           // result.children.push(result, childStat)
-          this.pushChild(result, childStat)
+          result.children.push(childStat)
         }
         index++
       }
+
       result.children.push(this.visitTerminal(ctx.RBRACK()))
     }
     return result
@@ -193,11 +193,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     if (!type) {
       this.errorLog.nodeLog(result, SemError.Undefined)
     } else {
-      const typeNode =
+      const arrayNode =
         (type instanceof BaseTypeContext) ? this.visitBaseType(type) :
           (type instanceof ArrayTypeContext) ? this.visitArrayType(type) :
             this.visitPairType(type)
-      this.pushChild(result, typeNode)
+      result.type = {
+        arrayType: arrayNode.type,
+      }
     }
     result.children.push(this.visitTerminal(ctx.RBRACK()))
     return result
