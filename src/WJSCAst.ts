@@ -51,7 +51,6 @@ interface WJSCFunction extends WJSCAst {
 }
 
 interface WJSCOperators extends WJSCAst {
-  operatorType: string
   inputs: TypeName[]
   arrayInput: boolean
   outputs: TypeName

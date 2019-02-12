@@ -1,7 +1,6 @@
-import { ParserRuleContext } from 'antlr4ts'
-import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
-import * as _ from 'lodash'
-import { WJSCLexer } from './grammar/WJSCLexer'
+import {ParserRuleContext} from 'antlr4ts'
+import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
+import {WJSCLexer} from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArithmeticOperatorContext,
@@ -29,18 +28,19 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
+import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
 import {
   WJSCAst,
   WJSCFunction,
-  WJSCIdentifier, WJSCOperators,
+  WJSCIdentifier,
+  WJSCOperators,
   WJSCParam,
   WJSCParserRules,
   WJSCStatement,
   WJSCTerminal,
 } from './WJSCAst'
-import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
-import { WJSCSymbolTable } from './WJSCSymbolTable'
+import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
+import {WJSCSymbolTable} from './WJSCSymbolTable'
 import {
   BaseType,
   getFstInPair,
@@ -85,6 +85,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       ctx.MULTIPLY() ||
       ctx.MODULO()
     if (operator) {
+      result.inputs = [BaseType.Integer]
+      result.arrayInput = false
+      result.outputs = BaseType.Integer
       result.token = operator.toString()
     }
     return result
@@ -503,6 +506,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       ctx.LESS_THAN() ||
       ctx.NEQUALS()
     if (operator) {
+      if (ctx.EQUALS() || ctx.NEQUALS()) {
+        result.inputs = [BaseType.Integer, BaseType.Character, BaseType.Boolean,
+                         BaseType.String, BaseType.Pair]
+        result.arrayInput = true
+      } else {
+        result.inputs = [BaseType.Integer, BaseType.Character]
+        result.arrayInput = false
+      }
+      result.outputs = BaseType.Boolean
       result.token = operator.toString()
     }
     return result
@@ -592,7 +604,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             if (expressions.length !== 2) {
               this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
             } else {
-              let visitedOp: WJSCAst
+              let visitedOp: WJSCOperators
               if (operators instanceof ArithmeticOperatorContext) {
                 visitedOp = this.visitArithmeticOperator(operators)
               } else if (operators instanceof BooleanOperatorContext) {
@@ -1031,12 +1043,33 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // 1. Ensure either of ops not undefined 2. visit ops
     const result = this.initWJSCAst(ctx) as WJSCOperators
     result.parserRule = WJSCParserRules.Operator
-    const op =
-      ctx.LOGICAL_NEGATION() ||
-      ctx.MINUS() ||
-      ctx.LENGTH() ||
-      ctx.ORDER_OF() ||
-      ctx.CHARACTER_OF()
+    let op
+    if (ctx.LOGICAL_NEGATION()) {
+      op = ctx.LOGICAL_NEGATION()
+      result.inputs = [BaseType.Boolean]
+      result.arrayInput = false
+      result.outputs = BaseType.Boolean
+    } else if (ctx.MINUS()) {
+      op = ctx.MINUS()
+      result.inputs = [BaseType.Integer]
+      result.arrayInput = false
+      result.outputs = BaseType.Integer
+    } else if (ctx.LENGTH()) {
+      op = ctx.LENGTH()
+      result.inputs = [BaseType.String]
+      result.arrayInput = true
+      result.outputs = BaseType.Integer
+    } else if (ctx.ORDER_OF()) {
+      op = ctx.ORDER_OF()
+      result.inputs = [BaseType.Character]
+      result.arrayInput = false
+      result.outputs = BaseType.Integer
+    } else if (ctx.CHARACTER_OF()) {
+      op = ctx.CHARACTER_OF()
+      result.inputs = [BaseType.Integer]
+      result.arrayInput = false
+      result.outputs = BaseType.Character
+    }
     if (!op) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
