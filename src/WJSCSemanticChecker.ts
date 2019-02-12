@@ -928,6 +928,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         if (!expression) {
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
+          // TODO: check expression isn't undefined for case sensitivity
+          // TODO: but it's already check?????
           const visitedExpr = this.visitExpression(expression)
           // Check stdLib function argument types
           this.checkStdlibExpressionType(visitedStdlib, visitedExpr)
@@ -1275,7 +1277,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         !hasSameType(visitedExpr.type, BaseType.Integer)) {
       // Exit must return exit code of type 'int'
       this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Integer)
-    }
+    } // code else if ((visitedStdlib.token === 'print' ||
+      // visitedStdlib.token === 'println') && !visitedExpr) {
+      // console.log("hetfhjg")
+      // this.errorLog.semErr(visitedStdlib, SemError.Undefined)
+    // }
   }
 
   private containsReturnStatement = (ast: WJSCAst): boolean => {
