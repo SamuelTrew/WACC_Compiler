@@ -1,5 +1,6 @@
 import { ParserRuleContext } from 'antlr4ts'
 import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import * as _ from 'lodash'
 import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
@@ -35,6 +36,7 @@ import {
   WJSCIdentifier,
   WJSCParam,
   WJSCParserRules,
+  WJSCStatement,
   WJSCTerminal,
 } from './WJSCAst'
 import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
@@ -618,7 +620,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
     // Insert inside for recursive call check
     this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
-    result.children.push(this.visitStatement(ctx.statement()))
+    const statements = this.visitStatement(ctx.statement())
+    result.children.push(statements)
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
     this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
@@ -784,7 +787,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
-  public visitStatement = (ctx: StatementContext): WJSCAst => {
+  public visitStatement = (ctx: StatementContext): WJSCStatement => {
     /** Ensure either skip, Assignments, read, stdlib, conditional,
      * begin/end or semicolon
      * not undefined
@@ -1193,8 +1196,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     let startIndex
     let text
     if (ctx instanceof ParserRuleContext) {
-      ({ charPositionInLine, line, startIndex } = ctx.start);
-      ({ text } = ctx)
+      ({ start: { charPositionInLine, line, startIndex }, text} = ctx)
     } else {
       ({ charPositionInLine, line, startIndex, text } = ctx.symbol)
     }
@@ -1249,6 +1251,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       // Exit must return exit code of type 'int'
       this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Integer)
     }
+  }
+
+  private containsReturnStatement = (ast: WJSCStatement): boolean => {
+    
   }
 }
 
