@@ -1,6 +1,6 @@
-import {ParserRuleContext} from 'antlr4ts'
-import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
-import {WJSCLexer} from './grammar/WJSCLexer'
+import { ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArithmeticOperatorContext,
@@ -36,7 +36,6 @@ import {
   WJSCOperators,
   WJSCParam,
   WJSCParserRules,
-  WJSCStatement,
   WJSCTerminal,
 } from './WJSCAst'
 import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
@@ -388,8 +387,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // Assignment
         const visitedLhsType = this.visitType(lhsType).type
         const visitedIdentifier = this.visitTerminal(lhsIdent)
-        // TODO check for double declaration
-        if (this.symbolTable.localLookup(visitedIdentifier.value)) {
+        // Check for double declaration
+        const possibleEntry
+            = this.symbolTable.getLocalEntry(visitedIdentifier.value)
+        if (possibleEntry && !possibleEntry.params) {
            this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
         }
         visitedIdentifier.type = visitedLhsType
@@ -653,10 +654,24 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // Insert inside for recursive call check
     this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
     const statements = this.visitStatement(ctx.statement())
+    if (!this.containsReturnStatement(statements)) {
+      this.errorLog.synErr(
+        result.line,
+        result.column,
+        SynError.NoReturn,
+        'statement missing return statement',
+      )
+    }
     result.children.push(statements)
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
-    this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
+
+    const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
+    if (possibleEntry && possibleEntry.params) {
+      this.errorLog.semErr(ident, SemError.DoubleDeclare)
+    } else {
+      this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
+    }
 
     return result
   }
@@ -872,7 +887,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
           const visitedExpr = this.visitExpression(expression)
-          // TODO Implement type check
+          // Check stdLib function argument types
           this.checkStdlibExpressionType(visitedStdlib, visitedExpr)
           result.children.push(visitedExpr)
         }
@@ -1278,7 +1293,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       // Return cannot only be in body of non-main function
       // Type of expression must match the return type of the function
       if (!this.symbolTable.inFunction()) {
-        this.errorLog.semErr(visitedStdlib, SemError.NoReturn)
+        this.errorLog.semErr(visitedStdlib, SemError.BadReturn)
       } else {
         const functionName = this.symbolTable.getFunctionName() || 'main'
         const functionType = this.symbolTable.globalLookup(functionName)
@@ -1295,8 +1310,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
   }
 
-  private containsReturnStatement = (ast: WJSCStatement): boolean => {
-    return true
+  private containsReturnStatement = (ast: WJSCAst): boolean => {
+    if (ast.token === 'return') {
+      return true
+    } else {
+      let found = false
+      ast.children.forEach((child: WJSCAst) => {
+        if (!found && this.containsReturnStatement(child)) {
+          found = true
+        }
+      })
+      return found
+    }
   }
 }
 
