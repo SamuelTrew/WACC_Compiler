@@ -36,7 +36,6 @@ import {
   WJSCIdentifier,
   WJSCParam,
   WJSCParserRules,
-  WJSCStatement,
   WJSCTerminal,
 } from './WJSCAst'
 import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
@@ -373,7 +372,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         const visitedIdentifier = this.visitTerminal(lhsIdent)
         // TODO check for double declaration
         if (this.symbolTable.localLookup(visitedIdentifier.value)) {
-           this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
+          this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
         }
         visitedIdentifier.type = visitedLhsType
         this.pushChild(result, visitedIdentifier)
@@ -625,6 +624,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // Insert inside for recursive call check
     this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
     const statements = this.visitStatement(ctx.statement())
+    if (!this.containsReturnStatement(statements)) {
+      this.errorLog.synErr(
+        result.line,
+        result.column,
+        SynError.NoReturn,
+        'statement missing return statement',
+      )
+    }
     result.children.push(statements)
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
@@ -1243,7 +1250,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       // Return cannot only be in body of non-main function
       // Type of expression must match the return type of the function
       if (!this.symbolTable.inFunction()) {
-        this.errorLog.semErr(visitedStdlib, SemError.NoReturn)
+        this.errorLog.semErr(visitedStdlib, SemError.BadReturn)
       } else {
         const functionName = this.symbolTable.getFunctionName() || 'main'
         const functionType = this.symbolTable.globalLookup(functionName)
@@ -1260,8 +1267,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
   }
 
-  private containsReturnStatement = (ast: WJSCStatement): boolean => {
-    return true
+  private containsReturnStatement = (ast: WJSCAst): boolean => {
+    if (ast.token === 'return') {
+      return true
+    } else {
+      let found = false
+      ast.children.forEach((child: WJSCAst) => {
+        if (!found && this.containsReturnStatement(child)) {
+          found = true
+        }
+      })
+      return found
+    }
   }
 }
 
