@@ -307,11 +307,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             const funcType = this.symbolTable.getGlobalEntry(visitedIdent.value)
             if (funcType) {
               const params = funcType.params
-              visitedArgList.children.forEach((child, index) => {
-                if (!hasSameType(child.type, params[index])) {
-                  this.errorLog.semErr(child, SemError.Mismatch, params[index])
-                }
-              })
+              if (params) {
+                visitedArgList.children.forEach((child, i) => {
+                  if (!hasSameType(child.type, params[i])) {
+                    this.errorLog.semErr(child, SemError.Mismatch, params[i])
+                  }
+                })
+              }
             }
           }
         }
