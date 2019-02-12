@@ -33,7 +33,7 @@ import {
   WJSCIdentifier,
   WJSCParam,
   WJSCParserRules,
-  WJSCTerminal
+  WJSCTerminal,
 } from './WJSCAst'
 import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
@@ -118,8 +118,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       }
     })
     while (isArrayType(elemTotal)) {
-        elemTotal = elemTotal.arrayType
-        depthTotal++
+      elemTotal = elemTotal.arrayType
+      depthTotal++
     }
     result.type =
         (currElemType === BaseType.String && (depthIndex === depthTotal) ?
@@ -155,7 +155,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         this.errorLog.nodeLog(result, SemError.Undefined)
       }
       // This is the expr that must be present
-      result.children.push(firstChild)
+      this.pushChild(result, firstChild)
       const length = expressions.length - 1 >= comma.length ?
         expressions.length - 1 : comma.length
       let index = 0
@@ -173,12 +173,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             this.errorLog.nodeLog(result, SemError.Mismatch, firstChild.type)
           }
           // result.children.push(result, childStat)
-          result.children.push(childStat)
+          this.pushChild(result, childStat)
         }
         index++
       }
       result.children.push(this.visitTerminal(ctx.RBRACK()))
-      result.type = { arrayType: firstChild.type }
     }
     return result
   }
@@ -198,8 +197,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         (type instanceof BaseTypeContext) ? this.visitBaseType(type) :
           (type instanceof ArrayTypeContext) ? this.visitArrayType(type) :
             this.visitPairType(type)
-      result.children.push(typeNode)
-      result.type = { arrayType: typeNode.type }
+      this.pushChild(result, typeNode)
     }
     result.children.push(this.visitTerminal(ctx.RBRACK()))
     return result
@@ -333,14 +331,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // Reassignment
         const visitedLhs = this.visitAssignLhs(lhs)
         if (!hasSameType(visitedLhs.type, visitedRhs.type)) {
-            this.errorLog.nodeLog(visitedRhs,
-                SemError.Mismatch, visitedLhs.type)
+          this.errorLog.nodeLog(visitedRhs,
+            SemError.Mismatch, visitedLhs.type)
         }
       } else if (lhsType && lhsIdent) {
         // Assignment
-        console.log('here')
         const visitedLhsType = this.visitType(lhsType).type
-        console.log(visitedLhsType)
         const visitedIdentifier = this.visitTerminal(lhsIdent)
         visitedIdentifier.type = visitedLhsType
         this.pushChild(result, visitedIdentifier)
@@ -425,16 +421,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.nodeLog(result, SemError.Mismatch, BaseType.Boolean)
         }
         this.pushChild(result, childExpType)
-        childStat.forEach((child) => {
+        childStat.forEach((child, index) => {
           const childStatType = this.visitStatement(child)
           this.pushChild(result, childStatType)
           if (!childStatType) {
             this.errorLog.nodeLog(result, SemError.Undefined)
           }
-          // HALP IDK HOW TO CHECK IF STATEMENT BODY SKIPS
-          // } else if (child.WSKIP()) {
-          //   this.errorLog.nodeLog(result, SynError, )
-          // }
         })
         if ((ifB) && (thenB) && (elseB) && (fiB)) {
           // <- tsLint wont allow ifThen...
@@ -951,101 +943,99 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   private checkOperator = (op: WJSCAst, exp1: WJSCAst, exp2?: WJSCAst):
-     TypeName => {
-      // Initialised to any as it is possible for outputType not get set
-      // in this function
-      let outputType = BaseType.Any
-      const unOps = ['!', '-', 'len', 'ord', 'chr']
-      const unOpInputs =
-          [[BaseType.Boolean], [BaseType.Integer],
-           [BaseType.String], // Can take array too
-           [BaseType.Character], [BaseType.Integer]]
-      const unOpOutputs =
-          [BaseType.Boolean, BaseType.Integer,
-           BaseType.Integer, BaseType.Integer,
-           BaseType.Character]
-      const binOps = ['*', '/', '%', '+', '-', '>', '>=',
-                      '<', '<=', '==', '!=', '&&', '||']
-      const binOpInputs =
-          [[BaseType.Integer], [BaseType.Integer],
-           [BaseType.Integer], [BaseType.Integer],
-           [BaseType.Integer], [BaseType.Integer, BaseType.Character],
-           [BaseType.Integer, BaseType.Character],
-           [BaseType.Integer, BaseType.Character],
-           [BaseType.Integer, BaseType.Character],
-           [BaseType.Integer, BaseType.Character, BaseType.String,
-            BaseType.Boolean, BaseType.Pair], // Can take array too
-           [BaseType.Integer, BaseType.Character, BaseType.String,
-            BaseType.Boolean, BaseType.Pair], // Can take array too
-           [BaseType.Boolean], [BaseType.Boolean]]
-      const binOpOutputs =
-          [BaseType.Integer, BaseType.Integer, BaseType.Integer,
-           BaseType.Integer, BaseType.Integer, BaseType.Boolean,
-           BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
-           BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
-           BaseType.Boolean]
-      if (exp2 === undefined) {
-        // unOp
-        unOps.forEach((child, index) => {
+    TypeName => {
+    let outputType
+    const unOps = ['!', '-', 'len', 'ord', 'chr']
+    const unOpInputs =
+      [[BaseType.Boolean], [BaseType.Integer],
+       [BaseType.String], // Can take array too
+       [BaseType.Character], [BaseType.Integer]]
+    const unOpOutputs =
+      [BaseType.Boolean, BaseType.Integer,
+       BaseType.Integer, BaseType.Integer,
+       BaseType.Character]
+    const binOps = ['*', '/', '%', '+', '-', '>', '>=',
+                    '<', '<=', '==', '!=', '&&', '||']
+    const binOpInputs =
+      [[BaseType.Integer], [BaseType.Integer],
+       [BaseType.Integer], [BaseType.Integer],
+       [BaseType.Integer], [BaseType.Integer, BaseType.Character],
+       [BaseType.Integer, BaseType.Character],
+       [BaseType.Integer, BaseType.Character],
+       [BaseType.Integer, BaseType.Character],
+       [BaseType.Integer, BaseType.Character, BaseType.String,
+        BaseType.Boolean, BaseType.Pair], // Can take array too
+       [BaseType.Integer, BaseType.Character, BaseType.String,
+        BaseType.Boolean, BaseType.Pair], // Can take array too
+       [BaseType.Boolean], [BaseType.Boolean]]
+    const binOpOutputs =
+      [BaseType.Integer, BaseType.Integer, BaseType.Integer,
+       BaseType.Integer, BaseType.Integer, BaseType.Boolean,
+       BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
+       BaseType.Boolean, BaseType.Boolean, BaseType.Boolean,
+       BaseType.Boolean]
+    if (exp2 === undefined) {
+      // unOp
+      unOps.forEach((child, index) => {
+        let matchAnyType = false
+        if (child.toString() === op.token) {
+          unOpInputs[index].forEach((potInput, potIndex) => {
+            if (potInput === exp1.type) {
+              matchAnyType = true
+              outputType = unOpOutputs[index]
+            }
+          })
+          if (index === 2 && isArrayType(exp1.type)) {
+            matchAnyType = true
+            outputType = BaseType.Integer
+          }
+          if (!matchAnyType) {
+            // unOp operator has the wrong argument type
+            this.errorLog.nodeLog(exp1, SemError.Mismatch, unOpInputs[index])
+          }
+        }
+      })
+    } else {
+      // binOp
+      binOps.forEach((child, index) => {
+        if (child.toString() === op.token) {
           let matchAnyType = false
-          if (child.toString() === op.token) {
-            unOpInputs[index].forEach((potInput) => {
-              if (potInput === exp1.type) {
+          let matchButFaulty = false
+          if (index === 9 || index === 10
+            && !matchAnyType && !matchButFaulty) {
+            // Special check for mismatched array types
+            if (!hasSameType(exp1.type, exp2.type)) {
+              this.errorLog.nodeLog(exp1, SemError.Mismatch, exp2.type)
+            } else {
+              matchAnyType = true
+              outputType = BaseType.Boolean
+            }
+          } else {
+            binOpInputs[index].forEach((potInput, potIndex) => {
+              if (potInput === exp1.type && potInput === exp2.type) {
                 matchAnyType = true
-                outputType = unOpOutputs[index]
+                outputType = binOpOutputs[index]
+              } else if (potInput !== exp1.type && potInput === exp2.type
+                && !matchButFaulty) { // <- We dont want 2 warnings
+                this.errorLog.nodeLog(exp1, SemError.Mismatch, potInput)
+                matchButFaulty = true
+              } else if (potInput === exp1.type && potInput !== exp2.type
+                && !matchButFaulty) { // <- We dont want 2 warnings
+                this.errorLog.nodeLog(exp2, SemError.Mismatch, potInput)
+                matchButFaulty = true
               }
             })
-            if (index === 2 && isArrayType(exp1.type)) {
-              matchAnyType = true
-              outputType = BaseType.Integer
-            }
-            if (!matchAnyType) {
-              // unOp operator has the wrong argument type
-              this.errorLog.nodeLog(exp1, SemError.Mismatch, unOpInputs[index])
-            }
           }
-        })
-      } else {
-        // binOp
-        binOps.forEach((child, index) => {
-          if (child.toString() === op.token) {
-            let matchAnyType = false
-            let matchButFaulty = false
-            if (index === 9 || index === 10
-                && !matchAnyType && !matchButFaulty) {
-              // Special check for mismatched array types
-              if (!hasSameType(exp1.type, exp2.type)) {
-                this.errorLog.nodeLog(exp1, SemError.Mismatch, exp2.type)
-              } else {
-                matchAnyType = true
-                outputType = BaseType.Boolean
-              }
-            } else {
-              binOpInputs[index].forEach((potInput) => {
-                if (potInput === exp1.type && potInput === exp2.type) {
-                  matchAnyType = true
-                  outputType = binOpOutputs[index]
-                } else if (potInput !== exp1.type && potInput === exp2.type
-                    && !matchButFaulty) { // <- We dont want 2 warnings
-                  this.errorLog.nodeLog(exp1, SemError.Mismatch, potInput)
-                  matchButFaulty = true
-                } else if (potInput === exp1.type && potInput !== exp2.type
-                    && !matchButFaulty) { // <- We dont want 2 warnings
-                  this.errorLog.nodeLog(exp2, SemError.Mismatch, potInput)
-                  matchButFaulty = true
-                }
-              })
-            }
-            if (!matchAnyType && !matchButFaulty) {
-              // binOp operator has two arguments of incorrect type
-              this.errorLog.nodeLog(exp1, SemError.Mismatch, binOpInputs[index])
-              this.errorLog.nodeLog(exp2, SemError.Mismatch, binOpInputs[index])
-            }
+          if (!matchAnyType && !matchButFaulty) {
+            // binOp operator has two arguments of incorrect type
+            this.errorLog.nodeLog(exp1, SemError.Mismatch, binOpInputs[index])
+            this.errorLog.nodeLog(exp2, SemError.Mismatch, binOpInputs[index])
           }
-        })
-      }
-      return outputType
+        }
+      })
     }
+    return outputType
+  }
 
   private initWJSCAst = (ctx: ParserRuleContext | TerminalNode):
     WJSCAst | WJSCTerminal => {
@@ -1082,16 +1072,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   private checkStdlibExpressionType
     = (visitedStdlib: WJSCAst, visitedExpr: WJSCAst): void => {
       if (visitedStdlib.token === 'free'
-          && !isPairType(visitedExpr.type)
-          && !isArrayType(visitedExpr.type)) {
-
+        && !isPairType(visitedExpr.type)
+        && !isArrayType(visitedExpr.type)) {
         // Free can only be called on pair or array type.
         console.log('Is pair type: ' + isPairType(visitedExpr.type))
         this.errorLog.pushError('Semantic Error at ' +
           `${visitedExpr.line}:${visitedExpr.column}` +
-            ': free can only be called on a pair or array.')
+          ': free can only be called on a pair or array.')
       } else if (visitedStdlib.token === 'return') {
-
         // Return cannot only be in body of non-main function
         // Type of expression must match the return type of the function
         if (!this.symbolTable.inFunction()) {
@@ -1102,17 +1090,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           const functionType = this.symbolTable.globalLookup(functionName)
           if (!hasSameType(functionType, visitedExpr.type)) {
             this.errorLog.nodeLog(visitedStdlib,
-                SemError.Mismatch, functionType)
+              SemError.Mismatch, functionType)
           }
         }
-      } else if (visitedStdlib.token === 'exit'
-          && !hasSameType(visitedExpr.type, BaseType.Integer)) {
 
-        // Exit must return exit code of type 'int'
-        this.errorLog.nodeLog(visitedExpr, SemError.Mismatch,
-            BaseType.Integer)
       }
-  }
+    }
 }
 
 export { WJSCSemanticChecker }
