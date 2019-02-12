@@ -93,28 +93,28 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     // 5. Take type of childExps
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Array
-    const ident = ctx.IDENTIFIER()
-    const identType = this.visitTerminal(ident)
-    this.symbolTable.checkType(identType)
+    const ident = this.visitTerminal(ctx.IDENTIFIER())
+    this.symbolTable.checkType(ident)
     const expressions = ctx.expression()
     if (expressions.length === 0) {
       this.errorLog.nodeLog(result, SemError.IncorrectArgNo, [1, -1])
     }
     result.children = expressions.map(this.visitExpression)
-    let currElemType = this.symbolTable.globalLookup(identType.token)
+    let currElemType = this.symbolTable.globalLookup(ident.token)
     let depthIndex = 0
-    let elemTotal = this.symbolTable.globalLookup(identType.token)
+    let elemTotal = this.symbolTable.globalLookup(ident.token)
     let depthTotal = 0 // To deal with edge cases with string
     result.children.forEach((child, index) => {
       hasSameType(child.type, BaseType.Integer)
       result.children.push(child)
-      if (index !== 0) {
-          if (isArrayType(currElemType)) {
-              depthIndex = index
-              currElemType = currElemType.arrayType
-          } else {
-              this.errorLog.nodeLog(result, SemError.Undefined)
-          }
+      if (isArrayType(currElemType)) {
+        depthIndex = index + 1
+        currElemType = currElemType.arrayType
+      } else if (hasSameType(currElemType, BaseType.String)) {
+        depthIndex = index + 1
+        currElemType = BaseType.Character
+      } else {
+        this.errorLog.nodeLog(result, SemError.Undefined)
       }
     })
     while (isArrayType(elemTotal)) {
@@ -122,7 +122,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         depthTotal++
     }
     result.type =
-        (currElemType === BaseType.String && (depthIndex === depthIndex) ?
+        (currElemType === BaseType.String && (depthIndex === depthTotal) ?
             BaseType.Character : currElemType)
     return result
   }
@@ -135,9 +135,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Array
     const expressions = ctx.expression()
-    if (expressions.length === 0) {
-      this.errorLog.nodeLog(result, SemError.IncorrectArgNo, [1, -1])
-    } else {
+    if (expressions.length !== 0) {
       const comma = ctx.COMMA()
       if (expressions.length - 1 !== comma.length
         && expressions.length - 1 >= comma.length) {
