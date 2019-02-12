@@ -654,18 +654,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.identifier = ident.value
     result.type = visitedType
     // Check types of Params and Statements
-    let paramsTypes: TypeName[]
     // Enter child scope
     this.symbolTable = this.symbolTable.enterFuncScope(ident.value)
     if (paramList) {
       const visitedParamList = this.visitParamList(paramList)
-      paramsTypes = visitedParamList.paramTypes
       this.pushChild(result, visitedParamList)
-    } else {
-      paramsTypes = []
     }
     // Insert inside for recursive call check
-    this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
+    // code this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
     const statements = this.visitStatement(ctx.statement())
     if (!this.containsReturnStatement(statements)) {
       this.errorLog.synErr(
@@ -678,13 +674,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.children.push(statements)
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
-
-    const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
+/*
+    cide const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
     if (possibleEntry && possibleEntry.params) {
       this.errorLog.semErr(ident, SemError.DoubleDeclare)
     } else {
       this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
-    }
+    }*/
 
     return result
   }
@@ -701,6 +697,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else {
       paramTypes = []
     }
+    this.symbolTable.insertSymbol(ident.token, visitedType, paramTypes)
+    this.symbolTable = this.symbolTable.exitScope()
     // Double insertion check
     const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
     if (possibleEntry && possibleEntry.params) {
@@ -708,7 +706,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else {
       this.symbolTable.insertSymbol(ident.token, visitedType, paramTypes)
     }
-    this.symbolTable = this.symbolTable.exitScope()
   }
 
   public visitIntegerLiteral = (ctx: IntegerLiteralContext): WJSCTerminal => {
