@@ -32,9 +32,16 @@ recursive(
                     fs.readFile(filename, 'utf8', function(readError, data) {
                       if (readError) throw readError
                       const compiler = new WJSCCompiler.default(data)
-                      sinon.stub(console, 'log')
+                      before(function () {
+                        sinon.stub(console, 'log')
+                      })
                       compiler.check()
-                      console.log.restore()
+                      after( function () {
+                        delete console.log
+                      })
+                      it('throws error', function (done) {
+                        console.log()
+                      })
                       /* Assert no errors */
                       assert(
                         compiler.errorLog.numErrors() === 0,

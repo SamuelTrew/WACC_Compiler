@@ -1,6 +1,6 @@
-import {ParserRuleContext} from 'antlr4ts'
-import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
-import {WJSCLexer} from './grammar/WJSCLexer'
+import { ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
   ArithmeticOperatorContext,
@@ -28,7 +28,7 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from './grammar/WJSCParser'
-import {WJSCParserVisitor} from './grammar/WJSCParserVisitor'
+import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import {
   WJSCAst,
   WJSCFunction,
@@ -38,8 +38,8 @@ import {
   WJSCParserRules,
   WJSCTerminal,
 } from './WJSCAst'
-import {SemError, SynError, WJSCErrorLog} from './WJSCErrors'
-import {WJSCSymbolTable} from './WJSCSymbolTable'
+import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
+import { WJSCSymbolTable } from './WJSCSymbolTable'
 import {
   BaseType,
   getFstInPair,
