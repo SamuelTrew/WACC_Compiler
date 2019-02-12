@@ -326,8 +326,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               const params = funcType.params
               if (params) {
                 if (params.length !== visitedArgList.children.length) {
-                  this.errorLog.semErr(visitedArgList, SemError.IncorrectArgNo,
-                      [params.length, params.length])
+                  this.errorLog.semErr(
+                    visitedArgList,
+                    SemError.IncorrectArgNo,
+                    [params.length, params.length],
+                  )
                 } else {
                   visitedArgList.children.forEach((child, i) => {
                     if (!hasSameType(child.type, params[i])) {
@@ -699,16 +702,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.children.push(statements)
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
-<<<<<<< HEAD
-=======
-    /*
-    cide const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
-    if (possibleEntry && possibleEntry.params) {
-      this.errorLog.semErr(ident, SemError.DoubleDeclare)
-    } else {
-      this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
-    }*/
->>>>>>> non-broken-branch
 
     return result
   }
@@ -942,8 +935,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
           const visitLhs = this.visitAssignLhs(lhs)
-          if (visitLhs.type !== BaseType.Integer
-            && visitLhs.type !== BaseType.Character) {
+          if (
+            visitLhs.type !== BaseType.Integer &&
+            visitLhs.type !== BaseType.Character
+          ) {
             this.errorLog.semErr(result, SemError.Mismatch)
           }
           result.children.push(this.visitTerminal(read))
@@ -1235,19 +1230,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         }
         console.log(exp2.type)
         if (isArrayType(exp2.type)) {
-<<<<<<< HEAD
-          this.errorLog.semErr(exp2, SemError.Mismatch,
-              [BaseType.Integer, BaseType.Character])
-          error = true
-        }
-        if (!error) {
-=======
           this.errorLog.semErr(exp2, SemError.Mismatch, [
             BaseType.Integer,
             BaseType.Character,
           ])
-        } else if (!error) {
->>>>>>> non-broken-branch
+          error = true
+        }
+        if (!error) {
           op.inputs.forEach((potInput) => {
             if (potInput === exp1.type && potInput === exp2.type) {
               matchAnyType = true
@@ -1287,12 +1276,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     let startIndex
     let text
     if (ctx instanceof ParserRuleContext) {
-      ;({
+      ({
         start: { charPositionInLine, line, startIndex },
         text,
       } = ctx)
     } else {
-      ;({ charPositionInLine, line, startIndex, text } = ctx.symbol)
+      ({ charPositionInLine, line, startIndex, text } = ctx.symbol)
     }
     return {
       children: [],
@@ -1314,18 +1303,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   // Check the expressions given to stdlib functions free, return, exit, print
   // and println are of the correct type
-<<<<<<< HEAD
-  private checkStdlibExpressionType
-      = (visitedStdlib: WJSCAst, visitedExpr: WJSCAst): void => {
-    if (visitedStdlib.token === 'free' &&
-=======
   private checkStdlibExpressionType = (
     visitedStdlib: WJSCAst,
     visitedExpr: WJSCAst,
   ): void => {
     if (
       visitedStdlib.token === 'free' &&
->>>>>>> non-broken-branch
       !isPairType(visitedExpr.type) &&
       !isArrayType(visitedExpr.type)
     ) {
@@ -1351,9 +1334,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       // Exit must return exit code of type 'int'
       this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Integer)
     } // code else if ((visitedStdlib.token === 'print' ||
-      // visitedStdlib.token === 'println') && !visitedExpr) {
-      // console.log("hetfhjg")
-      // this.errorLog.semErr(visitedStdlib, SemError.Undefined)
+    // visitedStdlib.token === 'println') && !visitedExpr) {
+    // console.log("hetfhjg")
+    // this.errorLog.semErr(visitedStdlib, SemError.Undefined)
     // }
   }
 
