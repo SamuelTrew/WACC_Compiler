@@ -506,6 +506,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const operator = ctx.LOGICAL_AND() || ctx.LOGICAL_OR()
     if (operator) {
       result.token = operator.toString()
+      result.inputs = [BaseType.Boolean]
+      result.outputs = BaseType.Boolean
     }
     return result
   }
@@ -1213,11 +1215,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     visitedStdlib: WJSCAst,
     visitedExpr: WJSCAst,
   ): void => {
-    if (
-      visitedStdlib.token === 'free' &&
+    if (visitedStdlib.token === 'free' &&
       !isPairType(visitedExpr.type) &&
-      !isArrayType(visitedExpr.type)
-    ) {
+      !isArrayType(visitedExpr.type)) {
       // Free can only be called on pair or array type.
       console.log('Is pair type: ' + isPairType(visitedExpr.type))
       this.errorLog.semErr(visitedExpr, SemError.BadStdlibArgs, Stdlib.Free)
@@ -1233,10 +1233,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.semErr(visitedStdlib, SemError.Mismatch, functionType)
         }
       }
-    } else if (
-      visitedStdlib.token === 'exit' &&
-      !hasSameType(visitedExpr.type, BaseType.Integer)
-    ) {
+    } else if (visitedStdlib.token === 'exit' &&
+        !hasSameType(visitedExpr.type, BaseType.Integer)) {
       // Exit must return exit code of type 'int'
       this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Integer)
     }
