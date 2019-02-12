@@ -116,9 +116,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Array
     const ident = this.visitTerminal(ctx.IDENTIFIER())
-    if (!this.symbolTable.checkType(ident)) {
-      this.errorLog.semErr(result, SemError.Undefined)
-    }
+    this.symbolTable.checkType(ident)
     if (this.symbolTable.checkType(ident)) {
       const entry = this.symbolTable.getGlobalEntry(ident.value)
       if (entry && entry.params) {
