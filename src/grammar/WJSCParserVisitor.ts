@@ -23,7 +23,9 @@ import { ExpressionContext } from "./WJSCParser";
 import { IntegerLiteralContext } from "./WJSCParser";
 import { ArrayElementContext } from "./WJSCParser";
 import { ArrayLiteralContext } from "./WJSCParser";
-import { BinaryOperatorContext } from "./WJSCParser";
+import { ArithmeticOperatorContext } from "./WJSCParser";
+import { ComparisonOperatorContext } from "./WJSCParser";
+import { BooleanOperatorContext } from "./WJSCParser";
 import { UnaryOperatorContext } from "./WJSCParser";
 import { StdlibContext } from "./WJSCParser";
 
@@ -177,11 +179,25 @@ export interface WJSCParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitArrayLiteral?: (ctx: ArrayLiteralContext) => Result;
 
 	/**
-	 * Visit a parse tree produced by `WJSCParser.binaryOperator`.
+	 * Visit a parse tree produced by `WJSCParser.arithmeticOperator`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitBinaryOperator?: (ctx: BinaryOperatorContext) => Result;
+	visitArithmeticOperator?: (ctx: ArithmeticOperatorContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `WJSCParser.comparisonOperator`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitComparisonOperator?: (ctx: ComparisonOperatorContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `WJSCParser.booleanOperator`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitBooleanOperator?: (ctx: BooleanOperatorContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `WJSCParser.unaryOperator`.

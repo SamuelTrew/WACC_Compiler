@@ -23,7 +23,9 @@ import { ExpressionContext } from "./WJSCParser";
 import { IntegerLiteralContext } from "./WJSCParser";
 import { ArrayElementContext } from "./WJSCParser";
 import { ArrayLiteralContext } from "./WJSCParser";
-import { BinaryOperatorContext } from "./WJSCParser";
+import { ArithmeticOperatorContext } from "./WJSCParser";
+import { ComparisonOperatorContext } from "./WJSCParser";
+import { BooleanOperatorContext } from "./WJSCParser";
 import { UnaryOperatorContext } from "./WJSCParser";
 import { StdlibContext } from "./WJSCParser";
 
@@ -254,15 +256,37 @@ export interface WJSCParserListener extends ParseTreeListener {
 	exitArrayLiteral?: (ctx: ArrayLiteralContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `WJSCParser.binaryOperator`.
+	 * Enter a parse tree produced by `WJSCParser.arithmeticOperator`.
 	 * @param ctx the parse tree
 	 */
-	enterBinaryOperator?: (ctx: BinaryOperatorContext) => void;
+	enterArithmeticOperator?: (ctx: ArithmeticOperatorContext) => void;
 	/**
-	 * Exit a parse tree produced by `WJSCParser.binaryOperator`.
+	 * Exit a parse tree produced by `WJSCParser.arithmeticOperator`.
 	 * @param ctx the parse tree
 	 */
-	exitBinaryOperator?: (ctx: BinaryOperatorContext) => void;
+	exitArithmeticOperator?: (ctx: ArithmeticOperatorContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.comparisonOperator`.
+	 * @param ctx the parse tree
+	 */
+	enterComparisonOperator?: (ctx: ComparisonOperatorContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.comparisonOperator`.
+	 * @param ctx the parse tree
+	 */
+	exitComparisonOperator?: (ctx: ComparisonOperatorContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.booleanOperator`.
+	 * @param ctx the parse tree
+	 */
+	enterBooleanOperator?: (ctx: BooleanOperatorContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.booleanOperator`.
+	 * @param ctx the parse tree
+	 */
+	exitBooleanOperator?: (ctx: BooleanOperatorContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `WJSCParser.unaryOperator`.

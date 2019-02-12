@@ -3,6 +3,7 @@ import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
 import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
+  ArithmeticOperatorContext,
   ArrayElementContext,
   ArrayLiteralContext,
   ArrayTypeContext,
@@ -10,7 +11,8 @@ import {
   AssignmentContext,
   AssignRhsContext,
   BaseTypeContext,
-  BinaryOperatorContext,
+  BooleanOperatorContext,
+  ComparisonOperatorContext,
   ConditionalBlocksContext,
   ExpressionContext,
   FuncContext,
@@ -69,6 +71,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     super()
     this.errorLog = errorLog
     this.symbolTable = new WJSCSymbolTable(0, undefined, false, errorLog)
+  }
+
+  public visitArithmeticOperator = (ctx: ArithmeticOperatorContext) => {
+    return this.initWJSCAst(ctx)
   }
 
   public visitArgList = (ctx: ArgListContext): WJSCAst => {
@@ -370,7 +376,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
-  public visitBinaryOperator = (ctx: BinaryOperatorContext): WJSCAst => {
+  /*public visitBinaryOperator = (ctx: BinaryOperatorContext): WJSCAst => {
     const result = this.initWJSCAst(ctx)
     result.parserRule = WJSCParserRules.Operator
     const binOP = ctx.MINUS() || ctx.PLUS() || ctx.DIVIDE() || ctx.EQUALS()
@@ -382,7 +388,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       result.token = binOP.toString()
     }
     return result
-  }
+  } */
 
   public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCAst => {
     // 1. Ensure either ifThenElseFi or whileDoDone
@@ -449,6 +455,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
+  public visitBooleanOperator = (ctx: BooleanOperatorContext) => {
+    return this.initWJSCAst(ctx)
+  }
+
+  public visitComparisonOperator = (ctx: ComparisonOperatorContext) => {
+    return this.initWJSCAst(ctx)
+  }
+
   public visitExpression = (ctx: ExpressionContext): WJSCAst => {
     // 1. Ensure either literals, idents, array-elem, operators or bracket
     // 2. if bracket, ensure both brackets present 3. Ensure ident is in lookup
@@ -464,7 +478,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       || ctx.STRING_LITERAL() || ctx.PAIR_LITERAL()
     const ident = ctx.IDENTIFIER()
     const arrayElem = ctx.arrayElement()
-    const operators = ctx.unaryOperator() || ctx.binaryOperator()
+    const operators = ctx.unaryOperator() || ctx.arithmeticOperator()
+      || ctx.comparisonOperator() || ctx.booleanOperator()
     const bracket = ctx.LPAREN()
     if (!intLiterals && !literals && !ident && !arrayElem && !operators
       && !bracket) {
@@ -506,23 +521,28 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           }
         } else {
           // Operator scenario
-          const unaryOperator = ctx.unaryOperator()
-          const binaryOperator = ctx.binaryOperator()
-          if (unaryOperator) {
+          if (operators instanceof UnaryOperatorContext) {
             if (expressions.length !== 1) {
               this.errorLog.semErr(result, SemError.IncorrectArgNo, [1, 1])
             } else {
-              const visitedOp = this.visitUnaryOperator(unaryOperator)
+              const visitedOp = this.visitUnaryOperator(operators)
               result.children.push(visitedOp)
               const exp1 = this.visitExpression(expressions[0])
               result.children.push(exp1)
               result.type = this.checkOperator(visitedOp, exp1)
             }
-          } else if (binaryOperator) {
+          } else if (operators) {
             if (expressions.length !== 2) {
               this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
             } else {
-              const visitedOp = this.visitBinaryOperator(binaryOperator)
+              let visitedOp: WJSCAst
+              if (operators instanceof ArithmeticOperatorContext) {
+                visitedOp = this.visitArithmeticOperator(operators)
+              } else if (operators instanceof BooleanOperatorContext) {
+                visitedOp = this.visitBooleanOperator(operators)
+              } else {
+                visitedOp = this.visitComparisonOperator(operators)
+              }
               result.children.push(visitedOp)
               const exp1 = this.visitExpression(expressions[0])
               const exp2 = this.visitExpression(expressions[1])
