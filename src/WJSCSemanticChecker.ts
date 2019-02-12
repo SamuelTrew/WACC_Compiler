@@ -33,7 +33,7 @@ import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import {
   WJSCAst,
   WJSCFunction,
-  WJSCIdentifier,
+  WJSCIdentifier, WJSCOperators,
   WJSCParam,
   WJSCParserRules,
   WJSCStatement,
@@ -74,8 +74,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     this.symbolTable = new WJSCSymbolTable(0, undefined, false, errorLog)
   }
 
-  public visitArithmeticOperator = (ctx: ArithmeticOperatorContext) => {
-    const result = this.initWJSCAst(ctx)
+  public visitArithmeticOperator = (ctx: ArithmeticOperatorContext):
+      WJSCOperators => {
+    const result = this.initWJSCAst(ctx) as WJSCOperators
     result.parserRule = WJSCParserRules.Operator
     const operator =
       ctx.MINUS() ||
@@ -480,8 +481,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
-  public visitBooleanOperator = (ctx: BooleanOperatorContext) => {
-    const result = this.initWJSCAst(ctx)
+  public visitBooleanOperator = (ctx: BooleanOperatorContext):
+      WJSCOperators => {
+    const result = this.initWJSCAst(ctx) as WJSCOperators
     result.parserRule = WJSCParserRules.Operator
     const operator = ctx.LOGICAL_AND() || ctx.LOGICAL_OR()
     if (operator) {
@@ -490,8 +492,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
-  public visitComparisonOperator = (ctx: ComparisonOperatorContext) => {
-    const result = this.initWJSCAst(ctx)
+  public visitComparisonOperator = (ctx: ComparisonOperatorContext):
+      WJSCOperators => {
+    const result = this.initWJSCAst(ctx) as WJSCOperators
     result.parserRule = WJSCParserRules.Operator
     const operator =
       ctx.EQUALS() ||
@@ -1024,9 +1027,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return terminal
   }
 
-  public visitUnaryOperator = (ctx: UnaryOperatorContext): WJSCAst => {
+  public visitUnaryOperator = (ctx: UnaryOperatorContext): WJSCOperators => {
     // 1. Ensure either of ops not undefined 2. visit ops
-    const result = this.initWJSCAst(ctx)
+    const result = this.initWJSCAst(ctx) as WJSCOperators
     result.parserRule = WJSCParserRules.Operator
     const op =
       ctx.LOGICAL_NEGATION() ||
@@ -1054,10 +1057,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
   }
 
-  private checkOperator = (
-    op: WJSCAst,
-    exp1: WJSCAst,
-    exp2?: WJSCAst,
+  private checkOperator = (op: WJSCOperators, exp1: WJSCAst, exp2?: WJSCAst,
   ): TypeName => {
     let outputType
     const unOps = ['!', '-', 'len', 'ord', 'chr']
@@ -1076,19 +1076,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       BaseType.Character,
     ]
     const binOps = [
-      '*',
-      '/',
-      '%',
-      '+',
-      '-',
-      '>',
-      '>=',
-      '<',
-      '<=',
-      '==',
-      '!=',
-      '&&',
-      '||',
+      '*', '/', '%', '+', '-', '>', '>=', '<',
+      '<=', '==', '!=', '&&', '||',
     ]
     const binOpInputs = [
       [BaseType.Integer],
