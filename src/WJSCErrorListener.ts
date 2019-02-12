@@ -15,7 +15,7 @@ class WJSCErrorListener implements ParserErrorListener {
     offendingSymbol: Token | undefined, line: number,
     charPositionInLine: number,
     msg: string, e: RecognitionException | undefined) => {
-    this.errorLog.messageLog(line, charPositionInLine, SynError.BadToken, msg)
+    this.errorLog.synErr(line, charPositionInLine, SynError.BadToken, msg)
   }
 
 }

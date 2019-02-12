@@ -70,7 +70,9 @@ pairElementType: baseType
                  ;
 
 expression: integerLiteral
-          | expression binaryOperator expression
+          | expression arithmeticOperator expression
+          | expression comparisonOperator expression
+          | expression booleanOperator expression
           | arrayElement
           | unaryOperator expression
           | LPAREN expression RPAREN
@@ -84,23 +86,26 @@ integerLiteral: (PLUS | MINUS)? DIGIT+;
 arrayElement: IDENTIFIER (LBRACK expression RBRACK)+;
 arrayLiteral: LBRACK (expression (COMMA expression)*)? RBRACK;
 
+arithmeticOperator: MULTIPLY
+                  | DIVIDE
+                  | MODULO
+                  | PLUS
+                  | MINUS
+                  ;
 
-binaryOperator: MULTIPLY
-              | DIVIDE
-              | MODULO
-              | PLUS
-              | MINUS
-              | GREATER_THAN
-              | GREATER_EQUAL
-              | LESS_THAN
-              | LESS_EQUAL
-              | EQUALS
-              | STRICT_EQUALS
-              | NEQUALS
-              | NSTRICT_EQUALS
-              | LOGICAL_AND
-              | LOGICAL_OR
-              ;
+comparisonOperator: GREATER_THAN
+                  | GREATER_EQUAL
+                  | LESS_THAN
+                  | LESS_EQUAL
+                  | EQUALS
+                  | STRICT_EQUALS
+                  | NEQUALS
+                  | NSTRICT_EQUALS
+                  ;
+
+booleanOperator: LOGICAL_AND
+               | LOGICAL_OR
+               ;
 
 unaryOperator: LOGICAL_NEGATION
              | MINUS

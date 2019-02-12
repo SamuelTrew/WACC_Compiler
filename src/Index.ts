@@ -63,8 +63,12 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   const lexer = new WJSCLexer(inputStream)
   const tokenStream = new antlr4ts.CommonTokenStream(lexer)
   const parser = new WJSCParser(tokenStream)
+
+  /* Suppress the default antlr output and add our own */
+  parser.removeErrorListeners()
   parser.addErrorListener(errorListener)
 
+  /* Allocate the tree, may be null */
   let tree: WJSCAst | null = null
 
   /* Visit the tree */
@@ -72,22 +76,35 @@ fs.readFile(args.src, 'utf8', (err, data) => {
     const ctx = parser.program()
     if (errorLog.numErrors() === 0) {
       tree = visitor.visit(ctx)
-      if (errorLog.numErrors() > 0) { process.exitCode = 200 }
-    } else { process.exitCode = 100 }
+    }
   } catch (error) {
-    const { message, stack } = error
-    errorLog.runtimeError(message, stack)
+    errorLog.runtimeError(error)
   }
 
   /* Count the number of error */
-  const numerrors = errorLog.numErrors()
+  const synerrors = errorLog.numSyntaxErrors()
+  const semerrors = errorLog.numSemanticErrors()
+  const numerrors = synerrors + semerrors
+
+  /* Set process exit code */
+  if (synerrors > 0) {
+    process.exitCode = 100
+  } else if (semerrors > 0) {
+    process.exitCode = 200
+  }
+
   if (numerrors === 0) {
     console.log(`  ${ConsoleColors.FgGreen}[OK]${ConsoleColors.Reset}`
       + ` Compilation succeeded.`)
   } else {
     console.log(`  ${ConsoleColors.FgRed}[NG]${ConsoleColors.Reset}`
-      + ` Compilation failed with ${numerrors} error`
-      + (numerrors !== 1 ? 's' : '') + '.')
+      + ` Compilation failed with `
+      + ((synerrors > 0)
+        ? `${synerrors} syntax error${(synerrors !== 1 ? 's' : '')}` : '')
+      + ((synerrors > 0 && semerrors > 0) ? ' and ' : '')
+      + ((semerrors > 0)
+        ? `${semerrors} semantic error${(semerrors !== 1 ? 's' : '')}` : ''),
+    )
   }
 
   /* Write the output */

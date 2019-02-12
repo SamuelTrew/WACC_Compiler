@@ -11,20 +11,9 @@ export class WJSCSymbolTable {
   private parentLevel?: WJSCSymbolTable
   private isInFunction: boolean
   private readonly errorLog: WJSCErrorLog
-  private readonly STDLIB_FUNCTIONS: WJSCSymbolTableEntry[] = [
-    {
-      identifier: 'free',
-      params: [
-        BaseType.Pair,
-      ],
-      type: BaseType.None,
-    },
-  ]
 
-  constructor(scopeLevel: number,
-              parentLevel: WJSCSymbolTable | undefined,
-              isInFunction: boolean,
-              errorLog: WJSCErrorLog) {
+  constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined,
+    isInFunction: boolean, errorLog: WJSCErrorLog) {
     this.currentScopeLevel = scopeLevel
     this.symbolTable = []
     this.childrenTables = []
@@ -71,7 +60,7 @@ export class WJSCSymbolTable {
     if (this.parentLevel !== undefined) {
       return this.parentLevel
     }
-    this.errorLog.pushError('Cannot exit from top level scope')
+    this.errorLog.runtimeError(new Error('Cannot exit from top level scope'))
     return this
   }
 
@@ -112,11 +101,11 @@ export class WJSCSymbolTable {
     console.log(`${astNode.token} should have type ${lookupResult},`
       + ` actual type ${astNode.type}.`)
     if (lookupResult === undefined) {
-      this.errorLog.nodeLog(astNode, SemError.Undefined)
+      this.errorLog.semErr(astNode, SemError.Undefined)
       return false
     } else {
       if (!hasSameType(lookupResult, astNode.type)) {
-        this.errorLog.nodeLog(astNode, SemError.Mismatch, lookupResult)
+        this.errorLog.semErr(astNode, SemError.Mismatch, lookupResult)
         return false
       }
     }
