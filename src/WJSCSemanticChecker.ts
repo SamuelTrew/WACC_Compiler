@@ -952,7 +952,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   private checkOperator = (op: WJSCAst, exp1: WJSCAst, exp2?: WJSCAst):
      TypeName => {
-      let outputType
+      // Initialised to any as it is possible for outputType not get set
+      // in this function
+      let outputType = BaseType.Any
       const unOps = ['!', '-', 'len', 'ord', 'chr']
       const unOpInputs =
           [[BaseType.Boolean], [BaseType.Integer],
@@ -987,7 +989,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         unOps.forEach((child, index) => {
           let matchAnyType = false
           if (child.toString() === op.token) {
-            unOpInputs[index].forEach((potInput, potIndex) => {
+            unOpInputs[index].forEach((potInput) => {
               if (potInput === exp1.type) {
                 matchAnyType = true
                 outputType = unOpOutputs[index]
@@ -1037,7 +1039,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               }
               */
             } else {
-              binOpInputs[index].forEach((potInput, potIndex) => {
+              binOpInputs[index].forEach((potInput) => {
                 if (potInput === exp1.type && potInput === exp2.type) {
                   matchAnyType = true
                   outputType = binOpOutputs[index]
