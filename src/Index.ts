@@ -2,17 +2,10 @@
 import * as argparse from 'argparse'
 import * as fs from 'fs'
 
-/* ANTLR imports */
-import * as antlr4ts from 'antlr4ts'
-import { WJSCLexer } from './grammar/WJSCLexer'
-import { WJSCParser } from './grammar/WJSCParser'
-
 /* Our code */
 import { ConsoleColors } from './util/Colors'
 import { WJSCAst } from './WJSCAst'
-import { WJSCErrorListener } from './WJSCErrorListener'
-import { WJSCErrorLog } from './WJSCErrors'
-import { WJSCSemanticChecker } from './WJSCSemanticChecker'
+import WJSCCompiler from './WJSCCompiler'
 
 const antinos = 'HXLY' + 311
 
@@ -49,37 +42,22 @@ fs.readFile(args.src, 'utf8', (err, data) => {
     throw err
   }
 
-  /* Instantiate our classes */
-  const errorLog = new WJSCErrorLog()
-  const errorListener = new WJSCErrorListener(errorLog)
-  const visitor = new WJSCSemanticChecker(errorLog)
+  /* Instantiate our compiler */
+  const compiler = new WJSCCompiler(data)
 
-  /* Instantitate and run ANTLR classes */
-  const inputStream = new antlr4ts.ANTLRInputStream(data)
-  const lexer = new WJSCLexer(inputStream)
-  const tokenStream = new antlr4ts.CommonTokenStream(lexer)
-  const parser = new WJSCParser(tokenStream)
-
-  /* Suppress the default antlr output and add our own */
-  parser.removeErrorListeners()
-  parser.addErrorListener(errorListener)
-
-  /* Allocate the tree, may be null */
-  let tree: WJSCAst | null = null
+  /* Allocate the tree, may be undefined */
+  let tree: WJSCAst | undefined
 
   /* Visit the tree */
   try {
-    const ctx = parser.program()
-    if (errorLog.numErrors() === 0) {
-      tree = visitor.visit(ctx)
-    }
+    tree = compiler.check()
   } catch (error) {
-    errorLog.runtimeError(error)
+    compiler.errorLog.runtimeError(error)
   }
 
   /* Count the number of error */
-  const synerrors = errorLog.numSyntaxErrors()
-  const semerrors = errorLog.numSemanticErrors()
+  const synerrors = compiler.errorLog.numSyntaxErrors()
+  const semerrors = compiler.errorLog.numSemanticErrors()
   const numerrors = synerrors + semerrors
 
   /* Set process exit code */
@@ -117,7 +95,7 @@ fs.readFile(args.src, 'utf8', (err, data) => {
           {
             tree,
             // tslint:disable-next-line:object-literal-sort-keys
-            symbolTable: visitor.symbolTable.json(),
+            symbolTable: compiler.semanticChecker.symbolTable.json(),
           },
           null,
           2,
@@ -145,7 +123,7 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   /* Write the output */
   if (numerrors > 0) {
     try {
-      fs.writeFile(errors, errorLog.printErrors(), (writeErr) => {
+      fs.writeFile(errors, compiler.errorLog.printErrors(), (writeErr) => {
         if (writeErr) {
           throw writeErr
         }
