@@ -429,12 +429,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.nodeLog(result, SemError.Mismatch, BaseType.Boolean)
         }
         this.pushChild(result, childExpType)
-        childStat.forEach((child, index) => {
+        childStat.forEach((child) => {
           const childStatType = this.visitStatement(child)
           this.pushChild(result, childStatType)
           if (!childStatType) {
             this.errorLog.nodeLog(result, SemError.Undefined)
           }
+          // HALP IDK HOW TO CHECK IF STATEMENT BODY SKIPS
+          // } else if (child.WSKIP()) {
+          //   this.errorLog.nodeLog(result, SynError, )
+          // }
         })
         if ((ifB) && (thenB) && (elseB) && (fiB)) {
           // <- tsLint wont allow ifThen...
