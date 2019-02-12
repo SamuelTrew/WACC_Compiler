@@ -23,7 +23,6 @@ enum SemError {
 }
 
 class WJSCErrorLog {
-
   private runtimeErrors: string[]
   private semanticErrors: string[]
   private syntaxErrors: string[]
@@ -34,8 +33,11 @@ class WJSCErrorLog {
     this.syntaxErrors = []
   }
 
-  public semErr = (node: WJSCAst, error: SemError,
-    additionalParam?: TypeName | TypeName[] | number[] | Stdlib) => {
+  public semErr = (
+    node: WJSCAst,
+    error: SemError,
+    additionalParam?: TypeName | TypeName[] | number[] | Stdlib,
+  ) => {
     let errorMessage = ''
     const { line, column, token } = node
     errorMessage += `Semantic Error '${error}' at ${line}:${column}: `
@@ -48,15 +50,15 @@ class WJSCErrorLog {
     } else if (error === SemError.BadStdlibArgs) {
       const stdlibfunc = additionalParam as Stdlib
       errorMessage +=
-        `Type of ${token} does not match expected type for stdlib function `
-        + `${stdlibfunc}: got ${JSON.stringify(node.type)}, expected `
+        `Type of ${token} does not match expected type for stdlib function ` +
+        `${stdlibfunc}: got ${JSON.stringify(node.type)}, expected `
       switch (stdlibfunc) {
         case Stdlib.Exit:
           errorMessage += BaseType.Integer
           break
         case Stdlib.Free:
-          errorMessage += BaseType.Pair + ' or '
-            + JSON.stringify({ arrayType: BaseType.Any })
+          errorMessage +=
+            BaseType.Pair + ' or ' + JSON.stringify({ arrayType: BaseType.Any })
           break
         case Stdlib.Fst:
         case Stdlib.Snd:
@@ -79,9 +81,9 @@ class WJSCErrorLog {
       errorMessage +=
         `${token} does not have ${additionalParam[0]}` +
         `${
-        additionalParam[1] === -1
-          ? 'or more'
-          : additionalParam[0] === additionalParam[1]
+          additionalParam[1] === -1
+            ? 'or more'
+            : additionalParam[0] === additionalParam[1]
             ? ''
             : 'to ' + secondParam
         } arguments`
@@ -89,15 +91,21 @@ class WJSCErrorLog {
     this.semanticErrors.push(errorMessage)
   }
 
-  public synErr = (line: number, column: number, error: SynError,
-    message: string) => {
-    this.syntaxErrors.push(`Syntax Error '${error}' at ${line}:${column}: `
-      + message)
+  public synErr = (
+    line: number,
+    column: number,
+    error: SynError,
+    message: string,
+  ) => {
+    this.syntaxErrors.push(
+      `Syntax Error '${error}' at ${line}:${column}: ` + message,
+    )
   }
 
   public runtimeError = (error: Error) => {
-    this.runtimeErrors.push(`Runtime error: ${error.message}.`
-      + `Full stack trace: ${error.stack}`)
+    this.runtimeErrors.push(
+      `Runtime error: ${error.message}.` + `Full stack trace: ${error.stack}`,
+    )
   }
 
   public printErrors = (): string => {
