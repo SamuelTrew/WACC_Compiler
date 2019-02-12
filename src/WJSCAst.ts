@@ -1,4 +1,6 @@
+import {symlink} from 'fs'
 import { TerminalType, TypeName } from './WJSCType'
+import Type = module
 
 enum WJSCParserRules {
   Undefined = 'undefined',
@@ -48,6 +50,13 @@ interface WJSCFunction extends WJSCAst {
   identifier: string
 }
 
+interface WJSCOperators extends WJSCAst {
+  operatorType: string
+  inputs: TypeName[]
+  arrayInput: boolean
+  outputs: TypeName
+}
+
 interface WJSCParam extends WJSCAst {
   paramTypes: TypeName[]
 }
@@ -67,5 +76,6 @@ export {
   WJSCFunction,
   WJSCStatement,
   WJSCIdentifier,
+  WJSCOperators,
   WJSCParam,
 }

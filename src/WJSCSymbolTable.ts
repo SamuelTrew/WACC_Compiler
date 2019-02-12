@@ -87,7 +87,6 @@ export class WJSCSymbolTable {
     let result
     this.symbolTable.forEach((entry) => {
       if (entry.identifier === identifier) {
-        console.log(entry.identifier + ':' + entry.type)
         result = entry.type
       }
     })
@@ -105,7 +104,28 @@ export class WJSCSymbolTable {
     return result
   }
 
-  // Return whether the node given has the same type in the symbol table
+  public getLocalEntry = (identifier: string):
+      WJSCSymbolTableEntry | undefined => {
+    let result
+    this.symbolTable.forEach((entry) => {
+      if (entry.identifier === identifier) {
+        result = entry
+      }
+    })
+    return result
+  }
+
+  public getGlobalEntry = (identifier: string):
+      WJSCSymbolTableEntry | undefined => {
+    let result = this.getLocalEntry(identifier)
+    if (!result && this.parentLevel !== undefined) {
+      console.log('Recursive lookup')
+      result = this.parentLevel.getGlobalEntry(identifier)
+    }
+    return result
+  }
+
+      // Return whether the node given has the same type in the symbol table
   public checkType = (astNode: WJSCAst): boolean => {
     const lookupResult = this.globalLookup(astNode.token)
     console.log(
