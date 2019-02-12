@@ -31,23 +31,21 @@ recursive(
                     /* Read the file */
                     fs.readFile(filename, 'utf8', function(readError, data) {
                       if (readError) throw readError
+                      let compileError
                       const compiler = new WJSCCompiler.default(data)
-                      before(function () {
+                      try {
                         sinon.stub(console, 'log')
-                      })
-                      compiler.check()
-                      after( function () {
-                        delete console.log
-                      })
-                      it('throws error', function (done) {
-                        console.log()
-                      })
-                      /* Assert no errors */
-                      assert(
-                        compiler.errorLog.numErrors() === 0,
-                        compiler.errorLog.printErrors(),
-                      )
-                      done()
+                        compiler.check()
+                      } catch (error) {
+                        error = compileError
+                      } finally {
+                        console.log.restore() /* Assert no errors */
+                        assert(
+                          compiler.errorLog.numErrors() === 0,
+                          compiler.errorLog.printErrors(),
+                        )
+                        done(compileError)
+                      }
                     })
                   })
                 })
@@ -61,16 +59,21 @@ recursive(
                     /* Read the file */
                     fs.readFile(filename, 'utf8', function(readError, data) {
                       if (readError) throw readError
+                      let compileError
                       const compiler = new WJSCCompiler.default(data)
-                      sinon.stub(console, 'log')
-                      compiler.check()
-                      console.log.restore()
-                      /* Assert no errors */
-                      assert(
-                        compiler.errorLog.numErrors() > 0,
-                        'No errors produced',
-                      )
-                      done()
+                      try {
+                        sinon.stub(console, 'log')
+                        compiler.check()
+                      } catch (error) {
+                        error = compileError
+                      } finally {
+                        console.log.restore()
+                        assert(
+                          compiler.errorLog.numErrors() > 0,
+                          'No error produced',
+                        )
+                        done(compileError)
+                      }
                     })
                   })
                 })
@@ -84,16 +87,21 @@ recursive(
                     /* Read the file */
                     fs.readFile(filename, 'utf8', function(readError, data) {
                       if (readError) throw readError
+                      let compileError
                       const compiler = new WJSCCompiler.default(data)
-                      sinon.stub(console, 'log')
-                      compiler.check()
-                      console.log.restore()
-                      /* Assert no errors */
-                      assert(
-                        compiler.errorLog.numErrors() > 0,
-                        'No errors produced',
-                      )
-                      done()
+                      try {
+                        sinon.stub(console, 'log')
+                        compiler.check()
+                      } catch (error) {
+                        error = compileError
+                      } finally {
+                        console.log.restore()
+                        assert(
+                          compiler.errorLog.numErrors() > 0,
+                          'No error produced',
+                        )
+                        done(compileError)
+                      }
                     })
                   })
                 })
