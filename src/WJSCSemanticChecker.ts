@@ -1,5 +1,6 @@
 import { ParserRuleContext } from 'antlr4ts'
 import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import * as _ from 'lodash'
 import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
@@ -972,7 +973,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             const firstStatement = this.visitStatement(stat[0])
             const lastStatement = this.visitStatement(stat[1])
             this.pushChild(result, firstStatement)
-            if (firstStatement.token.includes('return')) {
+            if (this.isReturnStatement(firstStatement)) {
               this.errorLog.synErr(
                 firstStatement.line,
                 firstStatement.column,
@@ -1252,12 +1253,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     let startIndex
     let text
     if (ctx instanceof ParserRuleContext) {
-      ({
+      ;({
         start: { charPositionInLine, line, startIndex },
         text,
       } = ctx)
     } else {
-      ({ charPositionInLine, line, startIndex, text } = ctx.symbol)
+      ;({ charPositionInLine, line, startIndex, text } = ctx.symbol)
     }
     return {
       children: [],
@@ -1325,6 +1326,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       return found
     }
   }
+
+  private isReturnStatement = (ast: WJSCAst): boolean =>
+    _.find(ast.children, { token: 'return' }) !== undefined
 }
 
 export { WJSCSemanticChecker }
