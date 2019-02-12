@@ -397,15 +397,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // Assignment
         const visitedLhsType = this.visitType(lhsType).type
         const visitedIdentifier = this.visitTerminal(lhsIdent)
-        const entry = this.symbolTable.getGlobalEntry(visitedIdentifier.value)
-        if (entry && entry.params) {
-            this.errorLog.semErr(result, SemError.BadFunctionUse)
-         }
         // Check for double declaration
         const possibleEntry
             = this.symbolTable.getLocalEntry(visitedIdentifier.value)
         if (possibleEntry && !possibleEntry.params) {
-           this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
+          this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
         }
         visitedIdentifier.type = visitedLhsType
         this.pushChild(result, visitedIdentifier)
