@@ -1,31 +1,30 @@
 import { ParserRuleContext } from 'antlr4ts'
 import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
-import {arrayify} from 'tslint/lib/utils'
 import { WJSCLexer } from './grammar/WJSCLexer'
 import {
-    ArgListContext,
-    ArrayElementContext,
-    ArrayLiteralContext,
-    ArrayTypeContext,
-    AssignLhsContext,
-    AssignmentContext,
-    AssignRhsContext,
-    BaseTypeContext,
-    BinaryOperatorContext,
-    ConditionalBlocksContext,
-    ExpressionContext,
-    FuncContext,
-    IntegerLiteralContext,
-    PairElementContext,
-    PairElementTypeContext,
-    PairTypeContext,
-    ParamContext,
-    ParamListContext,
-    ProgramContext,
-    StatementContext,
-    StdlibContext,
-    TypeContext,
-    UnaryOperatorContext,
+  ArgListContext,
+  ArrayElementContext,
+  ArrayLiteralContext,
+  ArrayTypeContext,
+  AssignLhsContext,
+  AssignmentContext,
+  AssignRhsContext,
+  BaseTypeContext,
+  BinaryOperatorContext,
+  ConditionalBlocksContext,
+  ExpressionContext,
+  FuncContext,
+  IntegerLiteralContext,
+  PairElementContext,
+  PairElementTypeContext,
+  PairTypeContext,
+  ParamContext,
+  ParamListContext,
+  ProgramContext,
+  StatementContext,
+  StdlibContext,
+  TypeContext,
+  UnaryOperatorContext,
 } from './grammar/WJSCParser'
 import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
 import {
@@ -39,18 +38,17 @@ import {
 import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 import {
-    ArrayType,
-    BaseType,
-    getFstInPair,
-    getSndInPair,
-    hasSameType,
-    isArrayType,
-    isPairType,
-    MAX_INT,
-    MIN_INT,
-    TerminalKeywords,
-    TerminalOperators,
-    TypeName,
+  BaseType,
+  getFstInPair,
+  getSndInPair,
+  hasSameType,
+  isArrayType,
+  isPairType,
+  MAX_INT,
+  MIN_INT,
+  TerminalKeywords,
+  TerminalOperators,
+  TypeName,
 } from './WJSCType'
 // WARNING: Results must be pushed in exact order?
 // Should error-ridden elems still be pushed on results?
@@ -1024,24 +1022,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
                 matchAnyType = true
                 outputType = BaseType.Boolean
               }
-              /*
-              if (isArrayType(exp1.type) && isArrayType(exp2.type)) {
-                matchAnyType = true
-                outputType = BaseType.Boolean
-              } else if (!isArrayType(exp1.type) && isArrayType(exp2.type)) {
-                const { line, column, token } = exp1
-                this.errorLog.pushError(`Type of ${token}:
-              ${JSON.stringify(exp1.type)}` +
-                    ` does not match expected type array`)
-                matchButFaulty = true
-              } else if (isArrayType(exp1.type) && !isArrayType(exp2.type)) {
-                const { line, column, token } = exp2
-                this.errorLog.pushError(`Type of ${token}:
-              ${JSON.stringify(exp2.type)}` +
-                    ` does not match expected type array`)
-                matchButFaulty = true
-              }
-              */
             } else {
               binOpInputs[index].forEach((potInput) => {
                 if (potInput === exp1.type && potInput === exp2.type) {
@@ -1106,12 +1086,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       if (visitedStdlib.token === 'free'
           && !isPairType(visitedExpr.type)
           && !isArrayType(visitedExpr.type)) {
+
         // Free can only be called on pair or array type.
         console.log('Is pair type: ' + isPairType(visitedExpr.type))
         this.errorLog.pushError('Semantic Error at ' +
           `${visitedExpr.line}:${visitedExpr.column}` +
             ': free can only be called on a pair or array.')
       } else if (visitedStdlib.token === 'return') {
+
         // Return cannot only be in body of non-main function
         // Type of expression must match the return type of the function
         if (!this.symbolTable.inFunction()) {
@@ -1125,9 +1107,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
                 SemError.Mismatch, functionType)
           }
         }
+      } else if (visitedStdlib.token === 'exit'
+          && !hasSameType(visitedExpr.type, BaseType.Integer)) {
 
+        // Exit must return exit code of type 'int'
+        this.errorLog.nodeLog(visitedExpr, SemError.Mismatch,
+            BaseType.Integer)
       }
-    }
+  }
 }
 
 export { WJSCSemanticChecker }
