@@ -678,6 +678,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const visitedType = this.visitType(ctx.type())
     const visitedIdent = this.visitTerminal(ctx.IDENTIFIER())
     result.identifier = visitedIdent.value
+    visitedIdent.type = visitedType.type
     result.type = visitedType.type
     this.symbolTable.insertSymbol(result.identifier, visitedIdent.type)
     return result
