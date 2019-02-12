@@ -117,11 +117,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.parserRule = WJSCParserRules.Array
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     this.symbolTable.checkType(ident)
-    if (this.symbolTable.checkType(ident)) {
-      const entry = this.symbolTable.getGlobalEntry(ident.value)
-      if (entry && entry.params) {
-        this.errorLog.semErr(result, SemError.BadFunctionUse)
-      }
+    const entry = this.symbolTable.getGlobalEntry(ident.value)
+    if (entry && entry.params) {
+      this.errorLog.semErr(result, SemError.BadFunctionUse)
     }
     const expressions = ctx.expression()
     if (expressions.length === 0) {
@@ -129,7 +127,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
     result.children = expressions.map(this.visitExpression)
     let currElemType = this.symbolTable.globalLookup(ident.token)
-
     result.children.forEach((child) => {
       if (!hasSameType(child.type, BaseType.Integer)) {
         this.errorLog.semErr(child, SemError.Mismatch, BaseType.Integer)
@@ -400,12 +397,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // Assignment
         const visitedLhsType = this.visitType(lhsType).type
         const visitedIdentifier = this.visitTerminal(lhsIdent)
-        if (this.symbolTable.checkType(visitedIdentifier)) {
-          const entry = this.symbolTable.getGlobalEntry(visitedIdentifier.value)
-          if (entry && entry.params) {
+        const entry = this.symbolTable.getGlobalEntry(visitedIdentifier.value)
+        if (entry && entry.params) {
             this.errorLog.semErr(result, SemError.BadFunctionUse)
-          }
-        }
+         }
         // Check for double declaration
         const possibleEntry
             = this.symbolTable.getLocalEntry(visitedIdentifier.value)
