@@ -1148,24 +1148,36 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           outputType = op.outputs
         }
       } else {
-        op.inputs.forEach((potInput) => {
-          if (potInput === exp1.type && potInput === exp2.type) {
-            matchAnyType = true
-            outputType = op.outputs
-          } else if (potInput !== exp1.type && potInput === exp2.type
-              && !matchButFaulty) {
-            this.errorLog.semErr(exp1, SemError.Mismatch, potInput)
-            matchButFaulty = true
-          } else if (potInput === exp1.type && potInput !== exp2.type
-          && !matchButFaulty) {
-            this.errorLog.semErr(exp2, SemError.Mismatch, potInput)
-            matchButFaulty = true
+        // check for invalid array inputs
+        let error = false
+        if (isArrayType(exp1.type)) {
+          this.errorLog.semErr(exp1, SemError.Mismatch,
+              [BaseType.Integer, BaseType.Character])
+          error = true
+        }
+        if (isArrayType(exp2.type)) {
+          this.errorLog.semErr(exp2, SemError.Mismatch,
+              [BaseType.Integer, BaseType.Character])
+        } else if (!error) {
+          op.inputs.forEach((potInput) => {
+            if (potInput === exp1.type && potInput === exp2.type) {
+              matchAnyType = true
+              outputType = op.outputs
+            } else if (potInput !== exp1.type && potInput === exp2.type
+                && !matchButFaulty) {
+              this.errorLog.semErr(exp1, SemError.Mismatch, potInput)
+              matchButFaulty = true
+            } else if (potInput === exp1.type && potInput !== exp2.type
+                && !matchButFaulty) {
+              this.errorLog.semErr(exp2, SemError.Mismatch, potInput)
+              matchButFaulty = true
+            }
+          })
+          if (!matchAnyType && !matchButFaulty) {
+            // binOp operator has two arguments of incorrect type
+            this.errorLog.semErr(exp1, SemError.Mismatch, op.inputs)
+            this.errorLog.semErr(exp2, SemError.Mismatch, op.inputs)
           }
-        })
-        if (!matchAnyType && !matchButFaulty) {
-          // binOp operator has two arguments of incorrect type
-          this.errorLog.semErr(exp1, SemError.Mismatch, op.inputs)
-          this.errorLog.semErr(exp2, SemError.Mismatch, op.inputs)
         }
       }
     }
