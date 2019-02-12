@@ -37,8 +37,13 @@ export class WJSCSymbolTable {
     return this.isInFunction
   }
 
+  // Return the name of function declaration containing this table
   public getFunctionName = (): string | undefined => {
-    return this.functionName
+    let functionName = this.functionName
+    if (!functionName && this.parentLevel) {
+      functionName = this.parentLevel.getFunctionName()
+    }
+    return functionName
   }
 
   // Create new child symbol table
@@ -97,7 +102,7 @@ export class WJSCSymbolTable {
   // all its parent scopes. Return the type if found, undefined otherwise.
   public globalLookup = (identifier: string): TypeName => {
     let result = this.localLookup(identifier)
-    if (!result && this.parentLevel !== undefined) {
+    if (!result && this.parentLevel) {
       console.log('Recursive lookup')
       result = this.parentLevel.globalLookup(identifier)
     }
@@ -119,7 +124,7 @@ export class WJSCSymbolTable {
   public getGlobalEntry = (identifier: string):
       WJSCSymbolTableEntry | undefined => {
     let result = this.getLocalEntry(identifier)
-    if (!result && this.parentLevel !== undefined) {
+    if (!result && this.parentLevel) {
       console.log('Recursive lookup')
       result = this.parentLevel.getGlobalEntry(identifier)
     }

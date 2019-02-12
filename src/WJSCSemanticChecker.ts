@@ -676,13 +676,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.children.push(statements)
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
-/*
-    cide const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
-    if (possibleEntry && possibleEntry.params) {
-      this.errorLog.semErr(ident, SemError.DoubleDeclare)
-    } else {
-      this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
-    }*/
 
     return result
   }
@@ -1246,10 +1239,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   // Check the expressions given to stdlib functions free, return, exit, print
   // and println are of the correct type
-  private checkStdlibExpressionType = (
-    visitedStdlib: WJSCAst,
-    visitedExpr: WJSCAst,
-  ): void => {
+  private checkStdlibExpressionType
+      = (visitedStdlib: WJSCAst, visitedExpr: WJSCAst): void => {
     if (visitedStdlib.token === 'free' &&
       !isPairType(visitedExpr.type) &&
       !isArrayType(visitedExpr.type)) {
