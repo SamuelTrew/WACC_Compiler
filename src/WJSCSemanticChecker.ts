@@ -1,6 +1,5 @@
 import { ParserRuleContext } from 'antlr4ts'
 import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
-import * as _ from 'lodash'
 import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
@@ -385,7 +384,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         const visitedLhsType = this.visitType(lhsType).type
         const visitedIdentifier = this.visitTerminal(lhsIdent)
         // TODO check for double declaration
-        if (this.symbolTable.localLookup(visitedIdentifier.value)) {
+        const possibleEntry
+            = this.symbolTable.getLocalEntry(visitedIdentifier.value)
+        if (possibleEntry && !possibleEntry.params) {
            this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
         }
         visitedIdentifier.type = visitedLhsType
@@ -641,7 +642,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.children.push(statements)
     // Exit child scope
     this.symbolTable = this.symbolTable.exitScope()
-    this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
+
+    const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
+    if (possibleEntry && possibleEntry.params) {
+      this.errorLog.semErr(ident, SemError.DoubleDeclare)
+    } else {
+      this.symbolTable.insertSymbol(ident.token, visitedType, paramsTypes)
+    }
 
     return result
   }
@@ -857,7 +864,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
           const visitedExpr = this.visitExpression(expression)
-          // TODO Implement type check
+          // Check stdLib function argument types
           this.checkStdlibExpressionType(visitedStdlib, visitedExpr)
           result.children.push(visitedExpr)
         }
