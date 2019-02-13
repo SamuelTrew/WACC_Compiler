@@ -140,4 +140,4 @@ class WJSCErrorLog {
     error === SemError.Undefined
 }
 
-export { WJSCErrorLog, ErrType, SemError, SynError }
+export { WJSCErrorLog, SemError, SynError }
