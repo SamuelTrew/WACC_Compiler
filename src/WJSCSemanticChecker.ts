@@ -116,10 +116,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const result = this.initWJSCAst(ctx, WJSCParserRules.Array)
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     this.symbolTable.checkType(ident)
-    const entry = this.symbolTable.getGlobalEntry(ident.value)
-    if (entry && entry.params) {
-      this.errorLog.semErr(result, SemError.FunctionAsArray)
-    }
+    this.functionUse(result, ident)
     const expressions = ctx.expression()
     if (expressions.length === 0) {
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [1, -1])
@@ -247,11 +244,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
       if (lhsElems instanceof TerminalNode) {
-        const ident = this.visitTerminal(lhsElems)
-        const entry = this.symbolTable.getGlobalEntry(ident.value)
-        if (entry && entry.params) {
-          this.errorLog.semErr(result, SemError.BadFunctionUse)
-        }
+        this.functionUse(result, this.visitTerminal(lhsElems))
       }
       const lhsNode =
         lhsElems instanceof TerminalNode
@@ -722,6 +715,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(ident, SemError.DoubleDeclare)
     } else {
       this.symbolTable.insertSymbol(ident.token, visitedType, paramTypes)
+    }
+  }
+
+  public functionUse = (result: WJSCAst, ident: WJSCTerminal): void => {
+    // Checks whether or not there is bad function use
+    const entry = this.symbolTable.getGlobalEntry(ident.value)
+    if (entry && entry.params) {
+      this.errorLog.semErr(result, SemError.BadFunctionUse)
     }
   }
 
