@@ -1105,78 +1105,92 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     exp2?: WJSCAst,
   ): TypeName => {
     let outputType
-    let matchAnyType = false
     if (exp2 === undefined) {
       /* Unary operators */
-      op.inputs.forEach((potInput) => {
-        if (potInput === exp1.type) {
-          matchAnyType = true
-          outputType = op.outputs
-        }
-      })
-      if (op.arrayInput && isArrayType(exp1.type)) {
+      outputType = this.checkOperatorUnary(op, exp1)
+    } else {
+      /* Binary operators */
+      outputType = this.checkOperatorBinary(op, exp1, exp2)
+    }
+    return outputType
+  }
+
+  private checkOperatorBinary = (op: WJSCOperators, exp1: WJSCAst,
+                                 exp2: WJSCAst): TypeName => {
+    let outputType
+    let matchAnyType = false
+    let matchButFaulty = false
+    if (op.arrayInput) {
+      /* Special check for mismatched array types */
+      if (!hasSameType(exp1.type, exp2.type)) {
+        this.errorLog.semErr(exp1, SemError.Mismatch, exp2.type)
+      } else {
         matchAnyType = true
         outputType = op.outputs
       }
-      if (!matchAnyType) {
-        this.errorLog.semErr(exp1, SemError.Mismatch, op.inputs)
-      }
     } else {
-      /* Binary Operator */
-      let matchButFaulty = false
-      if (op.arrayInput) {
-        /* Special check for mismatched array types */
-        if (!hasSameType(exp1.type, exp2.type)) {
-          this.errorLog.semErr(exp1, SemError.Mismatch, exp2.type)
-        } else {
-          matchAnyType = true
-          outputType = op.outputs
-        }
-      } else {
-        /* check for invalid array inputs */
-        let error = false
-        if (isArrayType(exp1.type)) {
-          this.errorLog.semErr(exp1, SemError.Mismatch, [
-            BaseType.Integer,
-            BaseType.Character,
-          ])
-          error = true
-        }
-        if (isArrayType(exp2.type)) {
-          this.errorLog.semErr(exp2, SemError.Mismatch, [
-            BaseType.Integer,
-            BaseType.Character,
-          ])
-          error = true
-        }
-        if (!error) {
-          op.inputs.forEach((potInput) => {
-            if (potInput === exp1.type && potInput === exp2.type) {
-              matchAnyType = true
-              outputType = op.outputs
-            } else if (
+      /* check for invalid array inputs */
+      let error = false
+      if (isArrayType(exp1.type)) {
+        this.errorLog.semErr(exp1, SemError.Mismatch, [
+          BaseType.Integer,
+          BaseType.Character,
+        ])
+        error = true
+      }
+      if (isArrayType(exp2.type)) {
+        this.errorLog.semErr(exp2, SemError.Mismatch, [
+          BaseType.Integer,
+          BaseType.Character,
+        ])
+        error = true
+      }
+      if (!error) {
+        op.inputs.forEach((potInput) => {
+          if (potInput === exp1.type && potInput === exp2.type) {
+            matchAnyType = true
+            outputType = op.outputs
+          } else if (
               potInput !== exp1.type &&
               potInput === exp2.type &&
               !matchButFaulty
-            ) {
-              this.errorLog.semErr(exp1, SemError.Mismatch, potInput)
-              matchButFaulty = true
-            } else if (
+          ) {
+            this.errorLog.semErr(exp1, SemError.Mismatch, potInput)
+            matchButFaulty = true
+          } else if (
               potInput === exp1.type &&
               potInput !== exp2.type &&
               !matchButFaulty
-            ) {
-              this.errorLog.semErr(exp2, SemError.Mismatch, potInput)
-              matchButFaulty = true
-            }
-          })
-          if (!matchAnyType && !matchButFaulty) {
-            /* binOp operator has two arguments of incorrect type */
-            this.errorLog.semErr(exp1, SemError.Mismatch, op.inputs)
-            this.errorLog.semErr(exp2, SemError.Mismatch, op.inputs)
+          ) {
+            this.errorLog.semErr(exp2, SemError.Mismatch, potInput)
+            matchButFaulty = true
           }
+        })
+        if (!matchAnyType && !matchButFaulty) {
+          /* binOp operator has two arguments of incorrect type */
+          this.errorLog.semErr(exp1, SemError.Mismatch, op.inputs)
+          this.errorLog.semErr(exp2, SemError.Mismatch, op.inputs)
         }
       }
+    }
+    return outputType
+  }
+
+  private checkOperatorUnary = (op: WJSCOperators, exp1: WJSCAst): TypeName => {
+    let matchAnyType = false
+    let outputType
+    op.inputs.forEach((potInput) => {
+      if (potInput === exp1.type) {
+        matchAnyType = true
+        outputType = op.outputs
+      }
+    })
+    if (op.arrayInput && isArrayType(exp1.type)) {
+      matchAnyType = true
+      outputType = op.outputs
+    }
+    if (!matchAnyType) {
+      this.errorLog.semErr(exp1, SemError.Mismatch, op.inputs)
     }
     return outputType
   }
