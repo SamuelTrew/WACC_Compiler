@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { WJSCLexer } from './grammar/WJSCLexer'
 import {
   ArgListContext,
+  ArithmeticOperator2Context,
   ArithmeticOperatorContext,
   ArrayElementContext,
   ArrayLiteralContext,
@@ -12,9 +13,11 @@ import {
   AssignmentContext,
   AssignRhsContext,
   BaseTypeContext,
-  BooleanOperatorContext,
+  BooleanAndOperatorContext,
+  BooleanOrOperatorContext,
   ComparisonOperatorContext,
   ConditionalBlocksContext,
+  EqualityOperatorContext,
   ExpressionContext,
   FuncContext,
   IntegerLiteralContext,
@@ -82,20 +85,28 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       ctx,
       WJSCParserRules.Operator,
     ) as WJSCOperators
-    const operator =
-      ctx.MINUS() ||
-      ctx.PLUS() ||
-      ctx.DIVIDE() ||
+    const operator = (ctx.DIVIDE() ||
       ctx.MULTIPLY() ||
-      ctx.MODULO()
-    if (operator) {
-      result.inputs = [BaseType.Integer]
-      result.arrayInput = false
-      result.outputs = BaseType.Integer
-      result.token = operator.toString()
-    } else {
-      this.errorLog.semErr(result, SemError.Undefined)
-    }
+      ctx.MODULO()) as TerminalNode
+    result.inputs = [BaseType.Integer]
+    result.arrayInput = false
+    result.outputs = BaseType.Integer
+    result.token = this.visitTerminal(operator).token
+    return result
+  }
+
+  public visitArithmeticOperator2 = (
+    ctx: ArithmeticOperator2Context,
+  ): WJSCOperators => {
+    const result = this.initWJSCAst(
+      ctx,
+      WJSCParserRules.Operator,
+    ) as WJSCOperators
+    const operator = (ctx.MINUS() || ctx.PLUS()) as TerminalNode
+    result.inputs = [BaseType.Integer]
+    result.arrayInput = false
+    result.outputs = BaseType.Integer
+    result.token = this.visitTerminal(operator).token
     return result
   }
 
@@ -458,21 +469,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
-  public visitBooleanOperator = (
-    ctx: BooleanOperatorContext,
-  ): WJSCOperators => {
-    const result = this.initWJSCAst(
-      ctx,
-      WJSCParserRules.Operator,
-    ) as WJSCOperators
-    const operator = ctx.LOGICAL_AND() || ctx.LOGICAL_OR()
-    if (operator) {
-      result.token = operator.toString()
-      result.inputs = [BaseType.Boolean]
-      result.outputs = BaseType.Boolean
-    }
-    return result
-  }
+  public visitBooleanAndOperator = (
+    ctx: BooleanAndOperatorContext,
+  ): WJSCOperators => this.visitBooleanOperator(ctx)
+
+  public visitBooleanOrOperator = (
+    ctx: BooleanOrOperatorContext,
+  ): WJSCOperators => this.visitBooleanOperator(ctx)
 
   public visitComparisonOperator = (
     ctx: ComparisonOperatorContext,
@@ -481,29 +484,35 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       ctx,
       WJSCParserRules.Operator,
     ) as WJSCOperators
-    const operator =
-      ctx.EQUALS() ||
-      ctx.GREATER_EQUAL() ||
+    const operator = (ctx.GREATER_EQUAL() ||
+      ctx.GREATER_THAN() ||
       ctx.LESS_EQUAL() ||
-      ctx.LESS_THAN() ||
-      ctx.NEQUALS()
-    if (operator) {
-      if (ctx.EQUALS() || ctx.NEQUALS()) {
-        result.inputs = [
-          BaseType.Integer,
-          BaseType.Character,
-          BaseType.Boolean,
-          BaseType.String,
-          BaseType.Pair,
-        ]
-        result.arrayInput = true
-      } else {
-        result.inputs = [BaseType.Integer, BaseType.Character]
-        result.arrayInput = false
-      }
-      result.outputs = BaseType.Boolean
-      result.token = operator.toString()
-    }
+      ctx.LESS_THAN()) as TerminalNode
+    result.inputs = [BaseType.Integer, BaseType.Character]
+    result.arrayInput = false
+    result.outputs = BaseType.Boolean
+    result.token = this.visitTerminal(operator).token
+    return result
+  }
+
+  public visitEqualityOperator = (
+    ctx: EqualityOperatorContext,
+  ): WJSCOperators => {
+    const result = this.initWJSCAst(
+      ctx,
+      WJSCParserRules.Operator,
+    ) as WJSCOperators
+    const operator = (ctx.EQUALS() || ctx.NEQUALS()) as TerminalNode
+    result.inputs = [
+      BaseType.Integer,
+      BaseType.Character,
+      BaseType.Boolean,
+      BaseType.String,
+      BaseType.Pair,
+    ]
+    result.arrayInput = true
+    result.outputs = BaseType.Boolean
+    result.token = this.visitTerminal(operator).token
     return result
   }
 
@@ -524,8 +533,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const operators =
       ctx.unaryOperator() ||
       ctx.arithmeticOperator() ||
+      ctx.arithmeticOperator2() ||
       ctx.comparisonOperator() ||
-      ctx.booleanOperator()
+      ctx.equalityOperator() ||
+      ctx.booleanAndOperator() ||
+      ctx.booleanOrOperator()
     const bracket = ctx.LPAREN()
     if (
       !intLiterals &&
@@ -583,10 +595,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               let visitedOp: WJSCOperators
               if (operators instanceof ArithmeticOperatorContext) {
                 visitedOp = this.visitArithmeticOperator(operators)
-              } else if (operators instanceof BooleanOperatorContext) {
-                visitedOp = this.visitBooleanOperator(operators)
-              } else {
+              } else if (operators instanceof ArithmeticOperator2Context) {
+                visitedOp = this.visitArithmeticOperator2(operators)
+              } else if (operators instanceof ComparisonOperatorContext) {
                 visitedOp = this.visitComparisonOperator(operators)
+              } else if (operators instanceof EqualityOperatorContext) {
+                visitedOp = this.visitEqualityOperator(operators)
+              } else {
+                visitedOp = this.visitBooleanOperator(operators)
               }
               result.children.push(visitedOp)
               const exp1 = this.visitExpression(expressions[0])
@@ -1143,8 +1159,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return outputType
   }
 
-  private checkOperatorBinary = (op: WJSCOperators, exp1: WJSCAst,
-                                 exp2: WJSCAst): TypeName => {
+  private checkOperatorBinary = (
+    op: WJSCOperators,
+    exp1: WJSCAst,
+    exp2: WJSCAst,
+  ): TypeName => {
     let outputType
     let matchAnyType = false
     let matchButFaulty = false
@@ -1179,16 +1198,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             matchAnyType = true
             outputType = op.outputs
           } else if (
-              potInput !== exp1.type &&
-              potInput === exp2.type &&
-              !matchButFaulty
+            potInput !== exp1.type &&
+            potInput === exp2.type &&
+            !matchButFaulty
           ) {
             this.errorLog.semErr(exp1, SemError.Mismatch, potInput)
             matchButFaulty = true
           } else if (
-              potInput === exp1.type &&
-              potInput !== exp2.type &&
-              !matchButFaulty
+            potInput === exp1.type &&
+            potInput !== exp2.type &&
+            !matchButFaulty
           ) {
             this.errorLog.semErr(exp2, SemError.Mismatch, potInput)
             matchButFaulty = true
@@ -1237,12 +1256,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     let startIndex
     let text
     if (ctx instanceof ParserRuleContext) {
-       ({
+      ({
         start: { charPositionInLine, line, startIndex },
         text,
       } = ctx)
     } else {
-       ({ charPositionInLine, line, startIndex, text } = ctx.symbol)
+      ({ charPositionInLine, line, startIndex, text } = ctx.symbol)
     }
     return {
       children: [],
@@ -1341,6 +1360,25 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   /* Lambda to check if the node is a exit statement (shallow) */
   private isExitStatement = (ast: WJSCAst): boolean =>
     _.find(ast.children, { token: 'exit' }) !== undefined
+
+  private visitBooleanOperator = (
+    ctx: BooleanAndOperatorContext | BooleanOrOperatorContext,
+  ): WJSCOperators => {
+    const result = this.initWJSCAst(
+      ctx,
+      WJSCParserRules.Operator,
+    ) as WJSCOperators
+    let operator
+    if (ctx instanceof BooleanAndOperatorContext) {
+      operator = ctx.LOGICAL_AND()
+    } else {
+      operator = ctx.LOGICAL_OR()
+    }
+    result.inputs = [BaseType.Boolean]
+    result.outputs = BaseType.Boolean
+    result.token = this.visitTerminal(operator).token
+    return result
+  }
 }
 
 export { WJSCSemanticChecker }

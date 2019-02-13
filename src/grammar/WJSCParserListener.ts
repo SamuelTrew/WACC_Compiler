@@ -24,8 +24,11 @@ import { IntegerLiteralContext } from "./WJSCParser";
 import { ArrayElementContext } from "./WJSCParser";
 import { ArrayLiteralContext } from "./WJSCParser";
 import { ArithmeticOperatorContext } from "./WJSCParser";
+import { ArithmeticOperator2Context } from "./WJSCParser";
 import { ComparisonOperatorContext } from "./WJSCParser";
-import { BooleanOperatorContext } from "./WJSCParser";
+import { EqualityOperatorContext } from "./WJSCParser";
+import { BooleanAndOperatorContext } from "./WJSCParser";
+import { BooleanOrOperatorContext } from "./WJSCParser";
 import { UnaryOperatorContext } from "./WJSCParser";
 import { StdlibContext } from "./WJSCParser";
 
@@ -267,6 +270,17 @@ export interface WJSCParserListener extends ParseTreeListener {
 	exitArithmeticOperator?: (ctx: ArithmeticOperatorContext) => void;
 
 	/**
+	 * Enter a parse tree produced by `WJSCParser.arithmeticOperator2`.
+	 * @param ctx the parse tree
+	 */
+	enterArithmeticOperator2?: (ctx: ArithmeticOperator2Context) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.arithmeticOperator2`.
+	 * @param ctx the parse tree
+	 */
+	exitArithmeticOperator2?: (ctx: ArithmeticOperator2Context) => void;
+
+	/**
 	 * Enter a parse tree produced by `WJSCParser.comparisonOperator`.
 	 * @param ctx the parse tree
 	 */
@@ -278,15 +292,37 @@ export interface WJSCParserListener extends ParseTreeListener {
 	exitComparisonOperator?: (ctx: ComparisonOperatorContext) => void;
 
 	/**
-	 * Enter a parse tree produced by `WJSCParser.booleanOperator`.
+	 * Enter a parse tree produced by `WJSCParser.equalityOperator`.
 	 * @param ctx the parse tree
 	 */
-	enterBooleanOperator?: (ctx: BooleanOperatorContext) => void;
+	enterEqualityOperator?: (ctx: EqualityOperatorContext) => void;
 	/**
-	 * Exit a parse tree produced by `WJSCParser.booleanOperator`.
+	 * Exit a parse tree produced by `WJSCParser.equalityOperator`.
 	 * @param ctx the parse tree
 	 */
-	exitBooleanOperator?: (ctx: BooleanOperatorContext) => void;
+	exitEqualityOperator?: (ctx: EqualityOperatorContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.booleanAndOperator`.
+	 * @param ctx the parse tree
+	 */
+	enterBooleanAndOperator?: (ctx: BooleanAndOperatorContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.booleanAndOperator`.
+	 * @param ctx the parse tree
+	 */
+	exitBooleanAndOperator?: (ctx: BooleanAndOperatorContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.booleanOrOperator`.
+	 * @param ctx the parse tree
+	 */
+	enterBooleanOrOperator?: (ctx: BooleanOrOperatorContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.booleanOrOperator`.
+	 * @param ctx the parse tree
+	 */
+	exitBooleanOrOperator?: (ctx: BooleanOrOperatorContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `WJSCParser.unaryOperator`.

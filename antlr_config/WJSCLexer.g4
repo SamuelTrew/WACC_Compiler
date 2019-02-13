@@ -51,25 +51,23 @@ CHARACTER_OF: 'chr';
 
 // Identifiers & literals
 DIGIT: [0-9];
-BOOLEAN_LITERAL: 'true'
-               | 'false'
-               ;
+BOOLEAN_LITERAL: 'true' | 'false';
 fragment BACKSLASH: '\\';
-fragment ESCAPED_CHAR: '0'
-                     | 'b'
-                     | 't'
-                     | 'n'
-                     | 'f'
-                     | 'r'
-                     | '\''
-                     | '\\'
-                     | '"'
-                     ;
-fragment NON_ESCAPED: [\u0000-\u0021] 
-                    | [\u0023-\u0026] 
-                    | [\u0028-\u005b] 
-                    | [\u005d-\u007f]
-                    ;
+fragment ESCAPED_CHAR:
+	'0'
+	| 'b'
+	| 't'
+	| 'n'
+	| 'f'
+	| 'r'
+	| '\''
+	| '\\'
+	| '"';
+fragment NON_ESCAPED:
+	[\u0000-\u0021]
+	| [\u0023-\u0026]
+	| [\u0028-\u005b]
+	| [\u005d-\u007f];
 fragment CHAR: NON_ESCAPED | (BACKSLASH ESCAPED_CHAR);
 CHARACTER_LITERAL: APOS CHAR APOS;
 PAIR_LITERAL: 'null';
@@ -96,4 +94,4 @@ fragment NL: [ \t\u000C\r\n];
 
 // COMMENTS
 COMMENT: '#' ~[\r\n]* -> skip;
-IDENTIFIER: ('_'|[a-z]|[A-Z])('_'|[a-z]|[A-Z]|[0-9])*;
+IDENTIFIER: ('_' | [a-z] | [A-Z]) ('_' | [a-z] | [A-Z] | [0-9])*;

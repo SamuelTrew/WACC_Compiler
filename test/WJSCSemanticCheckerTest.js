@@ -36,8 +36,9 @@ recursive(
                       try {
                         compiler.check()
                       } catch (error) {
-                        error = compileError
+                        compileError = error
                       } finally {
+                        assert (!compileError, compileError)
                         assert(
                           compiler.errorLog.numErrors() === 0,
                           compiler.errorLog.printErrors(),
@@ -62,8 +63,9 @@ recursive(
                         try {
                           compiler.check()
                         } catch (error) {
-                          error = compileError
+                          compileError = error
                         } finally {
+                          assert (!compileError, compileError)
                           assert(
                             compiler.errorLog.numSemanticErrors() > 0,
                             'No semantic error produced',
@@ -93,8 +95,9 @@ recursive(
                       try {
                         compiler.check()
                       } catch (error) {
-                        error = compileError
+                        compileError = error
                       } finally {
+                        assert (!compileError, compileError)
                         assert(
                           compiler.errorLog.numErrors() > 0,
                           'No error produced',
