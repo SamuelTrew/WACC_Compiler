@@ -1,4 +1,4 @@
-type TypeName = BaseType | ArrayType | PairType  | undefined
+type TypeName = BaseType | ArrayType | PairType | undefined
 
 enum BaseType {
   Integer = 'int',
