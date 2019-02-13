@@ -78,7 +78,7 @@ class WJSCErrorLog {
     ) {
       const secondParam = additionalParam[1]
       errorMessage +=
-        `${token} does not have ${additionalParam[0]}` +
+        `${token} expects ${additionalParam[0]}` +
         `${
           additionalParam[1] === -1
             ? 'or more'
