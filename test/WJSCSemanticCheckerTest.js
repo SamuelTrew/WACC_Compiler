@@ -34,12 +34,10 @@ recursive(
                       let compileError
                       const compiler = new WJSCCompiler.default(data)
                       try {
-                        sinon.stub(console, 'log')
                         compiler.check()
                       } catch (error) {
                         error = compileError
                       } finally {
-                        console.log.restore() /* Assert no errors */
                         assert(
                           compiler.errorLog.numErrors() === 0,
                           compiler.errorLog.printErrors(),
@@ -52,35 +50,38 @@ recursive(
               })
               describe('Semantically invalid files', function() {
                 semanticErrFiles.forEach((filename) => {
-                  it(`should produce errors for source file ${path.relative(
-                    'wacc_examples',
-                    filename,
-                  )}`, function(done) {
-                    /* Read the file */
-                    fs.readFile(filename, 'utf8', function(readError, data) {
-                      if (readError) throw readError
-                      let compileError
-                      const compiler = new WJSCCompiler.default(data)
-                      try {
-                        sinon.stub(console, 'log')
-                        compiler.check()
-                      } catch (error) {
-                        error = compileError
-                      } finally {
-                        console.log.restore()
-                        assert(
-                          compiler.errorLog.numErrors() > 0,
-                          'No error produced',
-                        )
-                        done(compileError)
-                      }
-                    })
-                  })
+                  it(
+                    'should produce semantic errors for source file' +
+                      path.relative('wacc_examples', filename),
+                    function(done) {
+                      /* Read the file */
+                      fs.readFile(filename, 'utf8', function(readError, data) {
+                        if (readError) throw readError
+                        let compileError
+                        const compiler = new WJSCCompiler.default(data)
+                        try {
+                          compiler.check()
+                        } catch (error) {
+                          error = compileError
+                        } finally {
+                          assert(
+                            compiler.errorLog.numSemanticErrors() > 0,
+                            'No semantic error produced',
+                          )
+                          assert(
+                            compiler.errorLog.numSyntaxErrors() === 0,
+                            `Syntax errors produced: ${compiler.errorLog.printErrors()}`,
+                          )
+                          done(compileError)
+                        }
+                      })
+                    },
+                  )
                 })
               })
               describe('Syntactically invalid files', function() {
                 syntaxErrFiles.forEach((filename) => {
-                  it(`should produce errors for source file ${path.relative(
+                  it(`should produce syntax errors for source file ${path.relative(
                     'wacc_examples',
                     filename,
                   )}`, function(done) {
@@ -90,12 +91,10 @@ recursive(
                       let compileError
                       const compiler = new WJSCCompiler.default(data)
                       try {
-                        sinon.stub(console, 'log')
                         compiler.check()
                       } catch (error) {
                         error = compileError
                       } finally {
-                        console.log.restore()
                         assert(
                           compiler.errorLog.numErrors() > 0,
                           'No error produced',

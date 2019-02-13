@@ -14,6 +14,7 @@ const argp = new argparse.ArgumentParser({
   description: 'WACC Compiler in TypeScript',
   version: '1.0.0',
 })
+
 argp.addArgument('src', {
   action: 'store',
   help: 'Path to source code to compile.',
@@ -22,17 +23,31 @@ argp.addArgument('src', {
 
 argp.addArgument(['-o', '--output'], {
   action: 'store',
+  defaultValue: 'out.json',
   help: 'Path to output tree.',
 })
 
 argp.addArgument(['-e', '--errors'], {
   action: 'store',
+  defaultValue: 'error.log',
   help: 'Path to store error log.',
 })
 
+argp.addArgument(['-pe', '--print-errors'], {
+  action: 'storeTrue',
+  help: 'Print errors to STDERR',
+})
+
+argp.addArgument(['-pa', '--print-ast'], {
+  action: 'storeTrue',
+  help: 'Print errors to STDERR',
+})
+
 const args = argp.parseArgs()
-const output = args.output || 'out.json'
-const errors = args.errors || 'err.log'
+const output = args.output
+const errors = args.errors
+const printErrors = args.print_errors
+const printAst = args.print_ast
 const info = `[info]`
 const warn = `${ConsoleColors.FgRed}[warn]${ConsoleColors.Reset}`
 
@@ -88,30 +103,23 @@ fs.readFile(args.src, 'utf8', (err, data) => {
 
   /* Write the output */
   if (tree) {
+    const stringifiedTree = JSON.stringify(tree, null, 2)
     try {
-      fs.writeFile(
-        output,
-        JSON.stringify(
-          {
-            tree,
-            // tslint:disable-next-line:object-literal-sort-keys
-            symbolTable: compiler.semanticChecker.symbolTable.json(),
-          },
-          null,
-          2,
-        ),
-        (writeErr) => {
-          if (writeErr) {
-            throw writeErr
-          }
-          console.log(
-            `${ConsoleColors.Dim}${info} ` +
-              `Output written to ${output}${ConsoleColors.Reset}`,
-          )
-        },
-      )
+      fs.writeFile(output, stringifiedTree, (writeErr) => {
+        if (writeErr) {
+          throw writeErr
+        }
+        console.log(
+          `${ConsoleColors.Dim}${info} ` +
+            `Output written to ${output}${ConsoleColors.Reset}`,
+        )
+      })
     } catch (writeError) {
       console.error(`${warn} ${writeError}`)
+    }
+    if (printAst) {
+      console.log('--- AST ---')
+      console.log(stringifiedTree + '\n')
     }
   } else {
     console.log(
@@ -120,7 +128,7 @@ fs.readFile(args.src, 'utf8', (err, data) => {
     )
   }
 
-  /* Write the output */
+  /* Write the errors */
   if (numerrors > 0) {
     try {
       fs.writeFile(errors, compiler.errorLog.printErrors(), (writeErr) => {
@@ -134,6 +142,10 @@ fs.readFile(args.src, 'utf8', (err, data) => {
       })
     } catch (writeError) {
       console.error(`${warn} ${writeError}`)
+    }
+    if (printErrors) {
+      console.error('--- ERRORS ---')
+      console.error(compiler.errorLog.printErrors() + '\n')
     }
   }
 })

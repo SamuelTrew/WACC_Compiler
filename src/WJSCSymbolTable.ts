@@ -48,7 +48,6 @@ export class WJSCSymbolTable {
 
   // Create new child symbol table
   public enterScope = (): WJSCSymbolTable => {
-    console.log('Entering scope...')
     const childTable = new WJSCSymbolTable(
       this.currentScopeLevel + 1,
       this,
@@ -68,7 +67,6 @@ export class WJSCSymbolTable {
 
   // Return the parent symbol table
   public exitScope = (): WJSCSymbolTable => {
-    console.log('Exiting scope...')
     if (this.parentLevel !== undefined) {
       return this.parentLevel
     }
@@ -82,7 +80,6 @@ export class WJSCSymbolTable {
     type: TypeName,
     params?: TypeName[],
   ) => {
-    console.log(`Inserting key/value pair ${identifier}:${type}`)
     this.symbolTable.push({ identifier, type, params })
   }
 
@@ -103,7 +100,6 @@ export class WJSCSymbolTable {
   public globalLookup = (identifier: string): TypeName => {
     let result = this.localLookup(identifier)
     if (!result && this.parentLevel) {
-      console.log('Recursive lookup')
       result = this.parentLevel.globalLookup(identifier)
     }
     return result
@@ -124,7 +120,6 @@ export class WJSCSymbolTable {
       WJSCSymbolTableEntry | undefined => {
     let result = this.getLocalEntry(identifier)
     if (!result && this.parentLevel) {
-      console.log('Recursive lookup')
       result = this.parentLevel.getGlobalEntry(identifier)
     }
     return result
@@ -133,10 +128,6 @@ export class WJSCSymbolTable {
       // Return whether the node given has the same type in the symbol table
   public checkType = (astNode: WJSCAst): boolean => {
     const lookupResult = this.globalLookup(astNode.token)
-    console.log(
-      `${astNode.token} should have type ${lookupResult},` +
-        ` actual type ${astNode.type}.`,
-    )
     if (lookupResult === undefined) {
       this.errorLog.semErr(astNode, SemError.Undefined)
       return false
@@ -149,6 +140,7 @@ export class WJSCSymbolTable {
     return true
   }
 
+  /* Decircularize the symbol table for printing */
   public clearParentDependencies = () => {
     this.parentLevel = undefined
     this.childrenTables.forEach((table) => table.clearParentDependencies())

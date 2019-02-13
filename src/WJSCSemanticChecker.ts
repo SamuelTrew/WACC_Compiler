@@ -415,7 +415,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         /* Ensure RHS has same type as LHS */
         if (!hasSameType(visitedRhs.type, visitedLhsType)) {
           this.errorLog.semErr(visitedRhs, SemError.Mismatch, visitedLhsType)
-          console.log('ERROR HERE')
         }
         /* Insert type into symbol table */
         this.symbolTable.insertSymbol(visitedIdentifier.value, visitedLhsType)
@@ -942,8 +941,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           }
           this.checkStdlibExpressionType(visitedStdlib, visitedExpr)
           result.children.push(visitedExpr)
-          console.log(`'${visitedStdlib.token}'`)
-          console.log(`Children: ${ctx.statement().length}`)
         }
       } else if (conditionals) {
         this.pushChild(result, this.visitConditionalBlocks(conditionals))
@@ -976,7 +973,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             const firstStatement = this.visitStatement(stat[0])
             const lastStatement = this.visitStatement(stat[1])
             this.pushChild(result, firstStatement)
-            if (this.isReturnStatement(firstStatement)) {
+            if (
+              this.isReturnStatement(firstStatement) &&
+              this.symbolTable.inFunction()
+            ) {
               this.errorLog.synErr(
                 firstStatement.line,
                 firstStatement.column,
@@ -1012,9 +1012,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
       const childType =
-        (type instanceof BaseTypeContext)
+        type instanceof BaseTypeContext
           ? this.visitBaseType(type)
-          : (type instanceof ArrayTypeContext)
+          : type instanceof ArrayTypeContext
           ? this.visitArrayType(type)
           : this.visitPairType(type)
       this.pushChild(result, childType)
@@ -1213,7 +1213,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           ])
           error = true
         }
-        console.log(exp2.type)
         if (isArrayType(exp2.type)) {
           this.errorLog.semErr(exp2, SemError.Mismatch, [
             BaseType.Integer,
@@ -1302,7 +1301,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       !isArrayType(visitedExpr.type)
     ) {
       // Free can only be called on pair or array type.
-      console.log('Is pair type: ' + isPairType(visitedExpr.type))
       this.errorLog.semErr(visitedExpr, SemError.BadStdlibArgs, Stdlib.Free)
     } else if (visitedStdlib.token === 'return') {
       // Return cannot only be in body of non-main function
@@ -1320,13 +1318,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       visitedStdlib.token === 'exit' &&
       !hasSameType(visitedExpr.type, BaseType.Integer)
     ) {
-      // Exit must return exit code of type 'int'
       this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Integer)
-    } // code else if ((visitedStdlib.token === 'print' ||
-    // visitedStdlib.token === 'println') && !visitedExpr) {
-    // console.log("hetfhjg")
-    // this.errorLog.semErr(visitedStdlib, SemError.Undefined)
-    // }
+    }
   }
 
   private containsNeverStatement = (ast: WJSCAst): boolean => {
@@ -1335,7 +1328,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else {
       let found = false
       if (ast.parserRule === WJSCParserRules.ConditionalIf) {
-        console.log('encountered conditional branch')
         const [trueStatement, falseStatement] = ast.children
         found =
           this.containsNeverStatement(trueStatement) &&

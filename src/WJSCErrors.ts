@@ -117,9 +117,9 @@ class WJSCErrorLog {
 
   public printErrors = (): string => {
     let errors = ''
-    this.runtimeErrors.forEach((error) => (errors += '\n' + error))
-    this.syntaxErrors.forEach((error) => (errors += '\n' + error))
-    this.semanticErrors.forEach((error) => (errors += '\n' + error))
+    this.runtimeErrors.forEach((error) => (errors += error + '\n'))
+    this.syntaxErrors.forEach((error) => (errors += error + '\n'))
+    this.semanticErrors.forEach((error) => (errors += error + '\n'))
     return errors
   }
 
