@@ -215,9 +215,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
    * ensure that it is of the correct type
    */
   public visitArrayType = (ctx: ArrayTypeContext): WJSCAst => {
-    // 1. Ensure type not undefined
-    // 2. visit sub type and brackets
-    // 3. take type of Type
     const result = this.initWJSCAst(ctx, WJSCParserRules.Array)
     const type = ctx.baseType() || ctx.arrayType() || ctx.pairType()
     result.children.push(this.visitTerminal(ctx.LBRACK()))
@@ -789,7 +786,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   /** visit begin, stat and end
-   * If func is present, visit func's list
+   * If func is present:
+   * First visit all the function definitions and saving them
+   * Then visit the content of the functions
    */
   public visitProgram = (ctx: ProgramContext): WJSCAst => {
     const result = this.initWJSCAst(ctx, WJSCParserRules.Program)
@@ -1095,7 +1094,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   /**
    * Check that operator can take types of @var exp1 and optionally @var exp2,
-   * and returns the expected return type
+   * and returns the expected return type if the operation is valid
    * @param op: WJSCOperators
    * @param exp1: WJSCAst
    * @param exp2: WJSCAst?
