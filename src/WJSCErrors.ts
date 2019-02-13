@@ -1,11 +1,6 @@
 import { WJSCAst } from './WJSCAst'
 import { BaseType, Stdlib, TypeName } from './WJSCType'
 
-enum ErrType {
-  Semantic = 'semantic',
-  Syntactic = 'syntactic',
-}
-
 enum SynError {
   BadToken = 'bad token',
   IllegalChar = 'illegal char',
