@@ -1,16 +1,32 @@
+const { WJSCErrorLog } = require('../build/WJSCErrors')
 const { WJSCSymbolTable } = require('../build/WJSCSymbolTable')
 const assert = require('assert')
 
 describe('Scope', function() {
-  let symbolTable = new WJSCSymbolTable(0, undefined)
+  let errorLog = new WJSCErrorLog()
+  const symbolTable = new WJSCSymbolTable(0, undefined, false, errorLog)
   describe('Enter Scope', function() {
-    let childTable = symbolTable.enterScope()
+    const childTable = symbolTable.enterScope()
     it('should increment scope number', function() {
       assert(childTable.getScopeLevel() === 1)
     })
     it('should have set parent level', function() {
       assert(childTable.getParentTable() !== undefined)
       assert(childTable.getParentTable() === symbolTable)
+    })
+  })
+  describe('Enter Function Scope', function() {
+    const functionName = 'f'
+    const childTable = symbolTable.enterFuncScope(functionName)
+    it('should increment scope number', function() {
+      assert(childTable.getScopeLevel() === 1)
+    })
+    it('should have set parent level', function() {
+      assert(childTable.getParentTable() !== undefined)
+      assert(childTable.getParentTable() === symbolTable)
+    })
+    it('should store function name', function() {
+      assert(childTable.getFunctionName() === functionName)
     })
   })
 })

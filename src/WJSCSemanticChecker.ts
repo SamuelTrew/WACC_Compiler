@@ -58,7 +58,7 @@ import {
 
 /**
  * Class that represents a semantic checker.
- * Extends the givent ANTLR parse tree visitor.
+ * Extends the given ANTLR parse tree visitor.
  */
 class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   implements WJSCParserVisitor<WJSCAst> {
@@ -125,7 +125,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [1, -1])
     }
     result.children = expressions.map(this.visitExpression)
-    let currElemType = this.symbolTable.globalLookup(ident.token)
+    let currElemType = this.symbolTable.lookup(ident.token)
     result.children.forEach((child) => {
       if (!hasSameType(child.type, BaseType.Integer)) {
         this.errorLog.semErr(child, SemError.Mismatch, BaseType.Integer)
@@ -263,7 +263,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
       // Check identifier already declared
       if (lhsElems instanceof TerminalNode) {
-        const type = this.symbolTable.globalLookup(lhsNode.token)
+        const type = this.symbolTable.lookup(lhsNode.token)
         if (!type) {
           this.errorLog.semErr(lhsNode, SemError.Undefined)
         }
@@ -305,7 +305,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
           const visitedIdent = this.visitTerminal(ident)
-          visitedIdent.type = this.symbolTable.globalLookup(visitedIdent.value)
+          visitedIdent.type = this.symbolTable.lookup(visitedIdent.value)
           this.pushChild(result, visitedIdent)
           if (argList) {
             const visitedArgList = this.visitArgList(argList)
@@ -600,7 +600,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       } else if (ident) {
         // Ident scenario
         const visitedTerminal = this.visitTerminal(ident)
-        const identType = this.symbolTable.globalLookup(visitedTerminal.value)
+        const identType = this.symbolTable.lookup(visitedTerminal.value)
         if (identType) {
           this.pushChild(result, visitedTerminal)
         }
@@ -1112,7 +1112,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else if (type === WJSCLexer.IDENTIFIER) {
       terminal.terminalType = TerminalKeywords.Identifier
       terminal.value = token
-      terminal.type = this.symbolTable.globalLookup(token)
+      terminal.type = this.symbolTable.lookup(token)
     }
     return terminal
   }
@@ -1309,7 +1309,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         this.errorLog.semErr(visitedStdlib, SemError.BadReturn)
       } else {
         const functionName = this.symbolTable.getFunctionName() || 'main'
-        const functionType = this.symbolTable.globalLookup(functionName)
+        const functionType = this.symbolTable.lookup(functionName)
         if (!hasSameType(functionType, visitedExpr.type)) {
           this.errorLog.semErr(visitedStdlib, SemError.Mismatch, functionType)
         }
