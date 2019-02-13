@@ -1,6 +1,8 @@
 parser grammar WJSCParser;
 
-options { tokenVocab = WJSCLexer; }
+options {
+	tokenVocab = WJSCLexer;
+}
 
 program: BEGIN func* statement END EOF;
 
@@ -10,113 +12,92 @@ paramList: param (COMMA param)*;
 
 param: type IDENTIFIER;
 
-statement: WSKIP
-         | conditionalBlocks
-         | assignment
-         | READ assignLhs
-         | stdlib expression
-         | conditionalBlocks
-         | BEGIN statement END
-         | statement SEMICOLON statement
-         ;
+statement:
+	WSKIP
+	| conditionalBlocks
+	| assignment
+	| READ assignLhs
+	| stdlib expression
+	| conditionalBlocks
+	| BEGIN statement END
+	| statement SEMICOLON statement;
 
-conditionalBlocks: IF expression THEN statement ELSE statement FI
-                 | WHILE expression DO statement DONE
-                 ;
+conditionalBlocks:
+	IF expression THEN statement ELSE statement FI
+	| WHILE expression DO statement DONE;
 
-assignment: type IDENTIFIER ASSIGNMENT assignRhs
-          | assignLhs ASSIGNMENT assignRhs
-          ;
-    
-assignLhs: IDENTIFIER
-          | arrayElement
-          | pairElement
-          ;
+assignment:
+	type IDENTIFIER ASSIGNMENT assignRhs
+	| assignLhs ASSIGNMENT assignRhs;
 
-assignRhs: expression
-         | arrayLiteral
-         | NEW_PAIR LPAREN expression COMMA expression RPAREN
-         | pairElement
-         | CALL IDENTIFIER LPAREN argList? RPAREN
-         ;
-    
+assignLhs: IDENTIFIER | arrayElement | pairElement;
+
+assignRhs:
+	expression
+	| arrayLiteral
+	| NEW_PAIR LPAREN expression COMMA expression RPAREN
+	| pairElement
+	| CALL IDENTIFIER LPAREN argList? RPAREN;
+
 argList: expression (COMMA expression)*;
 
-pairElement: FIRST expression
-            | SECOND expression
-            ;
-    
-type: baseType
-    | arrayType
-    | pairType
-    ;
+pairElement: FIRST expression | SECOND expression;
 
-baseType: INTEGER
-         | BOOLEAN
-         | CHARACTER
-         | STRING
-         ;
+type: baseType | arrayType | pairType;
 
-arrayType: baseType LBRACK RBRACK
-          | arrayType LBRACK RBRACK
-          | pairType LBRACK RBRACK
-          ;
+baseType: INTEGER | BOOLEAN | CHARACTER | STRING;
 
-pairType: PAIR LPAREN pairElementType COMMA pairElementType RPAREN;
+arrayType:
+	baseType LBRACK RBRACK
+	| arrayType LBRACK RBRACK
+	| pairType LBRACK RBRACK;
 
-pairElementType: baseType
-                 | arrayType
-                 | PAIR
-                 ;
+pairType:
+	PAIR LPAREN pairElementType COMMA pairElementType RPAREN;
 
-expression: integerLiteral
-          | expression arithmeticOperator expression
-          | expression comparisonOperator expression
-          | expression booleanOperator expression
-          | arrayElement
-          | unaryOperator expression
-          | LPAREN expression RPAREN
-          | IDENTIFIER
-          | BOOLEAN_LITERAL
-          | CHARACTER_LITERAL
-          | STRING_LITERAL
-          | PAIR_LITERAL
-          ;
+pairElementType: baseType | arrayType | PAIR;
+
+expression:
+	integerLiteral
+	| expression arithmeticOperator expression
+	| expression arithmeticOperator2 expression
+	| expression comparisonOperator expression
+	| expression equalityOperator expression
+	| expression booleanAndOperator expression
+	| expression booleanOrOperator expression
+	| arrayElement
+	| unaryOperator expression
+	| LPAREN expression RPAREN
+	| IDENTIFIER
+	| BOOLEAN_LITERAL
+	| CHARACTER_LITERAL
+	| STRING_LITERAL
+	| PAIR_LITERAL;
+
 integerLiteral: (PLUS | MINUS)? DIGIT+;
 arrayElement: IDENTIFIER (LBRACK expression RBRACK)+;
 arrayLiteral: LBRACK (expression (COMMA expression)*)? RBRACK;
 
-arithmeticOperator: MULTIPLY
-                  | DIVIDE
-                  | MODULO
-                  | PLUS
-                  | MINUS
-                  ;
+arithmeticOperator: MULTIPLY | DIVIDE | MODULO;
 
-comparisonOperator: GREATER_THAN
-                  | GREATER_EQUAL
-                  | LESS_THAN
-                  | LESS_EQUAL
-                  | EQUALS
-                  | STRICT_EQUALS
-                  | NEQUALS
-                  | NSTRICT_EQUALS
-                  ;
+arithmeticOperator2: PLUS | MINUS;
 
-booleanOperator: LOGICAL_AND
-               | LOGICAL_OR
-               ;
+comparisonOperator:
+	GREATER_THAN
+	| GREATER_EQUAL
+	| LESS_THAN
+	| LESS_EQUAL;
 
-unaryOperator: LOGICAL_NEGATION
-             | MINUS
-             | LENGTH
-             | ORDER_OF
-             | CHARACTER_OF
-             ;
+equalityOperator: EQUALS | NEQUALS;
 
-stdlib: FREE
-      | RETURN
-      | EXIT
-      | PRINT
-      | PRINTLN
-      ;
+booleanAndOperator: LOGICAL_AND;
+booleanOrOperator: LOGICAL_OR;
+
+unaryOperator:
+	LOGICAL_NEGATION
+	| MINUS
+	| LENGTH
+	| ORDER_OF
+	| CHARACTER_OF;
+
+stdlib: FREE | RETURN | EXIT | PRINT | PRINTLN;

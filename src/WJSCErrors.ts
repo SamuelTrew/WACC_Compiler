@@ -128,6 +128,8 @@ class WJSCErrorLog {
 
   public numSemanticErrors = (): number => this.semanticErrors.length
 
+  public getRuntimeErrors = (): string[] => this.runtimeErrors
+
   public clear = () => {
     this.semanticErrors = []
     this.syntaxErrors = []

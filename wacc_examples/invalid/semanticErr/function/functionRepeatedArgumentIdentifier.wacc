@@ -1,0 +1,17 @@
+# Repeated argument identifiers in function declaration
+
+# Output:
+# #semantic_error#
+
+# Exit:
+# 200
+
+# Program:
+
+begin
+  int r(int a, int a) is
+    return a
+  end
+  int x = call r(0, 1);
+  println x
+end

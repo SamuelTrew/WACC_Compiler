@@ -74,9 +74,15 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   const synerrors = compiler.errorLog.numSyntaxErrors()
   const semerrors = compiler.errorLog.numSemanticErrors()
   const numerrors = synerrors + semerrors
+  const runerrs = compiler.errorLog.getRuntimeErrors()
 
   /* Set process exit code */
-  if (synerrors > 0) {
+  if (runerrs.length > 0) {
+    process.exitCode = -1
+    console.log('Fatal error: ')
+    runerrs.forEach((runtimeError) => console.log(runtimeError))
+    process.exit()
+  } else if (synerrors > 0) {
     process.exitCode = 100
   } else if (semerrors > 0) {
     process.exitCode = 200
