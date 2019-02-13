@@ -675,33 +675,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
   }
 
-  public checkParamDoubleDeclaration = (ctx: ParamListContext): WJSCParam => {
-    const result = this.initWJSCAst(ctx, WJSCParserRules.Parameter) as WJSCParam
-    const params = ctx.param()
-    result.paramTypes = []
-    params.forEach((parameter) => {
-      const visitedParam = this.checkParam(parameter)
-      result.children.push(visitedParam)
-      result.paramTypes.push(visitedParam.type)
-    })
-    return result
-  }
-
-  public checkParam = (ctx: ParamContext): WJSCIdentifier => {
-    const result = this.initWJSCAst(
-        ctx,
-        WJSCParserRules.Parameter,
-    ) as WJSCIdentifier
-    const visitedIdent = this.visitTerminal(ctx.IDENTIFIER())
-    result.identifier = visitedIdent.value
-    result.type = this.visitType(ctx.type()).type
-    if (this.symbolTable.getLocalEntry(visitedIdent.value)) {
-      this.errorLog.semErr(visitedIdent, SemError.DoubleDeclare)
-    }
-    this.symbolTable.insertSymbol(result.identifier, result.type)
-    return result
-  }
-
   public functionUse = (result: WJSCAst, ident: WJSCTerminal): void => {
     /* Checks whether or not there is bad function use */
     const entry = this.symbolTable.getGlobalEntry(ident.value)
@@ -1377,6 +1350,33 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.inputs = [BaseType.Boolean]
     result.outputs = BaseType.Boolean
     result.token = this.visitTerminal(operator).token
+    return result
+  }
+
+  private checkParamDoubleDeclaration = (ctx: ParamListContext): WJSCParam => {
+    const result = this.initWJSCAst(ctx, WJSCParserRules.Parameter) as WJSCParam
+    const params = ctx.param()
+    result.paramTypes = []
+    params.forEach((parameter) => {
+      const visitedParam = this.checkParam(parameter)
+      result.children.push(visitedParam)
+      result.paramTypes.push(visitedParam.type)
+    })
+    return result
+  }
+
+  private checkParam = (ctx: ParamContext): WJSCIdentifier => {
+    const result = this.initWJSCAst(
+        ctx,
+        WJSCParserRules.Parameter,
+    ) as WJSCIdentifier
+    const visitedIdent = this.visitTerminal(ctx.IDENTIFIER())
+    result.identifier = visitedIdent.value
+    result.type = this.visitType(ctx.type()).type
+    if (this.symbolTable.getLocalEntry(visitedIdent.value)) {
+      this.errorLog.semErr(visitedIdent, SemError.DoubleDeclare)
+    }
+    this.symbolTable.insertSymbol(result.identifier, result.type)
     return result
   }
 }
