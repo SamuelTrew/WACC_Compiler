@@ -69,6 +69,12 @@ const isArrayType = (tname: any): tname is ArrayType =>
 const isPairType = (tname: any): tname is PairType =>
   tname !== undefined && tname.pairType !== undefined
 
+/**
+ *  Types that are considered to be the same:
+ *  * Any two base types
+ *  * pair and pairType
+ *  * char[] and string
+ */
 const hasSameType = (typeA?: TypeName, typeB?: TypeName): boolean => {
   if (!typeA || !typeB) {
     return false

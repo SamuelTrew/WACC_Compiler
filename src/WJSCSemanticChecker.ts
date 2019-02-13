@@ -1353,6 +1353,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
+  /* Visit a param list and check if the params have already been declared. */
   private checkParamDoubleDeclaration = (ctx: ParamListContext): WJSCParam => {
     const result = this.initWJSCAst(ctx, WJSCParserRules.Parameter) as WJSCParam
     const params = ctx.param()
@@ -1365,6 +1366,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
+  /* Visit a param and check if it has already been declared. */
   private checkParam = (ctx: ParamContext): WJSCIdentifier => {
     const result = this.initWJSCAst(
         ctx,
