@@ -118,7 +118,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     this.symbolTable.checkType(ident)
     const entry = this.symbolTable.getGlobalEntry(ident.value)
     if (entry && entry.params) {
-      this.errorLog.semErr(result, SemError.BadFunctionUse)
+      this.errorLog.semErr(result, SemError.FunctionAsArray)
     }
     const expressions = ctx.expression()
     if (expressions.length === 0) {
@@ -317,11 +317,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             if (funcType) {
               const params = funcType.params
               if (params) {
-                if (params.length !== visitedArgList.children.length) {
+                const args = visitedArgList.children
+                if (params.length !== args.length) {
                   this.errorLog.semErr(
-                    visitedArgList,
+                    visitedIdent,
                     SemError.IncorrectArgNo,
-                    [params.length, params.length],
+                    [args.length, params.length, false],
                   )
                 } else {
                   visitedArgList.children.forEach((child, i) => {
@@ -877,18 +878,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
+  /** Ensure either skip, Assignments, read, stdlib, conditional,
+   * begin/end or semicolon
+   * not undefined
+   * If read, ensures lhs not undefined 3. If stdlib,
+   * ensures expr not undefined
+   * If begin, ensures stat and end not undefined, and stat == 1
+   * If semicolon, ensure stat not undefined, stat == 1
+   * visit them
+   * visit types of read LHS, statement in begin/end,
+   * statements in semicolon
+   */
   public visitStatement = (ctx: StatementContext): WJSCAst => {
-    /** Ensure either skip, Assignments, read, stdlib, conditional,
-     * begin/end or semicolon
-     * not undefined
-     * If read, ensures lhs not undefined 3. If stdlib,
-     * ensures expr not undefined
-     * If begin, ensures stat and end not undefined, and stat == 1
-     * If semicolon, ensure stat not undefined, stat == 1
-     * visit them
-     * visit types of read LHS, statement in begin/end,
-     * statements in semicolon
-     */
     const result = this.initWJSCAst(ctx, WJSCParserRules.Statement)
     const skip = ctx.WSKIP()
     const assignment = ctx.assignment()
@@ -950,16 +951,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         if (!stat || !end) {
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
-          if (stat.length !== 1) {
-            this.errorLog.semErr(result, SemError.IncorrectArgNo, [1, 1])
-          } else {
-            if (!stat[0]) {
-              this.errorLog.semErr(result, SemError.Undefined)
-            }
-            this.symbolTable = this.symbolTable.enterScope()
-            this.pushChild(result, this.visitStatement(stat[0]))
-            this.symbolTable = this.symbolTable.exitScope()
-          }
+          this.symbolTable = this.symbolTable.enterScope()
+          this.pushChild(result, this.visitStatement(stat[0]))
+          this.symbolTable = this.symbolTable.exitScope()
           result.children.push(this.visitTerminal(end))
         }
       } else if (semicolon) {

@@ -19,10 +19,11 @@ enum SemError {
   Undefined = 'undefined',
   Mismatch = 'mismatch',
   IncorrectArgNo = 'incorrect arg no',
-  BadStdlibArgs = 'bad arguments for stdlib function',
+  BadStdlibArgs = 'bad std lib args',
   BadReturn = 'bad return',
   DoubleDeclare = 'double declare',
-  BadFunctionUse = 'function of this name declared',
+  FunctionAsArray = 'function as array',
+  BadFunctionUse = 'bad function use',
 }
 
 class WJSCErrorLog {
@@ -39,7 +40,7 @@ class WJSCErrorLog {
   public semErr = (
     node: WJSCAst,
     error: SemError,
-    additionalParam?: TypeName | TypeName[] | number[] | Stdlib,
+    additionalParam?: TypeName | TypeName[] | any[] | Stdlib,
   ) => {
     let errorMessage = ''
     const { line, column, token } = node
@@ -70,7 +71,7 @@ class WJSCErrorLog {
         case Stdlib.Print:
         case Stdlib.Println:
         default:
-          this.runtimeError(new Error('Did not expect error'))
+          this.runtimeError(new Error('Did not expect error.'))
           break
       }
     } else if (error === SemError.BadReturn) {
@@ -80,20 +81,17 @@ class WJSCErrorLog {
       additionalParam !== undefined &&
       additionalParam instanceof Array
     ) {
-      const secondParam = additionalParam[1]
       errorMessage +=
-        `${token} does not have ${additionalParam[0]}` +
-        `${
-          additionalParam[1] === -1
-            ? 'or more'
-            : additionalParam[0] === additionalParam[1]
-            ? ''
-            : 'to ' + secondParam
-        } arguments`
+        `${token} received ${additionalParam[0]} arguments, `
+        + `expecting ${additionalParam[1]}`
+        + (additionalParam[2] ? ` or more` : ``)
+        + ` arguments.`
     } else if (error === SemError.DoubleDeclare) {
-      errorMessage += `${token} has already been declared`
+      errorMessage += `${token} has already been declared.`
+    } else if (error === SemError.FunctionAsArray) {
+      errorMessage += `${token} is a function being used as an array.`
     } else if (error === SemError.BadFunctionUse) {
-      errorMessage += `${token} is a function being used inappropriately`
+      errorMessage += `${token} is a function being used as a variable.`
     }
     this.semanticErrors.push(errorMessage)
   }
