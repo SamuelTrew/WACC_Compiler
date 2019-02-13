@@ -40,7 +40,7 @@ class WJSCErrorLog {
   public semErr = (
     node: WJSCAst,
     error: SemError,
-    additionalParam?: TypeName | TypeName[] | any[] | Stdlib,
+    additionalParam?: TypeName | TypeName[] | number[] | Stdlib,
   ) => {
     let errorMessage = ''
     const { line, column, token } = node
@@ -81,11 +81,16 @@ class WJSCErrorLog {
       additionalParam !== undefined &&
       additionalParam instanceof Array
     ) {
+      const secondParam = additionalParam[1]
       errorMessage +=
-        `${token} received ${additionalParam[0]} arguments, `
-        + `expecting ${additionalParam[1]}`
-        + (additionalParam[2] ? ` or more` : ``)
-        + ` arguments.`
+        `${token} does not have ${additionalParam[0]}` +
+        `${
+          additionalParam[1] === -1
+            ? 'or more'
+            : additionalParam[0] === additionalParam[1]
+            ? ''
+            : 'to ' + secondParam
+        } arguments`
     } else if (error === SemError.DoubleDeclare) {
       errorMessage += `${token} has already been declared.`
     } else if (error === SemError.FunctionAsArray) {

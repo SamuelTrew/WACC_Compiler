@@ -322,7 +322,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
                   this.errorLog.semErr(
                     visitedIdent,
                     SemError.IncorrectArgNo,
-                    [args.length, params.length, false],
+                    [params.length, params.length],
                   )
                 } else {
                   visitedArgList.children.forEach((child, i) => {
