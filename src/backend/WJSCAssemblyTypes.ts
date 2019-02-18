@@ -4,19 +4,6 @@ interface Instr {
   operation: Operation
 }
 
-interface LableInstr extends Instr {
-  label: string
-}
-
-interface LoadInstr extends Instr {
-  Rd: Register
-  a_mode2: string
-}
-
-interface PushPopInstr extends Instr {
-  reglist: Register[]
-}
-
 enum Arithmetic {
   Add = 'ADD',
 }
@@ -51,6 +38,14 @@ const resultReg = Register.r0
 const allRegs
     = Object.keys(Register).map((k) => Register[k as any])
 
-const load = (Rd: Register, aMode2: string): string => {
-  return `${Load.Load} ${Rd}, =${aMode2}`
-}
+const label = (name: string): string =>
+    `${name}:`
+
+const load = (Rd: Register, aMode2: string): string =>
+    `${Load.Load} ${Rd}, =${aMode2}`
+
+const push = (reglist: Register[]): string[] =>
+    reglist.map((reg) => `${PushPop.Push} ${reg}`)
+
+const pop = (reglist: Register[]): string[] =>
+    reglist.reverse().map((reg) => `${PushPop.Pop} ${reg}`)
