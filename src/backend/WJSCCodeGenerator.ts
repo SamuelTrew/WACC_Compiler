@@ -1,4 +1,4 @@
-import { WJSCAst } from '../WJSCAst'
+import { WJSCAst, WJSCStatement} from '../WJSCAst'
 
 class WJSCCodeGenerator {
   public output: string[]
@@ -7,17 +7,22 @@ class WJSCCodeGenerator {
     this.output = output
   }
 
-  public genProgram = (atx: WJSCAst): Instr[] => {
-    return []
-  }
-
-  public genFunc = (atx: WJSCAst, freeRegs: Register[]): Instr[] => {
+  public genProgram = (atx: WJSCAst): string[] => {
     const result = []
-    result.push({ operation: PushPop.Push })
+    result.push(assemblyHeader)
     return result
   }
 
-  public genStat = (atx: WJSCAst, freeRegs: Register[]): Instr[] => {
+  public genFunc = (atx: WJSCAst, freeRegs: Register[]): string[] => {
+    const result = []
+    return []
+  }
+
+  public genStat = (atx: WJSCAst, freeRegs: Register[]): string [] => {
+    const result = []
+    if (atx.token === 'skip') {
+      // Skip does nothing
+    }
     return []
   }
 
