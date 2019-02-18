@@ -10,6 +10,8 @@ class WJSCCodeGenerator {
   public genProgram = (atx: WJSCAst): string[] => {
     const result = []
     result.push(assemblyHeader)
+    result.push(globalMain)
+    result.push()
     return result
   }
 

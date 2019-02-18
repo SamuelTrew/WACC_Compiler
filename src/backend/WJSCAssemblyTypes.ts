@@ -29,9 +29,11 @@ enum Register {
   r4 = 'r4',
   r5 = 'r5',
   pc = 'pc',
+  lr = 'lr',
 }
 
 const assemblyHeader = '.text\n\n'
+const globalMain = '.global main\n.main:\n'
 
 const resultReg = Register.r0
 
