@@ -22,10 +22,10 @@ class WJSCCodeGenerator {
   }
 
   public genExit = (code: number, freeRegs: Register[]) => {
-
+    return []
   }
 
   private saveRegs = (freeRegs: Register[]) => {
-
+    return []
   }
 }

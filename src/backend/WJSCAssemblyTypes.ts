@@ -51,6 +51,6 @@ const resultReg = Register.r0
 const allRegs
     = Object.keys(Register).map((k) => Register[k as any])
 
-const load = (Rd: Register, a_mode2: string): string => {
-  return `${Load.Load} ${Rd}, =${a_mode2}`
+const load = (Rd: Register, aMode2: string): string => {
+  return `${Load.Load} ${Rd}, =${aMode2}`
 }
