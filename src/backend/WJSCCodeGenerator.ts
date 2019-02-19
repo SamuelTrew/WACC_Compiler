@@ -7,13 +7,8 @@ class WJSCCodeGenerator {
     this.output = output
   }
 
-  public genProgram = (atx: WJSCAst): string[] => {
-    const result = []
-    result.push(assemblyHeader)
-    result.push(globalMain)
-    result.push()
-    return result
-  }
+  public genProgram = (atx: WJSCAst): string[] =>
+      [assemblyHeader].concat(globalMain, label('main'), push([Register.lr]))
 
   public genFunc = (atx: WJSCAst, freeRegs: Register[]): string[] => {
     const result = []

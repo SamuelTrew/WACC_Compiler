@@ -33,7 +33,7 @@ enum Register {
 }
 
 const assemblyHeader = '.text\n\n'
-const globalMain = '.global main\n.main:\n'
+const globalMain = '.global main\n'
 
 const resultReg = Register.r0
 
