@@ -40,6 +40,8 @@ enum ARMOpcode {
   multiply = 'MUL',
   multiplyAccumulate = 'MLA',
   or = 'ORR',
+  pop = 'POP',
+  push = 'PUSH',
   reverseSubtract = 'RSB',
   reverseSubtractCarry = 'RSC',
   softwareInterrupt = 'SWI',
@@ -61,7 +63,7 @@ enum ARMShiftname {
   rotateRight = 'ROR',
 }
 
-enum ARMRegister {
+enum Register {
   r0 = 'R0',
   r1 = 'R1',
   r2 = 'R2',
@@ -75,26 +77,39 @@ enum ARMRegister {
   r10 = 'R10',
   r11 = 'R11',
   r12 = 'R12',
-  r13 = 'R13',
-  r14 = 'R14',
-  r15 = 'R15',
+  r13 = 'SP',
+  r14  = 'LR',
+  r15  = 'PC',
   cpsr = 'CPSR',
   spsr = 'SPSR',
-  pc = 'PC',
 }
+// -------------- REGISTER LABELS  -----------------
+const resultReg = Register.r0
+const sp = Register.r13
+const lr = Register.r14
+const pc = Register.r15
+const allViableRegs = []
+// -------------------------------------------------
 
 type ARMAddress = ARMExpression | ARMAddressPreIndex | ARMAddressPostIndex
 type ARMAddressPreIndex =
-  | [ARMRegister]
-  | ['pre', ARMRegister, ARMExpression]
-  | ['pre', ARMRegister, ARMShiftType, ARMRegister, ARMShift]
+  | [Register]
+  | ['pre', Register, ARMExpression]
+  | ['pre', Register, ARMShiftType, Register, ARMShift]
 type ARMAddressPostIndex =
-  | ['post', ARMRegister, ARMExpression]
-  | ['post', ARMRegister, ARMShiftType, ARMRegister, ARMShift]
+  | ['post', Register, ARMExpression]
+  | ['post', Register, ARMShiftType, Register, ARMShift]
 type ARMExpression = string
-type ARMOperand = [ARMRegister, ARMShift] | ARMExpression
-type ARMShift = [ARMShiftname, ARMRegister | ARMExpression] | 'RRX'
+type ARMOperand = [Register, ARMShift] | ARMExpression
+type ARMShift = [ARMShiftname, Register | ARMExpression] | 'RRX'
 type ARMShiftType = '+' | '-'
+
+// Push pop utility
+const push = (reglist: Register[]): string[] =>
+    reglist.map((reg) => `${ARMOpcode.push} ${reg}`)
+
+const pop = (reglist: Register[]): string[] =>
+    reglist.reverse().map((reg) => `${ARMOpcode.pop} ${reg}`)
 
 const constructInstruction = (
   mnemonic: ARMOpcode,
@@ -105,8 +120,8 @@ const constructInstruction = (
 const construct = {
   arithmetic: (
     opcode: ARMOpcode,
-    rd: ARMRegister,
-    rn: ARMRegister,
+    rd: Register,
+    rn: Register,
     operand: ARMOperand,
     condition?: ARMCondition,
     set = false,
@@ -119,17 +134,17 @@ const construct = {
     condition?: ARMCondition,
     link = false,
   ): string => `B${link ? 'L' : ''}${condition} ${expression}`,
-  branchExchange: (rn: ARMRegister, condition?: ARMCondition): string =>
+  branchExchange: (rn: Register, condition?: ARMCondition): string =>
     `BX${condition} ${rn}`,
   compareTest: (
     opcode: ARMOpcode,
-    rn: ARMRegister,
+    rn: Register,
     operand: ARMOperand,
     condition?: ARMCondition,
   ) => `${opcode}${condition || ''} ${rn}, ${stringify.operand(operand)}`,
   move: (
     opcode: ARMOpcode,
-    rd: ARMRegister,
+    rd: Register,
     operand: ARMOperand,
     condition?: ARMCondition,
     set = false,
@@ -139,8 +154,8 @@ const construct = {
     )}`,
   moveFlags: (
     opcode: ARMOpcode,
-    psr: ARMRegister.spsr | ARMRegister.cpsr,
-    operand: ARMRegister | ARMExpression,
+    psr: Register.spsr | Register.cpsr,
+    operand: Register | ARMExpression,
     condition?: ARMCondition,
     option?: 'all' | 'flg',
   ): string =>
@@ -150,20 +165,20 @@ const construct = {
         : `${psr}${option ? '_' + option : ''}, ${operand}`
     }`,
   multiply: (
-    rd: ARMRegister,
-    rm: ARMRegister,
-    rs: ARMRegister,
+    rd: Register,
+    rm: Register,
+    rs: Register,
     condition?: ARMCondition,
     set = false,
     acc = false,
-    rn?: ARMRegister,
+    rn?: Register,
   ): string =>
     `${acc ? 'MLA' : 'MUL'}${condition || ''}${
       set ? 'S' : ''
     } ${rd}, ${rm}, ${rs}` + (acc ? `, ${rn}` : ''),
   singleDataTransfer: (
     opcode: ARMOpcode.load | ARMOpcode.store,
-    rd: ARMRegister,
+    rd: Register,
     address: ARMAddress,
     condition?: ARMCondition,
     byte = false,
@@ -171,13 +186,21 @@ const construct = {
   ): string => `${opcode}${condition || ''}${byte ? 'B' : ''}${post ? 'T' : ''} ${rd}, ${stringify.address(address)}`,
 }
 
+// ------------------ UTILITY --------------------
+
+const assemblyHeader = '.text\n\n'
+const globalMain = '.global main\n'
+
+const label = (name: string): string =>
+    `${name}:`
+
 const stringify = {
   address: (address: ARMAddress): string => {
     let stringified = ''
     if (typeof address === 'string') {
       stringified += address
     } else {
-      if (address[0] in ARMRegister) {
+      if (address[0] in Register) {
         stringified += `[${address[0]}]`
       } else {
         const register = address[1]
@@ -237,6 +260,6 @@ const stringify = {
   },
 }
 
-console.log(construct.singleDataTransfer(ARMOpcode.store, ARMRegister.r1, ['post', ARMRegister.r2, '#1']))
+console.log(construct.singleDataTransfer(ARMOpcode.store, Register.r1, ['post', Register.r2, '#1']))
 
-export { ARMCondition, ARMOpcode, constructInstruction, construct }
+// :( export { assemblyHeader, globalMain, ARMCondition, ARMOpcode, constructInstruction, construct }

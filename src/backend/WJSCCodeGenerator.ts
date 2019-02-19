@@ -1,4 +1,4 @@
-import { WJSCAst, WJSCStatement} from '../WJSCAst'
+import { WJSCAst, WJSCStatement } from '../WJSCAst'
 
 class WJSCCodeGenerator {
   public output: string[]
@@ -8,7 +8,7 @@ class WJSCCodeGenerator {
   }
 
   public genProgram = (atx: WJSCAst): string[] =>
-      [assemblyHeader].concat(globalMain, label('main'), push([Register.lr]))
+      [assemblyHeader].concat(globalMain, label('main'), push([lr]))
 
   public genFunc = (atx: WJSCAst, freeRegs: Register[]): string[] => {
     const result = []
