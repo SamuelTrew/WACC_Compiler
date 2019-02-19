@@ -1,4 +1,4 @@
-import '../util/ARMv7-lib'
+import { ARMCondition, ARMOpcode, assemblyHeader, construct, constructInstruction, globalMain, label, lr, ltOrg, Register, resultReg } from '../util/ARMv7-lib'
 import { WJSCAst, WJSCStatement } from '../WJSCAst'
 
 class WJSCCodeGenerator {

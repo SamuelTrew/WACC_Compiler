@@ -263,4 +263,4 @@ const stringify = {
 
 console.log(construct.singleDataTransfer(ARMOpcode.store, Register.r1, ['post', Register.r2, '#1']))
 
-// :( export { assemblyHeader, globalMain, ARMCondition, ARMOpcode, constructInstruction, construct }
+export { assemblyHeader, globalMain, ARMCondition, ARMOpcode, constructInstruction, construct, label, lr, ltOrg, resultReg, Register }
