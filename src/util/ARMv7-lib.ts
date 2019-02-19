@@ -104,13 +104,6 @@ type ARMOperand = [Register, ARMShift] | ARMExpression
 type ARMShift = [ARMShiftname, Register | ARMExpression] | 'RRX'
 type ARMShiftType = '+' | '-'
 
-// Push pop utility
-const push = (reglist: Register[]): string[] =>
-    reglist.map((reg) => `${ARMOpcode.push} ${reg}`)
-
-const pop = (reglist: Register[]): string[] =>
-    reglist.reverse().map((reg) => `${ARMOpcode.pop} ${reg}`)
-
 const constructInstruction = (
   mnemonic: ARMOpcode,
   condition: ARMCondition,
@@ -176,6 +169,13 @@ const construct = {
     `${acc ? 'MLA' : 'MUL'}${condition || ''}${
       set ? 'S' : ''
     } ${rd}, ${rm}, ${rs}` + (acc ? `, ${rn}` : ''),
+  pushPop: (
+    opcode: ARMOpcode.push | ARMOpcode.pop,
+    regList: [Register],
+    lrPc?: Register,
+  ): string[] => (opcode === ARMOpcode.push ?
+      regList.map((reg) => `${ARMOpcode.push} ${reg}`)
+      : regList.reverse().map((reg) => `${ARMOpcode.pop} ${reg}`)),
   singleDataTransfer: (
     opcode: ARMOpcode.load | ARMOpcode.store,
     rd: Register,

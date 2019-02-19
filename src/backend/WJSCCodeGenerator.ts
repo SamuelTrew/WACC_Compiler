@@ -8,7 +8,8 @@ class WJSCCodeGenerator {
   }
 
   public genProgram = (atx: WJSCAst): string[] =>
-      [assemblyHeader].concat(globalMain, label('main'), push([lr]))
+      [assemblyHeader].concat(globalMain, label('main'), construct.pushPop(ARMOpcode.push, [lr]),
+          construct.singleDataTransfer(ARMOpcode.load, resultReg, '=0'))
 
   public genFunc = (atx: WJSCAst, freeRegs: Register[]): string[] => {
     const result = []
