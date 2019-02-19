@@ -1,3 +1,4 @@
+import '../util/ARMv7-lib'
 import { WJSCAst, WJSCStatement } from '../WJSCAst'
 
 class WJSCCodeGenerator {
@@ -34,3 +35,5 @@ class WJSCCodeGenerator {
     return []
   }
 }
+
+export { WJSCCodeGenerator }

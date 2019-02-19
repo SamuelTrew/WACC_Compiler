@@ -3,6 +3,7 @@ import * as argparse from 'argparse'
 import * as fs from 'fs'
 
 /* Our code */
+import { WJSCCodeGenerator } from './backend/WJSCCodeGenerator'
 import { ConsoleColors } from './util/Colors'
 import { WJSCAst } from './WJSCAst'
 import WJSCCompiler from './WJSCCompiler'
@@ -153,5 +154,12 @@ fs.readFile(args.src, 'utf8', (err, data) => {
       console.error('--- ERRORS ---')
       console.error(compiler.errorLog.printErrors() + '\n')
     }
+  }
+
+  /* back end code gen check */
+  if (tree && !numerrors) {
+    const gen = new WJSCCodeGenerator([])
+    const result = gen.genProgram(tree)
+    console.log(result)
   }
 })
