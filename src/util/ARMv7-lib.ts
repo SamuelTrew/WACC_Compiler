@@ -171,9 +171,9 @@ const construct = {
     } ${rd}, ${rm}, ${rs}` + (acc ? `, ${rn}` : ''),
   pushPop: (
     opcode: ARMOpcode.push | ARMOpcode.pop,
-    regList: [Register],
+    regList: Register[],
     lrPc?: Register,
-  ): string[] => (opcode === ARMOpcode.push ?
+  ): string[] =>  (opcode === ARMOpcode.push ?
       regList.map((reg) => `${ARMOpcode.push} ${reg}`)
       : regList.reverse().map((reg) => `${ARMOpcode.pop} ${reg}`)),
   singleDataTransfer: (
@@ -190,6 +190,7 @@ const construct = {
 
 const assemblyHeader = '.text\n\n'
 const globalMain = '.global main\n'
+const ltOrg = '.ltorg\n'
 
 const label = (name: string): string =>
     `${name}:`
