@@ -68,6 +68,9 @@ interface WJSCIdentifier extends WJSCAst {
   identifier: string
 }
 
+// Checker for different types
+
+
 export {
   WJSCParserRules,
   WJSCAst,

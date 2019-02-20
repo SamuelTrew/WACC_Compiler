@@ -1,3 +1,4 @@
+import {type} from 'os'
 import {
   ARMCondition,
   ARMOpcode,
@@ -22,16 +23,25 @@ class WJSCCodeGenerator {
     this.output = output
   }
 
-  public genProgram = (atx: WJSCAst): string[] =>
-    [directive.text].concat(
-      directive.global('main'),
-      directive.label('main'),
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.move(ARMOpcode.move, Register.r0, '#1'),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
-      construct.pushPop(ARMOpcode.pop, [this.lr]),
-      directive.ltorg,
-    )
+  public genProgram = (atx: WJSCAst): string[] => {
+    let result = [directive.text].concat(
+        directive.global('main'),
+        directive.label('main'),
+        construct.pushPop(ARMOpcode.push, [this.lr]))
+    // After pushing the lr, we start visiting the children
+    atx.children.forEach( (child, index) => {
+      result = this.dealWithChildren(child, result)
+    })
+    result = result.concat(construct.move(ARMOpcode.move, Register.r0, '#1'),
+        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
+        construct.pushPop(ARMOpcode.pop, [this.lr]),
+        directive.ltorg)
+    return result
+  }
+
+  public dealWithChildren = (atx: WJSCAst, instructions: string[]): string[] => {
+    return instructions
+  }
 
   public genFunc = (atx: WJSCAst, freeRegs: Register[]): string[] => {
     const result = []
