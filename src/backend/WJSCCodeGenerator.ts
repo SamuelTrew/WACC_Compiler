@@ -7,7 +7,7 @@ import {
   directive,
   Register,
 } from '../util/ARMv7-lib'
-import { WJSCAst, WJSCStatement } from '../WJSCAst'
+import { WJSCAst, WJSCChecker, WJSCStatement } from '../WJSCAst'
 class WJSCCodeGenerator {
 
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -40,10 +40,26 @@ class WJSCCodeGenerator {
   }
 
   public dealWithChildren = (atx: WJSCAst, instructions: string[]): string[] => {
+    const checker = new WJSCChecker()
+    // WARNING: Remember to concat onto instructions, not override it!
+    if (checker.isTerminal(atx)) {
+      // Terminal case
+    } else if (checker.isFunction(atx)) {
+      // Function case
+    } else if (checker.isOperator(atx)) {
+      // Operator case
+    } else if (checker.isParam(atx)) {
+      // Param case
+    } else if (checker.isStatement(atx)) {
+      // Statement case
+    } else if (checker.isIdent(atx)) {
+      // Ident case
+    }
     return instructions
   }
 
   public genFunc = (atx: WJSCAst, freeRegs: Register[]): string[] => {
+    atx.type
     const result = []
     return []
   }

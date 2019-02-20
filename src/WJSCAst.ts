@@ -1,3 +1,4 @@
+import {Register} from './util/ARMv7-lib'
 import { TerminalType, TypeName } from './WJSCType'
 
 enum WJSCParserRules {
@@ -43,34 +44,63 @@ interface WJSCAst {
 interface WJSCTerminal extends WJSCAst {
   terminalType?: TerminalType
   value: any
+  terminalIdent: 'terminal'
 }
 
 interface WJSCFunction extends WJSCAst {
   arguments: string[]
   identifier: string
+  functionIdent: 'function'
 }
 
 interface WJSCOperators extends WJSCAst {
   inputs: TypeName[]
   arrayInput: boolean
   outputs: TypeName
+  opIdent: 'operator'
 }
 
 interface WJSCParam extends WJSCAst {
   paramTypes: TypeName[]
+  paramIdent: 'param'
 }
 
 interface WJSCStatement extends WJSCAst {
   function: WJSCStandardLibrary
+  statIdent: 'statement'
 }
 
 interface WJSCIdentifier extends WJSCAst {
   identifier: string
+  identIdent: 'ident'
 }
 
-// Checker for different types
+class WJSCChecker {
+  // Checker for different types
+  public isTerminal = (ast: WJSCAst): ast is WJSCTerminal => {
+    return 'terminalIdent' in ast
+  }
 
+  public isFunction = (ast: WJSCAst): ast is WJSCFunction => {
+    return 'functionIdent' in ast
+  }
 
+  public isOperator = (ast: WJSCAst): ast is WJSCOperators => {
+    return 'opIdent' in ast
+  }
+
+  public isParam = (ast: WJSCAst): ast is WJSCParam => {
+    return 'paramIdent' in ast
+  }
+
+  public isStatement = (ast: WJSCAst): ast is WJSCStatement => {
+    return 'statIdent' in ast
+  }
+
+  public isIdent = (ast: WJSCAst): ast is WJSCIdentifier => {
+    return 'identIdent' in ast
+  }
+}
 export {
   WJSCParserRules,
   WJSCAst,
@@ -80,4 +110,5 @@ export {
   WJSCIdentifier,
   WJSCOperators,
   WJSCParam,
+  WJSCChecker,
 }
