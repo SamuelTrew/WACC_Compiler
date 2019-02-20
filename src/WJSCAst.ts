@@ -1,4 +1,4 @@
-import {Register} from './util/ARMv7-lib'
+import { Register } from './util/ARMv7-lib'
 import { TerminalType, TypeName } from './WJSCType'
 
 enum WJSCParserRules {

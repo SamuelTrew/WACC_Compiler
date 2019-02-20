@@ -29,7 +29,7 @@ enum ARMOpcode {
   coprocessorDataProcessing = 'CDP',
   exclusiveOr = 'EOR',
   loadCoprocessorMemory = 'LDC',
-  loadMultRegisters = 'LDM',
+  loadMultiple = 'LDM',
   load = 'LDR',
   move = 'MOV',
   moveFlagsRegister = 'MRS',
@@ -96,6 +96,15 @@ type ARMExpression = string
 type ARMOperand = [Register, ARMShift] | ARMExpression | string
 type ARMShift = [ARMShiftname, Register | ARMExpression] | 'RRX'
 type ARMShiftType = '+' | '-'
+type ARMBDTAddressingModes =
+  | 'FD'
+  | 'ED'
+  | 'FA'
+  | 'EA'
+  | 'IA'
+  | 'IB'
+  | 'DA'
+  | 'DB'
 
 const tabSpace = '\t'
 
@@ -118,6 +127,18 @@ const construct = {
     `${opcode}${condition || ''}${
       set ? 'S' : ''
     } ${rd}, ${rn}, ${stringify.operand(operand)}`,
+  blockDataTransfer: (
+    opcode: ARMOpcode.loadMultiple | ARMOpcode.storeMultiple,
+    addrMode: ARMBDTAddressingModes,
+    rn: Register,
+    rlist: Register[],
+    condition?: ARMCondition,
+    writeBack = false,
+    sbit = false,
+  ): string =>
+    `${opcode}${condition || ''}${addrMode} ${rn}${
+      writeBack ? '!' : ''
+    } {${rlist.join(', ')}}${sbit ? '^' : ''}`,
   branch: (
     expression: ARMExpression,
     condition?: ARMCondition,
@@ -190,11 +211,14 @@ const construct = {
     `${opcode}${condition || ''}${byte ? 'B' : ''}${
       post ? 'T' : ''
     }${modifier || ''} ${rd}, ${stringify.address(address)}`,
+  softwareInterrupt: (comment: string, condition?: string) =>
+    tabSpace + `SWI${condition || ''} ${comment}`,
 }
 
 // ------------------ UTILITY --------------------
 
 const directive = {
+  ascii: (str: string): string => `.ascii "${str}"`,
   bss: '.bss',
   data: '.data',
   global: (...symbol: string[]): string => `.global ${symbol.join(', ')}`,
