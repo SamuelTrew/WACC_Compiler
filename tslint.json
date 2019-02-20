@@ -1,59 +1,37 @@
 {
-    "defaultSeverity": "error",
-    "extends": [
-        "tslint:recommended",
-        "tslint-sonarts"
+  "defaultSeverity": "error",
+  "extends": ["tslint:recommended", "tslint-sonarts"],
+  "linterOptions": {
+    "exclude": ["src/grammar/*.ts"]
+  },
+  "jsRules": {},
+  "rules": {
+    "semicolon": [true, "never"],
+    "quotemark": [true, "single"],
+    "indent": [true, "spaces", 2],
+    "interface-name": false,
+    "only-arrow-functions": true,
+    "no-unnecessary-class": true,
+    "whitespace": [
+      true,
+      "check-branch",
+      "check-decl",
+      "check-operator",
+      "check-module",
+      "check-separator",
+      "check-rest-spread",
+      "check-type",
+      "check-typecast",
+      "check-type-operator",
+      "check-preblock",
+      "check-postbrace"
     ],
-    "linterOptions": {
-        "exclude": [
-            "src/grammar/*.ts"
-        ]
-    },
-    "jsRules": {},
-    "rules": {
-        "semicolon": [
-            true,
-            "never"
-        ],
-        "quotemark": [
-            true,
-            "single"
-        ],
-        "indent": [
-            true,
-            "spaces",
-            2
-        ],
-        "interface-name": false,
-        "only-arrow-functions": true,
-        "no-unnecessary-class": true,
-        "whitespace": [
-            true,
-            "check-branch",
-            "check-decl",
-            "check-operator",
-            "check-module",
-            "check-separator",
-            "check-rest-spread",
-            "check-type",
-            "check-typecast",
-            "check-type-operator",
-            "check-preblock",
-            "check-postbrace"
-        ],
-        "no-console": false,
-        "max-line-length": false,
-        "align": [
-            true,
-            "elements",
-            "members",
-            "statements"
-        ],
-        "max-union-size": [
-            true, 
-            4
-        ],
-        "no-nested-template-literals": false
-    },
-    "rulesDirectory": []
+    "no-console": false,
+    "max-line-length": false,
+    "align": [true, "elements", "members", "statements"],
+    "max-union-size": [true, 4],
+    "no-nested-template-literals": false,
+    "parameters-max-number": [true, 10]
+  },
+  "rulesDirectory": []
 }

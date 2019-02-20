@@ -160,6 +160,6 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   if (tree && !numerrors) {
     const gen = new WJSCCodeGenerator([])
     const result = gen.genProgram(tree)
-    console.log(result)
+    console.log(WJSCCodeGenerator.stringifyAsm(result))
   }
 })

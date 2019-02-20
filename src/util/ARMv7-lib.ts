@@ -78,18 +78,11 @@ enum Register {
   r11 = 'R11',
   r12 = 'R12',
   r13 = 'SP',
-  r14  = 'LR',
-  r15  = 'PC',
+  r14 = 'LR',
+  r15 = 'PC',
   cpsr = 'CPSR',
   spsr = 'SPSR',
 }
-// -------------- REGISTER LABELS  -----------------
-const resultReg = Register.r0
-const sp = Register.r13
-const lr = Register.r14
-const pc = Register.r15
-const allViableRegs = []
-// -------------------------------------------------
 
 type ARMAddress = ARMExpression | ARMAddressPreIndex | ARMAddressPostIndex
 type ARMAddressPreIndex =
@@ -103,6 +96,8 @@ type ARMExpression = string
 type ARMOperand = [Register, ARMShift] | ARMExpression
 type ARMShift = [ARMShiftname, Register | ARMExpression] | 'RRX'
 type ARMShiftType = '+' | '-'
+
+const tabSpace = '\t'
 
 const constructInstruction = (
   mnemonic: ARMOpcode,
@@ -119,6 +114,7 @@ const construct = {
     condition?: ARMCondition,
     set = false,
   ) =>
+    tabSpace +
     `${opcode}${condition || ''}${
       set ? 'S' : ''
     } ${rd}, ${rn}, ${stringify.operand(operand)}`,
@@ -126,22 +122,25 @@ const construct = {
     expression: ARMExpression,
     condition?: ARMCondition,
     link = false,
-  ): string => `B${link ? 'L' : ''}${condition} ${expression}`,
+  ): string => tabSpace + `B${link ? 'L' : ''}${condition} ${expression}`,
   branchExchange: (rn: Register, condition?: ARMCondition): string =>
-    `BX${condition} ${rn}`,
+    tabSpace + `BX${condition} ${rn}`,
   compareTest: (
     opcode: ARMOpcode,
     rn: Register,
     operand: ARMOperand,
     condition?: ARMCondition,
-  ) => `${opcode}${condition || ''} ${rn}, ${stringify.operand(operand)}`,
+  ): string =>
+    tabSpace +
+    `${opcode}${condition || ''} ${rn}, ${stringify.operand(operand)}`,
   move: (
     opcode: ARMOpcode,
     rd: Register,
     operand: ARMOperand,
     condition?: ARMCondition,
     set = false,
-  ) =>
+  ): string =>
+    tabSpace +
     `${opcode}${condition || ''}${set ? 'S' : ''} ${rd}, ${stringify.operand(
       operand,
     )}`,
@@ -152,6 +151,7 @@ const construct = {
     condition?: ARMCondition,
     option?: 'all' | 'flg',
   ): string =>
+    tabSpace +
     `${opcode}${condition || ''} ${
       opcode === ARMOpcode.moveFlagsRegister
         ? `${operand}, ${psr}`
@@ -166,34 +166,67 @@ const construct = {
     acc = false,
     rn?: Register,
   ): string =>
+    tabSpace +
     `${acc ? 'MLA' : 'MUL'}${condition || ''}${
       set ? 'S' : ''
-    } ${rd}, ${rm}, ${rs}` + (acc ? `, ${rn}` : ''),
+    } ${rd}, ${rm}, ${rs}` +
+    (acc ? `, ${rn}` : ''),
   pushPop: (
     opcode: ARMOpcode.push | ARMOpcode.pop,
     regList: Register[],
     lrPc?: Register,
-  ): string[] =>  (opcode === ARMOpcode.push ?
-      regList.map((reg) => `${ARMOpcode.push} ${reg}`)
-      : regList.reverse().map((reg) => `${ARMOpcode.pop} ${reg}`)),
+    condition?: ARMCondition,
+  ): string => tabSpace + `${opcode}${condition || ''} {${regList.join(', ')}}`,
   singleDataTransfer: (
     opcode: ARMOpcode.load | ARMOpcode.store,
     rd: Register,
     address: ARMAddress,
     condition?: ARMCondition,
+    modifier?: 'H' | 'SB' | 'SH',
     byte = false,
     post = false,
-  ): string => `${opcode}${condition || ''}${byte ? 'B' : ''}${post ? 'T' : ''} ${rd}, ${stringify.address(address)}`,
+  ): string =>
+    tabSpace +
+    `${opcode}${condition || ''}${byte ? 'B' : ''}${
+      post ? 'T' : ''
+    }${modifier || ''} ${rd}, ${stringify.address(address)}`,
 }
 
 // ------------------ UTILITY --------------------
 
-const assemblyHeader = '.text\n\n'
-const globalMain = '.global main\n'
-const ltOrg = '.ltorg\n'
-
-const label = (name: string): string =>
-    `${name}:`
+const directive = {
+  bss: '.bss',
+  data: '.data',
+  global: (...symbol: string[]): string => `.global ${symbol.join(', ')}`,
+  label: (name: string): string => `${name}:`,
+  local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
+  ltorg: '.ltorg',
+  popSection: '.popsection',
+  pushSection: (...args: any): string =>
+    `.pushsection ${directive.section(args)}`,
+  rodata: '.rodata',
+  section: (
+    name: string,
+    flags?: string,
+    type?: string,
+    entrySize?: number,
+    groupName?: string,
+    linkage?: 'comdat',
+    linkOrderSymbol?: string,
+    unique?: string,
+    uniqueId?: number,
+  ): string =>
+    `.section ${name} ` +
+    (flags ? `"${flags}" ` : '') +
+    (type ? `%${type} ` : '') +
+    (entrySize ? `${entrySize} ` : '') +
+    (groupName ? `${groupName} ` : '') +
+    (linkage ? `${linkage} ` : '') +
+    (linkOrderSymbol ? `${linkOrderSymbol} ` : '') +
+    (unique && uniqueId ? `${unique} ${uniqueId}` : ''),
+  text: '.text',
+  weak: (...symbol: string[]): string => `.weak ${symbol.join(', ')}`,
+}
 
 const stringify = {
   address: (address: ARMAddress): string => {
@@ -261,6 +294,11 @@ const stringify = {
   },
 }
 
-console.log(construct.singleDataTransfer(ARMOpcode.store, Register.r1, ['post', Register.r2, '#1']))
-
-export { assemblyHeader, globalMain, ARMCondition, ARMOpcode, constructInstruction, construct, label, lr, ltOrg, resultReg, Register }
+export {
+  ARMCondition,
+  ARMOpcode,
+  constructInstruction,
+  construct,
+  directive,
+  Register,
+}
