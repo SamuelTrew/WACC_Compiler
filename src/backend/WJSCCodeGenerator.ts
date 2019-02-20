@@ -9,7 +9,7 @@ class WJSCCodeGenerator {
   private readonly sp = Register.r13
   private readonly lr = Register.r14
   private readonly pc = Register.r15
-  private readonly allViableRegs = []
+  private readonly allViableRegs = [Register.r4, Register.r5]
 
   constructor(output: string[]) {
     this.output = output
@@ -28,7 +28,7 @@ class WJSCCodeGenerator {
     result.push(
       construct.move(ARMOpcode.move, Register.r0, '#1'),
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
-      construct.pushPop(ARMOpcode.pop, [this.lr]),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
       directive.ltorg,
     )
     return result
@@ -54,7 +54,11 @@ class WJSCCodeGenerator {
       // Statement case
     } else if (checker.isIdent(atx)) {
       // Ident case
+    } else {
+      console.log('Checker failed to match')
+      // instructions = instructions.concat(this.genStat(atx, this.allViableRegs))
     }
+
     return instructions
   }
 
@@ -74,14 +78,21 @@ class WJSCCodeGenerator {
         directive.immNum(1),
       ),
     ] */
+    console.log(JSON.stringify(atx.children[0]))
     if (atx.token === 'skip') {
       // Skip does nothing
+    } else if (atx.children[0] && atx.children[0].token === 'exit') {
+      const exitCode = parseInt(atx.children[1].token, 10)
+      return this.genExit(exitCode, freeRegs)
+          .concat(construct.branch('exit', true))
     }
     return []
   }
 
-  public genExit = (code: number, freeRegs: Register[]) => {
-    return []
+  public genExit = (exitCode: number, freeRegs: Register[]): string[] => {
+    const exitReg = freeRegs[0]
+    return [construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`)]
+        .concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
   }
 
   /* Prints 'Hello World in assembly */

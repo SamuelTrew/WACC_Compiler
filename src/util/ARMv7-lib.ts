@@ -141,9 +141,9 @@ const construct = {
     } {${rlist.join(', ')}}${sbit ? '^' : ''}`,
   branch: (
     expression: ARMExpression,
-    condition?: ARMCondition,
     link = false,
-  ): string => tabSpace + `B${link ? 'L' : ''}${condition} ${expression}`,
+    condition?: ARMCondition,
+  ): string => tabSpace + `B${link ? 'L' : ''}${condition ? condition : ''} ${expression}`,
   branchExchange: (rn: Register, condition?: ARMCondition): string =>
     tabSpace + `BX${condition} ${rn}`,
   compareTest: (
