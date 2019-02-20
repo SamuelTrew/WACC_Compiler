@@ -93,7 +93,7 @@ type ARMAddressPostIndex =
   | ['post', Register, ARMExpression]
   | ['post', Register, ARMShiftType, Register, ARMShift]
 type ARMExpression = string
-type ARMOperand = [Register, ARMShift] | ARMExpression
+type ARMOperand = [Register, ARMShift] | ARMExpression | string
 type ARMShift = [ARMShiftname, Register | ARMExpression] | 'RRX'
 type ARMShiftType = '+' | '-'
 
@@ -198,6 +198,7 @@ const directive = {
   bss: '.bss',
   data: '.data',
   global: (...symbol: string[]): string => `.global ${symbol.join(', ')}`,
+  immNum: (num: number): string => `#${num}`,
   label: (name: string): string => `${name}:`,
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',

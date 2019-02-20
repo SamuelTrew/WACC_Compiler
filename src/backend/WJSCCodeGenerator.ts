@@ -1,13 +1,6 @@
-import {type} from 'os'
-import {
-  ARMCondition,
-  ARMOpcode,
-  construct,
-  constructInstruction,
-  directive,
-  Register,
-} from '../util/ARMv7-lib'
-import { WJSCAst, WJSCChecker, WJSCStatement } from '../WJSCAst'
+import {ARMOpcode, construct, directive, Register,} from '../util/ARMv7-lib'
+import {WJSCAst, WJSCChecker} from '../WJSCAst'
+
 class WJSCCodeGenerator {
 
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -46,11 +39,13 @@ class WJSCCodeGenerator {
       // Terminal case
     } else if (checker.isFunction(atx)) {
       // Function case
+      instructions = instructions.concat(this.genFunc(atx, this.allViableRegs))
     } else if (checker.isOperator(atx)) {
       // Operator case
     } else if (checker.isParam(atx)) {
       // Param case
     } else if (checker.isStatement(atx)) {
+      instructions = instructions.concat(this.genStat(atx, this.allViableRegs))
       // Statement case
     } else if (checker.isIdent(atx)) {
       // Ident case
@@ -65,7 +60,8 @@ class WJSCCodeGenerator {
   }
 
   public genStat = (atx: WJSCAst, freeRegs: Register[]): string[] => {
-    const result = []
+    // First we increment the PC
+    const result = [construct.arithmetic(ARMOpcode.add, this.pc, this.pc, directive.immNum(1))]
     if (atx.token === 'skip') {
       // Skip does nothing
     }
