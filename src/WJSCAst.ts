@@ -1,4 +1,4 @@
-import { TerminalType, TypeName } from './WJSCType'
+import { BaseType, TerminalType, TypeName } from './WJSCType'
 
 enum WJSCParserRules {
   Undefined = 'undefined',
@@ -18,6 +18,7 @@ enum WJSCParserRules {
   Pair = 'pair',
   Parameter = 'param',
   Stdlib = 'stdlib',
+  Identifier = 'ident',
 }
 
 enum WJSCStandardLibrary {
@@ -41,46 +42,52 @@ interface WJSCAst {
 }
 
 interface WJSCTerminal extends WJSCAst {
+  parserRule: WJSCParserRules.Terminal
   terminalType?: TerminalType
   value: any
-  terminalIdent: 'terminal'
 }
 
 interface WJSCFunction extends WJSCAst {
+  parserRule: WJSCParserRules.Function
   arguments: string[]
   identifier: string
-  functionIdent: 'function'
 }
 
 interface WJSCOperators extends WJSCAst {
+  parserRule: WJSCParserRules.Operator
   inputs: TypeName[]
   arrayInput: boolean
   outputs: TypeName
-  opIdent: 'operator'
 }
 
 interface WJSCParam extends WJSCAst {
+  parserRule: WJSCParserRules.Parameter
   paramTypes: TypeName[]
-  paramIdent: 'param'
 }
 
 interface WJSCStatement extends WJSCAst {
+  parserRule: WJSCParserRules.Statement
   function: WJSCStandardLibrary
-  statIdent: 'statement'
 }
 
 interface WJSCIdentifier extends WJSCAst {
+  parserRule: WJSCParserRules.Identifier
   identifier: string
-  identIdent: 'ident'
 }
 
 const WJSCChecker = {
-  isFunction: (ast: WJSCAst): ast is WJSCFunction => 'functionIdent' in ast,
-  isIdent: (ast: WJSCAst): ast is WJSCIdentifier => 'identIdent' in ast,
-  isOperator: (ast: WJSCAst): ast is WJSCOperators => 'opIdent' in ast,
-  isParam: (ast: WJSCAst): ast is WJSCParam => 'paramIdent' in ast,
-  isStatement: (ast: WJSCAst): ast is WJSCStatement => 'statIdent' in ast,
-  isTerminal: (ast: WJSCAst): ast is WJSCTerminal => 'terminalIdent' in ast,
+  isFunction: (ast: WJSCAst): ast is WJSCFunction =>
+    ast.parserRule === WJSCParserRules.Function,
+  isIdent: (ast: WJSCAst): ast is WJSCIdentifier =>
+    ast.parserRule === WJSCParserRules.Identifier,
+  isOperator: (ast: WJSCAst): ast is WJSCOperators =>
+    ast.parserRule === WJSCParserRules.Operator,
+  isParam: (ast: WJSCAst): ast is WJSCParam =>
+    ast.parserRule === WJSCParserRules.Parameter,
+  isStatement: (ast: WJSCAst): ast is WJSCStatement =>
+    ast.parserRule === WJSCParserRules.Statement,
+  isTerminal: (ast: WJSCAst): ast is WJSCTerminal =>
+    ast.parserRule === WJSCParserRules.Terminal,
 }
 
 export {

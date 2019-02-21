@@ -780,7 +780,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   public visitParam = (ctx: ParamContext): WJSCIdentifier => {
     const result = this.initWJSCAst(
       ctx,
-      WJSCParserRules.Parameter,
+      WJSCParserRules.Identifier,
     ) as WJSCIdentifier
     const visitedIdent = this.visitTerminal(ctx.IDENTIFIER())
     result.identifier = visitedIdent.value
@@ -1370,7 +1370,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   private checkParam = (ctx: ParamContext): WJSCIdentifier => {
     const result = this.initWJSCAst(
         ctx,
-        WJSCParserRules.Parameter,
+        WJSCParserRules.Identifier,
     ) as WJSCIdentifier
     const visitedIdent = this.visitTerminal(ctx.IDENTIFIER())
     result.identifier = visitedIdent.value
