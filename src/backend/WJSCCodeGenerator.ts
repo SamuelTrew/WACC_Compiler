@@ -1,5 +1,5 @@
 import {ARMOpcode, construct, directive, Register} from '../util/ARMv7-lib'
-import {WJSCAst, WJSCChecker as checker} from '../WJSCAst'
+import {WJSCAst, WJSCChecker as checker, WJSCFunction, WJSCStatement} from '../WJSCAst'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -22,9 +22,7 @@ class WJSCCodeGenerator {
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
     // After pushing the lr, we start visiting the children
-    atx.children.forEach((child, index) => {
-      result = this.dealWithChildren(child, result)
-    })
+    result = this.dealWithChildren(atx.children, result)
     result.push(
       construct.move(ARMOpcode.move, Register.r0, '#1'),
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
@@ -34,11 +32,21 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public dealWithChildren = (
+  public dealWithChildren = (atx: WJSCAst[], instructions: string[],
+  ): string[] => {
+    // WARNING: Do not concat the results of this function to prior results
+    atx.forEach((child, index) => {
+      instructions = this.dealWithChild(child, instructions)
+    })
+    return instructions
+}
+
+  public dealWithChild = (
     atx: WJSCAst,
     instructions: string[],
   ): string[] => {
     // WARNING: Remember to concat onto instructions, not override it!
+    // WARNING: All concatenations occur here!
     // WARNING: Do all LR pushing, PC popping or PC increments here!
     if (checker.isTerminal(atx)) {
       // Terminal case
@@ -70,14 +78,14 @@ class WJSCCodeGenerator {
     return instructions
   }
 
-  public genFunc = (atx: WJSCAst, freeRegs: Register[]): string[] => {
-    // atx.type
-    // ! const result = []
-    return []
+  public genFunc = (atx: WJSCFunction, freeRegs: Register[]): string[] => {
+    let result = [directive.label(atx.identifier)]
+    // We now deal with the children
+    result = this.dealWithChildren(atx.children, result)
+    return result
   }
 
-  public genStat = (atx: WJSCAst, freeRegs: Register[]): string[] => {
-    // First we increment the PC
+  public genStat = (atx: WJSCStatement, freeRegs: Register[]): string[] => {
     const result: string[] = []
     console.log(JSON.stringify(atx.children[0]))
     if (atx.token === 'skip') {
