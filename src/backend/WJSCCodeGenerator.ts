@@ -1,5 +1,5 @@
-import { ARMOpcode, construct, directive, Register } from '../util/ARMv7-lib'
-import { WJSCAst, WJSCChecker as checker } from '../WJSCAst'
+import {ARMOpcode, construct, directive, Register} from '../util/ARMv7-lib'
+import {WJSCAst, WJSCChecker as checker} from '../WJSCAst'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -39,17 +39,26 @@ class WJSCCodeGenerator {
     instructions: string[],
   ): string[] => {
     // WARNING: Remember to concat onto instructions, not override it!
+    // WARNING: Do all LR pushing, PC popping or PC increments here!
     if (checker.isTerminal(atx)) {
       // Terminal case
     } else if (checker.isFunction(atx)) {
       // Function case
-      instructions = instructions.concat(this.genFunc(atx, this.allViableRegs))
+      instructions = instructions.concat(construct.pushPop(ARMOpcode.push, [this.lr]),
+          this.genFunc(atx, this.allViableRegs),
+          construct.pushPop(ARMOpcode.pop, [this.pc]),
+          )
     } else if (checker.isOperator(atx)) {
       // Operator case
     } else if (checker.isParam(atx)) {
       // Param case
     } else if (checker.isStatement(atx)) {
-      instructions = instructions.concat(this.genStat(atx, this.allViableRegs))
+      instructions = instructions.concat(construct.arithmetic(
+          ARMOpcode.add,
+          this.pc,
+          this.pc,
+          directive.immNum(1),
+      ), this.genStat(atx, this.allViableRegs))
       // Statement case
     } else if (checker.isIdent(atx)) {
       // Ident case
@@ -69,24 +78,17 @@ class WJSCCodeGenerator {
 
   public genStat = (atx: WJSCAst, freeRegs: Register[]): string[] => {
     // First we increment the PC
-    /* const result = [
-      construct.arithmetic(
-        ARMOpcode.add,
-        this.pc,
-        this.pc,
-        directive.immNum(1),
-      ),
-    ] */
+    const result: string[] = []
     console.log(JSON.stringify(atx.children[0]))
     if (atx.token === 'skip') {
       // Skip does nothing
     } else if (atx.children[0] && atx.children[0].token === 'exit') {
       const exitCode = parseInt(atx.children[1].token, 10)
-      return this.genExit(exitCode, freeRegs).concat(
-        construct.branch('exit', true),
+      result.concat(this.genExit(exitCode, freeRegs).concat(
+        construct.branch('exit', true)),
       )
     }
-    return []
+    return result
   }
 
   public genExit = (exitCode: number, freeRegs: Register[]): string[] => {
