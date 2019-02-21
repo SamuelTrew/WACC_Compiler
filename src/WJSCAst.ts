@@ -77,29 +77,17 @@ interface WJSCIdentifier extends WJSCAst {
 
 class WJSCChecker {
   // Checker for different types
-  public isTerminal = (ast: WJSCAst): ast is WJSCTerminal => {
-    return 'terminalIdent' in ast
-  }
+  public isTerminal = (ast: WJSCAst): ast is WJSCTerminal => 'terminalIdent' in ast
 
-  public isFunction = (ast: WJSCAst): ast is WJSCFunction => {
-    return 'functionIdent' in ast
-  }
+  public isFunction = (ast: WJSCAst): ast is WJSCFunction => 'functionIdent' in ast
 
-  public isOperator = (ast: WJSCAst): ast is WJSCOperators => {
-    return 'opIdent' in ast
-  }
+  public isOperator = (ast: WJSCAst): ast is WJSCOperators => 'opIdent' in ast
 
-  public isParam = (ast: WJSCAst): ast is WJSCParam => {
-    return 'paramIdent' in ast
-  }
+  public isParam = (ast: WJSCAst): ast is WJSCParam => 'paramIdent' in ast
 
-  public isStatement = (ast: WJSCAst): ast is WJSCStatement => {
-    return 'statIdent' in ast
-  }
+  public isStatement = (ast: WJSCAst): ast is WJSCStatement => 'statIdent' in ast
 
-  public isIdent = (ast: WJSCAst): ast is WJSCIdentifier => {
-    return 'identIdent' in ast
-  }
+  public isIdent = (ast: WJSCAst): ast is WJSCIdentifier => 'identIdent' in ast
 }
 export {
   WJSCParserRules,

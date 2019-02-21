@@ -116,7 +116,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     if (expressions.length === 0) {
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [1, -1])
     }
-    expressions.forEach((child, index) => {
+    expressions.forEach((child) => {
       const childStat = this.visitExpression(child)
       this.pushChild(result, childStat)
     })
