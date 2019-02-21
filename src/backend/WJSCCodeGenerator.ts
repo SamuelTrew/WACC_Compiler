@@ -1,5 +1,5 @@
 import { ARMOpcode, construct, directive, Register } from '../util/ARMv7-lib'
-import { WJSCAst, WJSCChecker } from '../WJSCAst'
+import { WJSCAst, WJSCChecker as checker } from '../WJSCAst'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -38,7 +38,6 @@ class WJSCCodeGenerator {
     atx: WJSCAst,
     instructions: string[],
   ): string[] => {
-    const checker = new WJSCChecker()
     // WARNING: Remember to concat onto instructions, not override it!
     if (checker.isTerminal(atx)) {
       // Terminal case
@@ -70,7 +69,7 @@ class WJSCCodeGenerator {
 
   public genStat = (atx: WJSCAst, freeRegs: Register[]): string[] => {
     // First we increment the PC
-   /* const result = [
+    /* const result = [
       construct.arithmetic(
         ARMOpcode.add,
         this.pc,
@@ -83,16 +82,18 @@ class WJSCCodeGenerator {
       // Skip does nothing
     } else if (atx.children[0] && atx.children[0].token === 'exit') {
       const exitCode = parseInt(atx.children[1].token, 10)
-      return this.genExit(exitCode, freeRegs)
-          .concat(construct.branch('exit', true))
+      return this.genExit(exitCode, freeRegs).concat(
+        construct.branch('exit', true),
+      )
     }
     return []
   }
 
   public genExit = (exitCode: number, freeRegs: Register[]): string[] => {
     const exitReg = freeRegs[0]
-    return [construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`)]
-        .concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
+    return [
+      construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`),
+    ].concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
   }
 
   /* Prints 'Hello World in assembly */

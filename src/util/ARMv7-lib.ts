@@ -143,7 +143,8 @@ const construct = {
     expression: ARMExpression,
     link = false,
     condition?: ARMCondition,
-  ): string => tabSpace + `B${link ? 'L' : ''}${condition ? condition : ''} ${expression}`,
+  ): string =>
+    tabSpace + `B${link ? 'L' : ''}${condition ? condition : ''} ${expression}`,
   branchExchange: (rn: Register, condition?: ARMCondition): string =>
     tabSpace + `BX${condition} ${rn}`,
   compareTest: (

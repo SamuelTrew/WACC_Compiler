@@ -1,4 +1,3 @@
-import { Register } from './util/ARMv7-lib'
 import { TerminalType, TypeName } from './WJSCType'
 
 enum WJSCParserRules {
@@ -75,20 +74,15 @@ interface WJSCIdentifier extends WJSCAst {
   identIdent: 'ident'
 }
 
-class WJSCChecker {
-  // Checker for different types
-  public isTerminal = (ast: WJSCAst): ast is WJSCTerminal => 'terminalIdent' in ast
-
-  public isFunction = (ast: WJSCAst): ast is WJSCFunction => 'functionIdent' in ast
-
-  public isOperator = (ast: WJSCAst): ast is WJSCOperators => 'opIdent' in ast
-
-  public isParam = (ast: WJSCAst): ast is WJSCParam => 'paramIdent' in ast
-
-  public isStatement = (ast: WJSCAst): ast is WJSCStatement => 'statIdent' in ast
-
-  public isIdent = (ast: WJSCAst): ast is WJSCIdentifier => 'identIdent' in ast
+const WJSCChecker = {
+  isFunction: (ast: WJSCAst): ast is WJSCFunction => 'functionIdent' in ast,
+  isIdent: (ast: WJSCAst): ast is WJSCIdentifier => 'identIdent' in ast,
+  isOperator: (ast: WJSCAst): ast is WJSCOperators => 'opIdent' in ast,
+  isParam: (ast: WJSCAst): ast is WJSCParam => 'paramIdent' in ast,
+  isStatement: (ast: WJSCAst): ast is WJSCStatement => 'statIdent' in ast,
+  isTerminal: (ast: WJSCAst): ast is WJSCTerminal => 'terminalIdent' in ast,
 }
+
 export {
   WJSCParserRules,
   WJSCAst,
