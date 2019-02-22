@@ -2,7 +2,7 @@ import {
   WJSCAst,
   WJSCChecker as checker,
   WJSCFunction,
-  WJSCStatement,
+  WJSCStatement, WJSCTerminal,
 } from '../util/WJSCAst'
 import { ARMOpcode, construct, directive, Register } from './ARMv7-lib'
 
@@ -35,6 +35,10 @@ class WJSCCodeGenerator {
       directive.ltorg,
     )
     return result
+  }
+
+  public genTerminal = (atx: WJSCTerminal): string[] => {
+
   }
 
   public dealWithChildren = (
