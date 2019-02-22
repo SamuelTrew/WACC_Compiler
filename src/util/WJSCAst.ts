@@ -75,6 +75,12 @@ interface WJSCIdentifier extends WJSCAst {
   identifier: string
 }
 
+interface WJSCAssignment extends WJSCAst {
+  identifier: string
+  lhs: WJSCAst
+  rhs: WJSCAst
+}
+
 const WJSCChecker = {
   isFunction: (ast: WJSCAst): ast is WJSCFunction =>
     ast.parserRule === WJSCParserRules.Function,
@@ -97,6 +103,7 @@ export {
   WJSCFunction,
   WJSCStatement,
   WJSCIdentifier,
+  WJSCAssignment,
   WJSCOperators,
   WJSCParam,
   WJSCChecker,

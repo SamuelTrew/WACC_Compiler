@@ -34,20 +34,26 @@ class WJSCCodeGenerator {
 
   public genTerminal = (atx: WJSCTerminal): string[] => {
     const reg = this.allViableRegs.shift()
-    const val = atx.value ? 1 : 0
+    const val = atx.value
     let result: string[] = []
     if (reg) {
-      result = [construct.move(ARMOpcode.move, reg, `=${val}`)]
+      switch (atx.terminalType) {
+        case 'bool':
+          result = [construct.move(ARMOpcode.move, reg, `=${val}`)]
+          break
+        case 'stdlib':
+
+      }
     }
     return result
   }
 
   public traverseChildren = (
-    atx: WJSCAst[],
+    children: WJSCAst[],
     instructions: string[],
   ): string[] => {
     // WARNING: Do not concat the results of this function to prior results
-    atx.forEach((child, index) => {
+    children.forEach((child, index) => {
       instructions = this.traverseChild(child, instructions)
     })
     return instructions
@@ -74,7 +80,7 @@ class WJSCCodeGenerator {
       // Param case
     } else if (checker.isStatement(atx)) {
       instructions = instructions.concat(
-        this.genStat(atx, this.allViableRegs),
+        this.genStat(atx),
       )
       // Statement case
     } else if (checker.isIdent(atx)) {
@@ -94,7 +100,7 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public genStat = (atx: WJSCStatement, freeRegs: Register[]): string[] => {
+  public genStat = (atx: WJSCStatement): string[] => {
     let result: string[] = []
     console.log(JSON.stringify(atx.children[0]))
     if (atx.token === 'skip') {
@@ -102,14 +108,14 @@ class WJSCCodeGenerator {
     } else if (atx.children[0] && atx.children[0].token === 'exit') {
       const exitCode = parseInt(atx.children[1].token, 10)
       result = result.concat(
-        this.genExit(exitCode, freeRegs).concat(construct.branch('exit', true)),
+        this.genExit(exitCode).concat(construct.branch('exit', true)),
       )
     }
     return result
   }
 
-  public genExit = (exitCode: number, freeRegs: Register[]): string[] => {
-    const exitReg = freeRegs[0]
+  public genExit = (exitCode: number): string[] => {
+    const exitReg = this.allViableRegs[0]
     return [
       construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`),
     ].concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
