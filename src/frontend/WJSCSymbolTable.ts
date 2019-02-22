@@ -3,7 +3,7 @@ import { SemError, WJSCErrorLog } from '../util/WJSCErrors'
 import { hasSameType, TypeName } from '../util/WJSCType'
 
 export class WJSCSymbolTable {
-  private symbolTable: WJSCSymbolTableEntry[]
+  private symbolTable: Map<string, WJSCSymbolTableValue>
   private childrenTables: WJSCSymbolTable[]
   private isInFunction: boolean
   private readonly currentScopeLevel: number
@@ -11,50 +11,28 @@ export class WJSCSymbolTable {
   private functionName?: string
   private parentLevel?: WJSCSymbolTable
 
-  constructor(
-    scopeLevel: number,
-    parentLevel: WJSCSymbolTable | undefined,
-    isInFunction: boolean,
-    errorLog: WJSCErrorLog,
-  ) {
+  constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, isInFunction: boolean, errorLog: WJSCErrorLog) {
     this.currentScopeLevel = scopeLevel
-    this.symbolTable = []
+    this.symbolTable = new Map()
     this.childrenTables = []
     this.parentLevel = parentLevel
     this.isInFunction = isInFunction
     this.errorLog = errorLog
   }
 
-  public getScopeLevel = (): number => {
-    return this.currentScopeLevel
-  }
+  public getScopeLevel = (): number => this.currentScopeLevel
 
-  public getParentTable = (): WJSCSymbolTable | undefined => {
-    return this.parentLevel
-  }
+  public getParentTable = (): WJSCSymbolTable | undefined => this.parentLevel
 
   // Return if this table is inside a function declaration
-  public inFunction = (): boolean => {
-    return this.isInFunction
-  }
+  public inFunction = (): boolean => this.isInFunction
 
   // Return the name of function declaration containing this table
-  public getFunctionName = (): string | undefined => {
-    let functionName = this.functionName
-    if (!functionName && this.parentLevel) {
-      functionName = this.parentLevel.getFunctionName()
-    }
-    return functionName
-  }
+  public getFunctionName = (): string | undefined => this.functionName || (this.parentLevel ? this.parentLevel.getFunctionName() : undefined)
 
   // Create new child symbol table
   public enterScope = (): WJSCSymbolTable => {
-    const childTable = new WJSCSymbolTable(
-      this.currentScopeLevel + 1,
-      this,
-      this.isInFunction,
-      this.errorLog,
-    )
+    const childTable = new WJSCSymbolTable(this.currentScopeLevel + 1, this, this.isInFunction, this.errorLog)
     this.childrenTables.push(childTable)
     return childTable
   }
@@ -68,54 +46,19 @@ export class WJSCSymbolTable {
   }
 
   // Return the parent symbol table
-  public exitScope = (): WJSCSymbolTable => {
-    if (this.parentLevel !== undefined) {
-      return this.parentLevel
-    }
-    this.errorLog.runtimeError(new Error('Cannot exit from top level scope'))
-    return this
-  }
+  public exitScope = (): WJSCSymbolTable => (this.parentLevel || (this.errorLog.runtimeError(new Error('Cannot exit from top level scope')), this))
 
   // Add an entry to the symbol table with optional function params
-  public insertSymbol = (
-    identifier: string,
-    type: TypeName,
-    params?: TypeName[],
-  ) => {
-    this.symbolTable.push({ identifier, type, params })
-  }
+  public insertSymbol = (identifier: string, type: TypeName, params?: TypeName[]) => this.symbolTable.set(identifier, { type, params })
 
   // Return the type of entry with given identifier if found
-  public lookup = (identifier: string): TypeName => {
-    let result
-    const entry = this.getGlobalEntry(identifier)
-    if (entry) {
-      result = entry.type
-    }
-    return result
-  }
+  public lookup = (identifier: string): TypeName => (this.getGlobalEntry(identifier) || { type: undefined }).type
 
   // Return table entry with the given identifier in the local scope
-  public getLocalEntry = (identifier: string):
-      WJSCSymbolTableEntry | undefined => {
-    let result
-    this.symbolTable.forEach((entry) => {
-      if (entry.identifier === identifier) {
-        result = entry
-      }
-    })
-    return result
-  }
+  public getLocalEntry = (identifier: string): WJSCSymbolTableValue | undefined => this.symbolTable.get(identifier)
 
   // Return table entry with the given identifier in the global scope
-  public getGlobalEntry = (identifier: string):
-      WJSCSymbolTableEntry | undefined => {
-    let result = this.getLocalEntry(identifier)
-    if (!result && this.parentLevel) {
-      result = this.parentLevel.getGlobalEntry(identifier)
-    }
-    return result
-  }
+  public getGlobalEntry = (identifier: string): WJSCSymbolTableValue | undefined => this.getLocalEntry(identifier) || (this.parentLevel || { getGlobalEntry: (_: string): undefined => undefined }).getGlobalEntry(identifier)
 
   // Return whether the node given has the same type in the symbol table
   public checkType = (astNode: WJSCAst): boolean => {
@@ -138,14 +81,10 @@ export class WJSCSymbolTable {
     this.childrenTables.forEach((table) => table.clearParentDependencies())
   }
 
-  public json = (): object => {
-    this.clearParentDependencies()
-    return this
-  }
+  public json = (): object => (this.clearParentDependencies(), this)
 }
 
-export interface WJSCSymbolTableEntry {
-  identifier: string
+export interface WJSCSymbolTableValue {
   type: TypeName
   params?: TypeName[]
 }
