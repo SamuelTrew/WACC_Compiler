@@ -1,3 +1,4 @@
+import assert from 'assert'
 import { WJSCAst } from './WJSCAst'
 import { BaseType, Stdlib, TypeName } from './WJSCType'
 
@@ -22,6 +23,52 @@ enum SemError {
 }
 
 class WJSCErrorLog {
+  private readonly errorLookup: Map<SemError, (node: WJSCAst, arg?: TypeName | TypeName[] | number[] | Stdlib) => string>
+    = new Map([
+      [SemError.Undefined, ({ token }: WJSCAst): string =>
+        `Type of ${token} is undefined`,
+      ],
+      [SemError.Mismatch, ({ token }: WJSCAst, expected?: TypeName | TypeName[] | number[] | Stdlib) =>
+        `Type of ${token} does not match expected type ${JSON.stringify(expected)}`,
+      ],
+      [SemError.BadStdlibArgs, ({ token, type }: WJSCAst, stdlib?: TypeName | TypeName[] | number[] | Stdlib): string => {
+        let errorMessage = `Type of ${token} does not match expected type for stdlib function ${stdlib}: got ${JSON.stringify(type)}, expected `
+        switch (stdlib) {
+          case Stdlib.Exit:
+            errorMessage += BaseType.Integer
+            break
+          case Stdlib.Free:
+            errorMessage +=
+              BaseType.Pair + ' or ' + JSON.stringify({ arrayType: BaseType.Any })
+            break
+          case Stdlib.Fst:
+          case Stdlib.Snd:
+            errorMessage += BaseType.Pair
+            break
+          case Stdlib.Print:
+          case Stdlib.Println:
+          default:
+            this.runtimeError(new Error('Did not expect error.'))
+            break
+        }
+        return errorMessage
+      }],
+      [SemError.BadReturn, () => 'Return must be in body of non-main function.'],
+      [SemError.IncorrectArgNo, ({ token }: WJSCAst, additionalParam: TypeName | TypeName[] | number[] | Stdlib) => {
+        additionalParam = additionalParam as number[]
+        return `${token} expects ${additionalParam[0]}` +
+          `${
+          additionalParam[1] === -1
+            ? 'or more'
+            : additionalParam[0] === additionalParam[1]
+              ? ''
+              : 'to ' + additionalParam[1]
+          } arguments`
+      }],
+      [SemError.DoubleDeclare, ({ token }: WJSCAst) => `${token} has already been declared.`],
+      [SemError.FunctionAsArray, ({ token }: WJSCAst) => `${token} is a function being used as [an array.`],
+      [SemError.BadFunctionUse, ({ token }: WJSCAst) => `${token} is a function being used as a variable.`],
+    ])
   private runtimeErrors: string[]
   private semanticErrors: string[]
   private syntaxErrors: string[]
@@ -32,67 +79,13 @@ class WJSCErrorLog {
     this.syntaxErrors = []
   }
 
-  public semErr = (
-    node: WJSCAst,
-    error: SemError,
-    additionalParam?: TypeName | TypeName[] | number[] | Stdlib,
-  ) => {
+  public semErr = (node: WJSCAst, error: SemError, additionalParam?: TypeName | TypeName[] | number[] | Stdlib) => {
     let errorMessage = ''
-    const { line, column, token } = node
+    const { line, column } = node
     errorMessage += `Semantic Error '${error}' at ${line}:${column}: `
-    if (error === SemError.Undefined) {
-      errorMessage += `Type of ${token} is undefined`
-    } else if (error === SemError.Mismatch) {
-      errorMessage +=
-        `Type of ${token}: ${JSON.stringify(node.type)} ` +
-        `does not match expected type ${JSON.stringify(additionalParam)}`
-    } else if (error === SemError.BadStdlibArgs) {
-      const stdlibfunc = additionalParam as Stdlib
-      errorMessage +=
-        `Type of ${token} does not match expected type for stdlib function ` +
-        `${stdlibfunc}: got ${JSON.stringify(node.type)}, expected `
-      switch (stdlibfunc) {
-        case Stdlib.Exit:
-          errorMessage += BaseType.Integer
-          break
-        case Stdlib.Free:
-          errorMessage +=
-            BaseType.Pair + ' or ' + JSON.stringify({ arrayType: BaseType.Any })
-          break
-        case Stdlib.Fst:
-        case Stdlib.Snd:
-          errorMessage += BaseType.Pair
-          break
-        case Stdlib.Print:
-        case Stdlib.Println:
-        default:
-          this.runtimeError(new Error('Did not expect error.'))
-          break
-      }
-    } else if (error === SemError.BadReturn) {
-      errorMessage += 'return must be in body of non-main function.'
-    } else if (
-      error === SemError.IncorrectArgNo &&
-      additionalParam !== undefined &&
-      additionalParam instanceof Array
-    ) {
-      const secondParam = additionalParam[1]
-      errorMessage +=
-        `${token} expects ${additionalParam[0]}` +
-        `${
-          additionalParam[1] === -1
-            ? 'or more'
-            : additionalParam[0] === additionalParam[1]
-            ? ''
-            : 'to ' + secondParam
-        } arguments`
-    } else if (error === SemError.DoubleDeclare) {
-      errorMessage += `${token} has already been declared.`
-    } else if (error === SemError.FunctionAsArray) {
-      errorMessage += `${token} is a function being used as an array.`
-    } else if (error === SemError.BadFunctionUse) {
-      errorMessage += `${token} is a function being used as a variable.`
-    }
+    errorMessage += (this.errorLookup.get(error) || (() => {
+      throw new Error('Undefined error lookup')
+    }))(node, additionalParam)
     this.semanticErrors.push(errorMessage)
   }
 
