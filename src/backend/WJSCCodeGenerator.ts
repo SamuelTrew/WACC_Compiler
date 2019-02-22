@@ -1,4 +1,11 @@
-import { WJSCAst, WJSCChecker as checker, WJSCFunction, WJSCStatement, WJSCTerminal } from '../util/WJSCAst'
+import {
+  WJSCAst,
+  WJSCChecker as checker,
+  WJSCFunction, WJSCIdentifier,
+  WJSCOperators, WJSCParam,
+  WJSCStatement,
+  WJSCTerminal,
+} from '../util/WJSCAst'
 import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
 
 class WJSCCodeGenerator {
@@ -14,6 +21,18 @@ class WJSCCodeGenerator {
 
   constructor(output: string[]) {
     this.output = output
+  }
+
+  public genIdent = (atx: WJSCIdentifier): string[] => {
+    return []
+  }
+
+  public genOperator = (atx: WJSCOperators): string[] => {
+    return []
+  }
+
+  public genParam = (atx: WJSCParam): string[] => {
+    return []
   }
 
   public genProgram = (atx: WJSCAst): string[] => {
@@ -76,15 +95,24 @@ class WJSCCodeGenerator {
       )
     } else if (checker.isOperator(atx)) {
       // Operator case
+      instructions = instructions.concat(
+        this.genOperator(atx),
+      )
     } else if (checker.isParam(atx)) {
       // Param case
+      instructions = instructions.concat(
+        this.genParam(atx),
+      )
     } else if (checker.isStatement(atx)) {
+      // Statement case
       instructions = instructions.concat(
         this.genStat(atx),
       )
-      // Statement case
     } else if (checker.isIdent(atx)) {
       // Ident case
+      instructions = instructions.concat(
+        this.genIdent(atx),
+      )
     } else {
       console.log('Checker failed to match')
       // instructions = instructions.concat(this.genStat(atx, this.allViableRegs))
@@ -139,10 +167,6 @@ class WJSCCodeGenerator {
       construct.pushPop(ARMOpcode.pop, [Register.r7, this.pc]),
       directive.ltorg,
     )
-
-  private saveRegs = (freeRegs: Register[]) => {
-    return []
-  }
 }
 
 export { WJSCCodeGenerator }
