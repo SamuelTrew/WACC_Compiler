@@ -1,7 +1,7 @@
 import { ParserRuleContext } from 'antlr4ts'
 import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
 import _ from 'lodash'
-import { WJSCLexer } from './grammar/WJSCLexer'
+import { WJSCLexer } from '../grammar/WJSCLexer'
 import {
   ArgListContext,
   ArithmeticOperator2Context,
@@ -31,8 +31,8 @@ import {
   StdlibContext,
   TypeContext,
   UnaryOperatorContext,
-} from './grammar/WJSCParser'
-import { WJSCParserVisitor } from './grammar/WJSCParserVisitor'
+} from '../grammar/WJSCParser'
+import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
   WJSCAst,
   WJSCFunction,
@@ -41,9 +41,8 @@ import {
   WJSCParam,
   WJSCParserRules,
   WJSCTerminal,
-} from './WJSCAst'
-import { SemError, SynError, WJSCErrorLog } from './WJSCErrors'
-import { WJSCSymbolTable } from './WJSCSymbolTable'
+} from '../util/WJSCAst'
+import { SemError, SynError, WJSCErrorLog } from '../util/WJSCErrors'
 import {
   BaseType,
   getFstInPair,
@@ -57,7 +56,8 @@ import {
   TerminalKeywords,
   TerminalOperators,
   TypeName,
-} from './WJSCType'
+} from '../util/WJSCType'
+import { WJSCSymbolTable } from './WJSCSymbolTable'
 
 /**
  * Class that represents a semantic checker.

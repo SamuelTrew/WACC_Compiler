@@ -1,5 +1,10 @@
-import {ARMOpcode, construct, directive, Register} from '../util/ARMv7-lib'
-import {WJSCAst, WJSCChecker as checker, WJSCFunction, WJSCStatement} from '../WJSCAst'
+import {
+  WJSCAst,
+  WJSCChecker as checker,
+  WJSCFunction,
+  WJSCStatement,
+} from '../util/WJSCAst'
+import { ARMOpcode, construct, directive, Register } from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -32,19 +37,18 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public dealWithChildren = (atx: WJSCAst[], instructions: string[],
+  public dealWithChildren = (
+    atx: WJSCAst[],
+    instructions: string[],
   ): string[] => {
     // WARNING: Do not concat the results of this function to prior results
     atx.forEach((child, index) => {
       instructions = this.dealWithChild(child, instructions)
     })
     return instructions
-}
+  }
 
-  public dealWithChild = (
-    atx: WJSCAst,
-    instructions: string[],
-  ): string[] => {
+  public dealWithChild = (atx: WJSCAst, instructions: string[]): string[] => {
     // WARNING: Remember to concat onto instructions, not override it!
     // WARNING: All concatenations occur here!
     // WARNING: Do all LR pushing, PC popping or PC increments here!
@@ -52,21 +56,25 @@ class WJSCCodeGenerator {
       // Terminal case
     } else if (checker.isFunction(atx)) {
       // Function case
-      instructions = instructions.concat(construct.pushPop(ARMOpcode.push, [this.lr]),
-          this.genFunc(atx, this.allViableRegs),
-          construct.pushPop(ARMOpcode.pop, [this.pc]),
-          )
+      instructions = instructions.concat(
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        this.genFunc(atx, this.allViableRegs),
+        construct.pushPop(ARMOpcode.pop, [this.pc]),
+      )
     } else if (checker.isOperator(atx)) {
       // Operator case
     } else if (checker.isParam(atx)) {
       // Param case
     } else if (checker.isStatement(atx)) {
-      instructions = instructions.concat(construct.arithmetic(
+      instructions = instructions.concat(
+        construct.arithmetic(
           ARMOpcode.add,
           this.pc,
           this.pc,
           directive.immNum(1),
-      ), this.genStat(atx, this.allViableRegs))
+        ),
+        this.genStat(atx, this.allViableRegs),
+      )
       // Statement case
     } else if (checker.isIdent(atx)) {
       // Ident case
@@ -86,14 +94,14 @@ class WJSCCodeGenerator {
   }
 
   public genStat = (atx: WJSCStatement, freeRegs: Register[]): string[] => {
-    const result: string[] = []
+    let result: string[] = []
     console.log(JSON.stringify(atx.children[0]))
     if (atx.token === 'skip') {
       // Skip does nothing
     } else if (atx.children[0] && atx.children[0].token === 'exit') {
       const exitCode = parseInt(atx.children[1].token, 10)
-      result.concat(this.genExit(exitCode, freeRegs).concat(
-        construct.branch('exit', true)),
+      result = result.concat(
+        this.genExit(exitCode, freeRegs).concat(construct.branch('exit', true)),
       )
     }
     return result

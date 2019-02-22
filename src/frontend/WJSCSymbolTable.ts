@@ -1,6 +1,6 @@
-import { WJSCAst } from './WJSCAst'
-import { SemError, WJSCErrorLog } from './WJSCErrors'
-import { hasSameType, TypeName } from './WJSCType'
+import { WJSCAst } from '../util/WJSCAst'
+import { SemError, WJSCErrorLog } from '../util/WJSCErrors'
+import { hasSameType, TypeName } from '../util/WJSCType'
 
 export class WJSCSymbolTable {
   private symbolTable: WJSCSymbolTableEntry[]

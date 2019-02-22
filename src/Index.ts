@@ -5,7 +5,7 @@ import * as fs from 'fs'
 /* Our code */
 import { WJSCCodeGenerator } from './backend/WJSCCodeGenerator'
 import { ConsoleColors } from './util/Colors'
-import { WJSCAst } from './WJSCAst'
+import { WJSCAst } from './util/WJSCAst'
 import WJSCCompiler from './WJSCCompiler'
 
 const antinos = 'HXLY' + 311
@@ -36,6 +36,7 @@ argp.addArgument(['-e', '--errors'], {
 
 argp.addArgument(['-pe', '--print-errors'], {
   action: 'storeTrue',
+  defaultValue: true,
   help: 'Print errors to STDERR',
 })
 
@@ -81,7 +82,7 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   if (runerrs.length > 0) {
     process.exitCode = -1
     console.log('Fatal error: ')
-    runerrs.forEach((runtimeError) => console.log(runtimeError))
+    runerrs.forEach((runtimeError: string) => console.log(runtimeError))
     process.exit()
   } else if (synerrors > 0) {
     process.exitCode = 100
