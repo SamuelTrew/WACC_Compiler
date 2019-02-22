@@ -1,4 +1,3 @@
-import assert from 'assert'
 import { WJSCAst } from './WJSCAst'
 import { BaseType, Stdlib, TypeName } from './WJSCType'
 
@@ -66,7 +65,7 @@ class WJSCErrorLog {
           } arguments`
       }],
       [SemError.DoubleDeclare, ({ token }: WJSCAst) => `${token} has already been declared.`],
-      [SemError.FunctionAsArray, ({ token }: WJSCAst) => `${token} is a function being used as [an array.`],
+      [SemError.FunctionAsArray, ({ token }: WJSCAst) => `${token} is a function being used as an array.`],
       [SemError.BadFunctionUse, ({ token }: WJSCAst) => `${token} is a function being used as a variable.`],
     ])
   private runtimeErrors: string[]
@@ -128,11 +127,6 @@ class WJSCErrorLog {
     this.syntaxErrors = []
     this.runtimeErrors = []
   }
-
-  private isSemantic = (error: SemError | SynError): error is SemError =>
-    error === SemError.IncorrectArgNo ||
-    error === SemError.Mismatch ||
-    error === SemError.Undefined
 }
 
 export { WJSCErrorLog, SemError, SynError }
