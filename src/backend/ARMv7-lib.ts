@@ -106,7 +106,7 @@ type ARMBDTAddressingModes =
   | 'DA'
   | 'DB'
 
-const tabSpace = '\t'
+export const tabSpace = '\t'
 
 const constructInstruction = (
   mnemonic: ARMOpcode,
@@ -250,7 +250,7 @@ const directive = {
     (linkage ? `${linkage} ` : '') +
     (linkOrderSymbol ? `${linkOrderSymbol} ` : '') +
     (unique && uniqueId ? `${unique} ${uniqueId}` : ''),
-  text: '.text',
+  text: '.text\n',
   weak: (...symbol: string[]): string => `.weak ${symbol.join(', ')}`,
 }
 

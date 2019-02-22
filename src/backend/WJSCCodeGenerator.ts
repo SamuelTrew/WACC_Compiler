@@ -4,7 +4,7 @@ import {
   WJSCFunction,
   WJSCStatement, WJSCTerminal,
 } from '../util/WJSCAst'
-import { ARMOpcode, construct, directive, Register } from './ARMv7-lib'
+import {ARMOpcode, construct, directive, Register, tabSpace} from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -31,7 +31,7 @@ class WJSCCodeGenerator {
     result.push(
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
-      directive.ltorg,
+      tabSpace + directive.ltorg + '\n',
     )
     return result
   }
