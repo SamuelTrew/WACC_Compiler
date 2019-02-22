@@ -1,10 +1,5 @@
-import {
-  WJSCAst,
-  WJSCChecker as checker,
-  WJSCFunction,
-  WJSCStatement, WJSCTerminal,
-} from '../util/WJSCAst'
-import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
+import {WJSCAst, WJSCChecker as checker, WJSCFunction, WJSCStatement, WJSCTerminal} from '../util/WJSCAst'
+import {ARMOpcode, construct, directive, Register, tabSpace} from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -14,7 +9,8 @@ class WJSCCodeGenerator {
   private readonly sp = Register.r13
   private readonly lr = Register.r14
   private readonly pc = Register.r15
-  private readonly allViableRegs = [Register.r4, Register.r5]
+  private readonly allViableRegs = [Register.r4, Register.r5, Register.r6, Register.r7,
+                                    Register.r8, Register.r9, Register.r10, Register.r11, Register.r12]
 
   constructor(output: string[]) {
     this.output = output
@@ -27,7 +23,7 @@ class WJSCCodeGenerator {
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
     // After pushing the lr, we start visiting the children
-    result = this.dealWithChildren(atx.children, result)
+    result = this.traverseChildren(atx.children, result)
     result.push(
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
@@ -37,26 +33,30 @@ class WJSCCodeGenerator {
   }
 
   public genTerminal = (atx: WJSCTerminal): string[] => {
-    return []
+    let result: string[] = []
+    result = this.traverseChildren(atx.children, result)
+    return result
   }
 
-  public dealWithChildren = (
+  public traverseChildren = (
     atx: WJSCAst[],
     instructions: string[],
   ): string[] => {
     // WARNING: Do not concat the results of this function to prior results
     atx.forEach((child, index) => {
-      instructions = this.dealWithChild(child, instructions)
+      instructions = this.traverseChild(child, instructions)
     })
     return instructions
   }
 
-  public dealWithChild = (atx: WJSCAst, instructions: string[]): string[] => {
+  public traverseChild = (atx: WJSCAst, instructions: string[]): string[] => {
     // WARNING: Remember to concat onto instructions, not override it!
     // WARNING: All concatenations occur here!
     // WARNING: Do all LR pushing, PC popping or PC increments here!
     if (checker.isTerminal(atx)) {
-      // Terminal case
+      instructions = instructions.concat(
+        [], // TODO: Deal with terminal case
+      )
     } else if (checker.isFunction(atx)) {
       // Function case
       instructions = instructions.concat(
@@ -86,7 +86,7 @@ class WJSCCodeGenerator {
   public genFunc = (atx: WJSCFunction, freeRegs: Register[]): string[] => {
     let result = [directive.label(atx.identifier)]
     // We now deal with the children
-    result = this.dealWithChildren(atx.children, result)
+    result = this.traverseChildren(atx.children, result)
     return result
   }
 
