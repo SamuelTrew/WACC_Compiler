@@ -1,5 +1,5 @@
-import {WJSCAst, WJSCChecker as checker, WJSCFunction, WJSCStatement, WJSCTerminal} from '../util/WJSCAst'
-import {ARMOpcode, construct, directive, Register, tabSpace} from './ARMv7-lib'
+import { WJSCAst, WJSCChecker as checker, WJSCFunction, WJSCStatement, WJSCTerminal } from '../util/WJSCAst'
+import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -33,8 +33,11 @@ class WJSCCodeGenerator {
   }
 
   public genTerminal = (atx: WJSCTerminal): string[] => {
+    const reg = this.allViableRegs.pop()
     let result: string[] = []
-    result = this.traverseChildren(atx.children, result)
+    if (reg) {
+      result = [construct.move(ARMOpcode.move, reg, atx.value)]
+    }
     return result
   }
 
@@ -55,7 +58,7 @@ class WJSCCodeGenerator {
     // WARNING: Do all LR pushing, PC popping or PC increments here!
     if (checker.isTerminal(atx)) {
       instructions = instructions.concat(
-        [], // TODO: Deal with terminal case
+        this.genTerminal(atx),
       )
     } else if (checker.isFunction(atx)) {
       // Function case
