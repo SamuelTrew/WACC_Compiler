@@ -29,7 +29,6 @@ class WJSCCodeGenerator {
     // After pushing the lr, we start visiting the children
     result = this.dealWithChildren(atx.children, result)
     result.push(
-      construct.move(ARMOpcode.move, Register.r0, '#1'),
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
       directive.ltorg,
@@ -38,7 +37,7 @@ class WJSCCodeGenerator {
   }
 
   public genTerminal = (atx: WJSCTerminal): string[] => {
-
+    return []
   }
 
   public dealWithChildren = (
@@ -71,12 +70,6 @@ class WJSCCodeGenerator {
       // Param case
     } else if (checker.isStatement(atx)) {
       instructions = instructions.concat(
-        construct.arithmetic(
-          ARMOpcode.add,
-          this.pc,
-          this.pc,
-          directive.immNum(1),
-        ),
         this.genStat(atx, this.allViableRegs),
       )
       // Statement case
