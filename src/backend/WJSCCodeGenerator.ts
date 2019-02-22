@@ -1,4 +1,11 @@
-import { WJSCAst, WJSCChecker as checker, WJSCFunction, WJSCStatement, WJSCTerminal } from '../util/WJSCAst'
+import {
+  WJSCAst,
+  WJSCChecker as checker,
+  WJSCFunction, WJSCIdentifier,
+  WJSCOperators, WJSCParam,
+  WJSCStatement,
+  WJSCTerminal
+} from '../util/WJSCAst'
 import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
 
 class WJSCCodeGenerator {
@@ -14,6 +21,32 @@ class WJSCCodeGenerator {
 
   constructor(output: string[]) {
     this.output = output
+  }
+
+  public genExit = (exitCode: number, freeRegs: Register[]): string[] => {
+    const exitReg = freeRegs[0]
+    return [
+      construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`),
+    ].concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
+  }
+
+  public genFunc = (atx: WJSCFunction, freeRegs: Register[]): string[] => {
+    let result = [directive.label(atx.identifier)]
+    // We now deal with the children
+    result = this.traverseChildren(atx.children, result)
+    return result
+  }
+
+  public genIdent = (atx: WJSCIdentifier): string[] => {
+    return []
+  }
+
+  public genOperator = (atx: WJSCOperators): string[] => {
+    return []
+  }
+
+  public genParam = (atx: WJSCParam): string[] => {
+    return []
   }
 
   public genProgram = (atx: WJSCAst): string[] => {
@@ -32,6 +65,20 @@ class WJSCCodeGenerator {
     return result
   }
 
+  public genStat = (atx: WJSCStatement, freeRegs: Register[]): string[] => {
+    let result: string[] = []
+    console.log(JSON.stringify(atx.children[0]))
+    if (atx.token === 'skip') {
+      // Skip does nothing
+    } else if (atx.children[0] && atx.children[0].token === 'exit') {
+      const exitCode = parseInt(atx.children[1].token, 10)
+      result = result.concat(
+        this.genExit(exitCode, freeRegs).concat(construct.branch('exit', true)),
+      )
+    }
+    return result
+  }
+
   public genTerminal = (atx: WJSCTerminal): string[] => {
     const reg = this.allViableRegs.shift()
     const val = atx.value ? 1 : 0
@@ -40,17 +87,6 @@ class WJSCCodeGenerator {
       result = [construct.move(ARMOpcode.move, reg, `=${val}`)]
     }
     return result
-  }
-
-  public traverseChildren = (
-    atx: WJSCAst[],
-    instructions: string[],
-  ): string[] => {
-    // WARNING: Do not concat the results of this function to prior results
-    atx.forEach((child, index) => {
-      instructions = this.traverseChild(child, instructions)
-    })
-    return instructions
   }
 
   public traverseChild = (atx: WJSCAst, instructions: string[]): string[] => {
@@ -70,15 +106,24 @@ class WJSCCodeGenerator {
       )
     } else if (checker.isOperator(atx)) {
       // Operator case
+      instructions = instructions.concat(
+        this.genOperator(atx),
+      )
     } else if (checker.isParam(atx)) {
       // Param case
+      instructions = instructions.concat(
+        this.genParam(atx),
+      )
     } else if (checker.isStatement(atx)) {
+      // Statement case
       instructions = instructions.concat(
         this.genStat(atx, this.allViableRegs),
       )
-      // Statement case
     } else if (checker.isIdent(atx)) {
       // Ident case
+      instructions = instructions.concat(
+        this.genIdent(atx),
+      )
     } else {
       console.log('Checker failed to match')
       // instructions = instructions.concat(this.genStat(atx, this.allViableRegs))
@@ -87,32 +132,19 @@ class WJSCCodeGenerator {
     return instructions
   }
 
-  public genFunc = (atx: WJSCFunction, freeRegs: Register[]): string[] => {
-    let result = [directive.label(atx.identifier)]
-    // We now deal with the children
-    result = this.traverseChildren(atx.children, result)
-    return result
+  private saveRegs = (freeRegs: Register[]) => {
+    return []
   }
 
-  public genStat = (atx: WJSCStatement, freeRegs: Register[]): string[] => {
-    let result: string[] = []
-    console.log(JSON.stringify(atx.children[0]))
-    if (atx.token === 'skip') {
-      // Skip does nothing
-    } else if (atx.children[0] && atx.children[0].token === 'exit') {
-      const exitCode = parseInt(atx.children[1].token, 10)
-      result = result.concat(
-        this.genExit(exitCode, freeRegs).concat(construct.branch('exit', true)),
-      )
-    }
-    return result
-  }
-
-  public genExit = (exitCode: number, freeRegs: Register[]): string[] => {
-    const exitReg = freeRegs[0]
-    return [
-      construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`),
-    ].concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
+  public traverseChildren = (
+    atx: WJSCAst[],
+    instructions: string[],
+  ): string[] => {
+    // WARNING: Do not concat the results of this function to prior results
+    atx.forEach((child, index) => {
+      instructions = this.traverseChild(child, instructions)
+    })
+    return instructions
   }
 
   /* Prints 'Hello World in assembly */
@@ -133,10 +165,6 @@ class WJSCCodeGenerator {
       construct.pushPop(ARMOpcode.pop, [Register.r7, this.pc]),
       directive.ltorg,
     )
-
-  private saveRegs = (freeRegs: Register[]) => {
-    return []
-  }
 }
 
 export { WJSCCodeGenerator }
