@@ -4,7 +4,7 @@ import {
   WJSCFunction,
   WJSCStatement, WJSCTerminal,
 } from '../util/WJSCAst'
-import {ARMOpcode, construct, directive, Register, tabSpace} from './ARMv7-lib'
+import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')

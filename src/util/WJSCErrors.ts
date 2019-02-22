@@ -21,16 +21,18 @@ enum SemError {
   BadFunctionUse = 'bad function use',
 }
 
+type typeERR = TypeName | TypeName[] | number[] | Stdlib
+
 class WJSCErrorLog {
-  private readonly errorLookup: Map<SemError, (node: WJSCAst, arg?: TypeName | TypeName[] | number[] | Stdlib) => string>
+  private readonly errorLookup: Map<SemError, (node: WJSCAst, arg?: typeERR) => string>
     = new Map([
       [SemError.Undefined, ({ token }: WJSCAst): string =>
         `Type of ${token} is undefined`,
       ],
-      [SemError.Mismatch, ({ token }: WJSCAst, expected?: TypeName | TypeName[] | number[] | Stdlib) =>
+      [SemError.Mismatch, ({ token }: WJSCAst, expected?: typeERR) =>
         `Type of ${token} does not match expected type ${JSON.stringify(expected)}`,
       ],
-      [SemError.BadStdlibArgs, ({ token, type }: WJSCAst, stdlib?: TypeName | TypeName[] | number[] | Stdlib): string => {
+      [SemError.BadStdlibArgs, ({ token, type }: WJSCAst, stdlib?: typeERR): string => {
         let errorMessage = `Type of ${token} does not match expected type for stdlib function ${stdlib}: got ${JSON.stringify(type)}, expected `
         switch (stdlib) {
           case Stdlib.Exit:
@@ -53,7 +55,7 @@ class WJSCErrorLog {
         return errorMessage
       }],
       [SemError.BadReturn, () => 'Return must be in body of non-main function.'],
-      [SemError.IncorrectArgNo, ({ token }: WJSCAst, additionalParam: TypeName | TypeName[] | number[] | Stdlib) => {
+      [SemError.IncorrectArgNo, ({ token }: WJSCAst, additionalParam: typeERR) => {
         additionalParam = additionalParam as number[]
         return `${token} expects ${additionalParam[0]}` +
           `${
@@ -78,7 +80,7 @@ class WJSCErrorLog {
     this.syntaxErrors = []
   }
 
-  public semErr = (node: WJSCAst, error: SemError, additionalParam?: TypeName | TypeName[] | number[] | Stdlib) => {
+  public semErr = (node: WJSCAst, error: SemError, additionalParam?: typeERR) => {
     let errorMessage = ''
     const { line, column } = node
     errorMessage += `Semantic Error '${error}' at ${line}:${column}: `
