@@ -1,4 +1,4 @@
-const WJSCType = require('../build/WJSCType')
+const WJSCType = require('../build/util/WJSCType')
 const assert = require('assert')
 
 describe('Type Check', function() {

@@ -1,5 +1,5 @@
-const { WJSCErrorLog } = require('../build/WJSCErrors')
-const { WJSCSymbolTable } = require('../build/WJSCSymbolTable')
+const { WJSCErrorLog } = require('../build/util/WJSCErrors')
+const { WJSCSymbolTable } = require('../build/frontend/WJSCSymbolTable')
 const assert = require('assert')
 
 describe('Scope', function() {

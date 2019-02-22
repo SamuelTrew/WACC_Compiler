@@ -37,18 +37,6 @@ build:
     paths:
     - build/
 
-build-grammar:
-  stage: build
-  dependencies:
-  - install
-  only:
-  - master
-  script:
-  - npm run build:antlr
-  artifacts:
-    paths:
-    - antlr_config/antlr/
-
 test:
   stage: test
   dependencies:
@@ -58,7 +46,6 @@ test:
   only:
   - master
   script:
-  - cd antlr_config/antlr && ls && cd ../..
   - npm run test
 
 lint:
