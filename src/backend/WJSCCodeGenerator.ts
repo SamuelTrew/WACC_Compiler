@@ -33,10 +33,11 @@ class WJSCCodeGenerator {
   }
 
   public genTerminal = (atx: WJSCTerminal): string[] => {
-    const reg = this.allViableRegs.pop()
+    const reg = this.allViableRegs.shift()
+    const val = atx.value ? 1 : 0
     let result: string[] = []
     if (reg) {
-      result = [construct.move(ARMOpcode.move, reg, atx.value)]
+      result = [construct.move(ARMOpcode.move, reg, `=${val}`)]
     }
     return result
   }
