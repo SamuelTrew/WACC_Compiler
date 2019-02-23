@@ -41,6 +41,7 @@ interface WJSCAst {
   startIndex: number
   token: string
   type: TypeName
+  functions: WJSCFunction[]
 }
 
 interface WJSCTerminal extends WJSCAst {
@@ -51,8 +52,9 @@ interface WJSCTerminal extends WJSCAst {
 
 interface WJSCFunction extends WJSCAst {
   parserRule: WJSCParserRules.Function
-  arguments: string[]
   identifier: string
+  paramList: WJSCAst[]
+  body: WJSCStatement
 }
 
 interface WJSCOperators extends WJSCAst {
@@ -78,14 +80,20 @@ interface WJSCIdentifier extends WJSCAst {
 }
 
 interface WJSCAssignment extends WJSCAst {
+  parserRule: WJSCParserRules.Assignment
   lhs: WJSCAst
   rhs: WJSCAst
 }
 
 interface WJSCDeclare extends WJSCAst {
+  parserRule: WJSCParserRules.Declare
   type: TypeName
   identifier: string
   rhs: WJSCAst
+}
+
+interface WJSCExpression extends WJSCAst {
+
 }
 
 const WJSCChecker = {

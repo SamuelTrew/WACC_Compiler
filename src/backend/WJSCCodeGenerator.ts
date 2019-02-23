@@ -7,17 +7,18 @@ import {
   WJSCIdentifier,
   WJSCOperators,
   WJSCParam,
+  WJSCParserRules,
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
+import { BaseType } from '../util/WJSCType'
 import {
   ARMOpcode,
   construct,
   directive,
   Register,
-  tabSpace
+  tabSpace,
 } from './ARMv7-lib'
-import { BaseType } from '../util/WJSCType'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -47,12 +48,22 @@ class WJSCCodeGenerator {
   }
 
   public genProgram = (atx: WJSCAst): string[] => {
-    let result = [directive.text].concat(
-      directive.global('main'),
+    let result = [directive.text].concat(directive.global('main'))
+
+    // Generate code for function declarations
+    const functions = atx.functions
+    if (functions) {
+      functions.forEach((func) => result.concat(this.genFunc(func)))
+    }
+
+    // Generate code for the main function body
+    result.concat(
       directive.label('main'),
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
     // After pushing the lr, we start visiting the children
+    // TODO change to genStatement
+    const stat = atx.children[0]
     result = this.traverseChildren(atx.children, result)
     result.push(
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
@@ -101,7 +112,7 @@ class WJSCCodeGenerator {
       // Function case
       instructions = instructions.concat(
         construct.pushPop(ARMOpcode.push, [this.lr]),
-        this.genFunc(atx, this.allViableRegs),
+        this.genFunc(atx),
         construct.pushPop(ARMOpcode.pop, [this.pc]),
       )
     } else if (checker.isOperator(atx)) {
@@ -132,7 +143,7 @@ class WJSCCodeGenerator {
     return instructions
   }
 
-  public genFunc = (atx: WJSCFunction, freeRegs: Register[]): string[] => {
+  public genFunc = (atx: WJSCFunction): string[] => {
     let result = [directive.label(atx.identifier)]
     // We now deal with the children
     result = this.traverseChildren(atx.children, result)
@@ -167,6 +178,7 @@ class WJSCCodeGenerator {
   }
 
   public genDeclare = (atx: WJSCDeclare): string[] => {
+    let result: string[] = []
     const type = atx.type
     const id = atx.identifier
     const rhs = atx.rhs
@@ -175,11 +187,34 @@ class WJSCCodeGenerator {
     if (rd) {
       switch (type) {
         case BaseType.Boolean:
-          return [construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#1')]
-              .concat(genAssignRhs(rhs))
-              .concat(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#1'))
+          result.concat(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#1'),
+              this.genAssignRhs(rhs),
+              construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#1'),
+          )
+          break
+        case BaseType.Integer:
+          result.concat(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#4'),
+              this.genAssignRhs(rhs),
+              construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#4'),
+          )
       }
     }
+    return result
+  }
+
+  public genAssignRhs = (atx: WJSCAst): string[] => {
+    let result: string[] = []
+    const child = atx.children[0]
+    if (child.parserRule === WJSCParserRules.Expression) {
+      return this.genExpr(child)
+    }
+    return result
+  }
+
+  public genExpr = (atx: WJSCAst): string[] => {
+    let result: string[] = []
+
+    return result
   }
 
   /* Prints 'Hello World in assembly */

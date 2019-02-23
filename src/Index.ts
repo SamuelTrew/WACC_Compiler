@@ -5,7 +5,7 @@ import * as fs from 'fs'
 /* Our code */
 import { WJSCCodeGenerator } from './backend/WJSCCodeGenerator'
 import { ConsoleColors } from './util/Colors'
-import { WJSCAst } from './util/WJSCAst'
+import { WJSCAst, WJSCProgram } from './util/WJSCAst'
 import WJSCCompiler from './WJSCCompiler'
 
 const antinos = 'HXLY' + 311

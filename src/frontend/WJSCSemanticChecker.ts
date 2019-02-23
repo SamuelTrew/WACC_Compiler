@@ -43,6 +43,7 @@ import {
   WJSCOperators,
   WJSCParam,
   WJSCParserRules,
+  WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { SemError, SynError, WJSCErrorLog } from '../util/WJSCErrors'
@@ -662,7 +663,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         'statement missing return statement',
       )
     }
-    result.children.push(statements)
+    result.body = statements
     /* Exit child scope */
     this.symbolTable = this.symbolTable.exitScope()
     return result
@@ -827,15 +828,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const result = this.initWJSCAst(ctx, WJSCParserRules.Program)
     const functions = ctx.func()
     if (functions) {
+      result.functions = []
       functions.forEach((child) => {
         this.visitFuncDec(child)
       })
       functions.forEach((child) => {
-        result.children.push(this.visitFunc(child))
+        result.functions.push(this.visitFunc(child))
       })
     }
     result.children.push(this.visitStatement(ctx.statement()))
-    result.children.push(this.visitTerminal(ctx.END()))
     return result
   }
 
@@ -850,8 +851,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
    * visit types of read LHS, statement in begin/end,
    * statements in semicolon
    */
-  public visitStatement = (ctx: StatementContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx, WJSCParserRules.Statement)
+  public visitStatement = (ctx: StatementContext): WJSCStatement => {
+    const result = this.initWJSCAst(ctx, WJSCParserRules.Statement) as WJSCStatement
     const skip = ctx.WSKIP()
     const assignment = ctx.assignment()
     const declare = ctx.declare()
@@ -1120,6 +1121,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return {
       children: [],
       column: -1,
+      functions: [],
       line: -1,
       parserRule: WJSCParserRules.Undefined,
       startIndex: -1,
@@ -1258,6 +1260,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return {
       children: [],
       column: charPositionInLine,
+      functions: [],
       line,
       parserRule,
       startIndex,

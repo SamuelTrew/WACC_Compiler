@@ -2,7 +2,7 @@ import { ANTLRInputStream, CommonTokenStream } from 'antlr4ts'
 import { WJSCSemanticChecker } from './frontend/WJSCSemanticChecker'
 import { WJSCLexer } from './grammar/WJSCLexer'
 import { WJSCParser } from './grammar/WJSCParser'
-import { WJSCAst } from './util/WJSCAst'
+import { WJSCAst, WJSCProgram } from './util/WJSCAst'
 import { WJSCErrorListener } from './util/WJSCErrorListener'
 import { WJSCErrorLog } from './util/WJSCErrors'
 
