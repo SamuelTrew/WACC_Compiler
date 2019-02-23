@@ -1,12 +1,22 @@
 import {
+  WJSCAssignment,
   WJSCAst,
   WJSCChecker as checker,
-  WJSCFunction, WJSCIdentifier,
-  WJSCOperators, WJSCParam,
+  WJSCFunction,
+  WJSCIdentifier,
+  WJSCOperators,
+  WJSCParam,
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
+import {
+  ARMOpcode,
+  construct,
+  directive,
+  Register,
+  tabSpace
+} from './ARMv7-lib'
+import { BaseType } from '../util/WJSCType'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -147,6 +157,22 @@ class WJSCCodeGenerator {
     return [
       construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`),
     ].concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
+  }
+
+  public genAssignment = (atx: WJSCAssignment): string[] => {
+    let result: string[] = []
+    const type = atx.lhs.type
+    const identifier = atx.identifier
+    const rhs = atx.rhs
+    result.concat()
+    const reg = this.allViableRegs.shift()
+    switch (type) {
+      case BaseType.Boolean:
+        if (reg) {
+          result = [construct.move(ARMOpcode.move, reg, `=`)]
+        }
+    }
+    return result
   }
 
   /* Prints 'Hello World in assembly */

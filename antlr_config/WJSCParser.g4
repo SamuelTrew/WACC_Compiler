@@ -16,6 +16,7 @@ statement:
 	WSKIP
 	| conditionalBlocks
 	| assignment
+	| declare
 	| READ assignLhs
 	| stdlib expression
 	| conditionalBlocks
@@ -27,8 +28,10 @@ conditionalBlocks:
 	| WHILE expression DO statement DONE;
 
 assignment:
-	type IDENTIFIER ASSIGNMENT assignRhs
-	| assignLhs ASSIGNMENT assignRhs;
+	assignLhs ASSIGNMENT assignRhs;
+
+declare:
+	type IDENTIFIER ASSIGNMENT assignRhs;
 
 assignLhs: IDENTIFIER | arrayElement | pairElement;
 

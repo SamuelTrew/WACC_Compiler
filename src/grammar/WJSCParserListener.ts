@@ -10,6 +10,7 @@ import { ParamContext } from "./WJSCParser";
 import { StatementContext } from "./WJSCParser";
 import { ConditionalBlocksContext } from "./WJSCParser";
 import { AssignmentContext } from "./WJSCParser";
+import { DeclareContext } from "./WJSCParser";
 import { AssignLhsContext } from "./WJSCParser";
 import { AssignRhsContext } from "./WJSCParser";
 import { ArgListContext } from "./WJSCParser";
@@ -114,6 +115,17 @@ export interface WJSCParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitAssignment?: (ctx: AssignmentContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.declare`.
+	 * @param ctx the parse tree
+	 */
+	enterDeclare?: (ctx: DeclareContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.declare`.
+	 * @param ctx the parse tree
+	 */
+	exitDeclare?: (ctx: DeclareContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `WJSCParser.assignLhs`.

@@ -10,6 +10,7 @@ import { ParamContext } from "./WJSCParser";
 import { StatementContext } from "./WJSCParser";
 import { ConditionalBlocksContext } from "./WJSCParser";
 import { AssignmentContext } from "./WJSCParser";
+import { DeclareContext } from "./WJSCParser";
 import { AssignLhsContext } from "./WJSCParser";
 import { AssignRhsContext } from "./WJSCParser";
 import { ArgListContext } from "./WJSCParser";
@@ -89,6 +90,13 @@ export interface WJSCParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitAssignment?: (ctx: AssignmentContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by `WJSCParser.declare`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitDeclare?: (ctx: DeclareContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `WJSCParser.assignLhs`.
