@@ -2,6 +2,7 @@ import {
   WJSCAssignment,
   WJSCAst,
   WJSCChecker as checker,
+  WJSCDeclare,
   WJSCFunction,
   WJSCIdentifier,
   WJSCOperators,
@@ -161,18 +162,24 @@ class WJSCCodeGenerator {
 
   public genAssignment = (atx: WJSCAssignment): string[] => {
     let result: string[] = []
-    const type = atx.lhs.type
-    const identifier = atx.identifier
-    const rhs = atx.rhs
-    result.concat()
-    const reg = this.allViableRegs.shift()
-    switch (type) {
-      case BaseType.Boolean:
-        if (reg) {
-          result = [construct.move(ARMOpcode.move, reg, `=`)]
-        }
-    }
+
     return result
+  }
+
+  public genDeclare = (atx: WJSCDeclare): string[] => {
+    const type = atx.type
+    const id = atx.identifier
+    const rhs = atx.rhs
+    const rd = this.allViableRegs.shift()
+
+    if (rd) {
+      switch (type) {
+        case BaseType.Boolean:
+          return [construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#1')]
+              .concat(genAssignRhs(rhs))
+              .concat(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#1'))
+      }
+    }
   }
 
   /* Prints 'Hello World in assembly */

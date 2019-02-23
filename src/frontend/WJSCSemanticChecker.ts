@@ -37,6 +37,7 @@ import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
   WJSCAssignment,
   WJSCAst,
+  WJSCDeclare,
   WJSCFunction,
   WJSCIdentifier,
   WJSCOperators,
@@ -282,7 +283,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
    * that types or arguments, etc. hold
    */
   public visitAssignRhs = (ctx: AssignRhsContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx, WJSCParserRules.Assignment)
+    const result = this.initWJSCAst(ctx, WJSCParserRules.Assignrhs)
     const arrLiter = ctx.arrayLiteral()
     const pairElem = ctx.pairElement()
     const call = ctx.CALL()
@@ -371,43 +372,38 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         = this.initWJSCAst(ctx, WJSCParserRules.Assignment) as WJSCAssignment
     const lhs = ctx.assignLhs()
     const rhs = ctx.assignRhs()
-
+    const visitedLhs = this.visitAssignLhs(lhs)
     const visitedRhs = this.visitAssignRhs(rhs)
-    result.rhs = visitedRhs
-    if (lhs) {
-      /* Reassignment */
-      const visitedLhs = this.visitAssignLhs(lhs)
-      if (!hasSameType(visitedLhs.type, visitedRhs.type)) {
-        this.errorLog.semErr(visitedRhs, SemError.Mismatch, visitedLhs.type)
-      }
-      result.lhs = visitedLhs
+
+    if (!hasSameType(visitedLhs.type, visitedRhs.type)) {
+      this.errorLog.semErr(visitedRhs, SemError.Mismatch, visitedLhs.type)
     }
+    result.lhs = visitedLhs
+    result.rhs = visitedRhs
     this.pushChild(result, visitedRhs)
 
     return result
   }
 
-  public visitDeclare = (ctx: DeclareContext): WJSCAssignment => {
+  public visitDeclare = (ctx: DeclareContext): WJSCDeclare => {
     const result
-        = this.initWJSCAst(ctx, WJSCParserRules.Assignment) as WJSCAssignment
+        = this.initWJSCAst(ctx, WJSCParserRules.Declare) as WJSCDeclare
     const lhsType = ctx.type()
     const lhsIdent = ctx.IDENTIFIER()
     const rhs = ctx.assignRhs()
 
-    const visitedRhs = this.visitAssignRhs(rhs)
-    result.rhs = visitedRhs
-
     /* Assignment */
+    const visitedRhs = this.visitAssignRhs(rhs)
     const visitedLhs = this.visitType(lhsType)
     const visitedLhsType = visitedLhs.type
     const visitedIdentifier = this.visitTerminal(lhsIdent)
     /* Check for double declaration */
-    const possibleEntry = this.symbolTable.getLocalEntry(
-        visitedIdentifier.value,
-    )
+    const possibleEntry
+        = this.symbolTable.getLocalEntry(visitedIdentifier.value)
     if (possibleEntry && !possibleEntry.params) {
       this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
     }
+
     visitedIdentifier.type = visitedLhsType
     this.pushChild(result, visitedIdentifier)
     /* Ensure RHS has same type as LHS */
@@ -416,8 +412,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
     /* Insert type into symbol table */
     this.symbolTable.insertSymbol(visitedIdentifier.value, visitedLhsType)
-    result.lhs = visitedLhs
+    result.type = visitedLhsType
     result.identifier = visitedIdentifier.value
+    result.rhs = visitedRhs
 
     this.pushChild(result, visitedRhs)
 

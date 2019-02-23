@@ -9,6 +9,8 @@ enum WJSCParserRules {
   ArgList = 'arg-list',
   Array = 'array',
   Assignment = 'assign',
+  Assignrhs = 'assignrhs',
+  Declare = 'declare',
   Type = 'type',
   Operator = 'op',
   ConditionalIf = 'condif',
@@ -76,8 +78,13 @@ interface WJSCIdentifier extends WJSCAst {
 }
 
 interface WJSCAssignment extends WJSCAst {
-  identifier: string
   lhs: WJSCAst
+  rhs: WJSCAst
+}
+
+interface WJSCDeclare extends WJSCAst {
+  type: TypeName
+  identifier: string
   rhs: WJSCAst
 }
 
@@ -104,6 +111,7 @@ export {
   WJSCStatement,
   WJSCIdentifier,
   WJSCAssignment,
+  WJSCDeclare,
   WJSCOperators,
   WJSCParam,
   WJSCChecker,
