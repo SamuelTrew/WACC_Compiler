@@ -13,6 +13,7 @@ enum WJSCParserRules {
   Declare = 'declare',
   Type = 'type',
   Operator = 'op',
+  Conditional = 'conditional',
   ConditionalIf = 'condif',
   ConditionalWhile = 'condwhile',
   Expression = 'expr',
@@ -21,6 +22,15 @@ enum WJSCParserRules {
   Parameter = 'param',
   Stdlib = 'stdlib',
   Identifier = 'ident',
+  Skip = 'skip',
+  Read = 'read',
+  Scope = 'scope',
+  Sequential = 'sequential composition',
+  Free = 'free',
+  Return = 'return',
+  Exit = 'exit',
+  Print = 'print',
+  Println = 'print line',
 }
 
 enum WJSCStandardLibrary {
@@ -70,8 +80,8 @@ interface WJSCParam extends WJSCAst {
 }
 
 interface WJSCStatement extends WJSCAst {
-  parserRule: WJSCParserRules.Statement
   function: WJSCStandardLibrary
+  stdlibExpr: WJSCAst
 }
 
 interface WJSCIdentifier extends WJSCAst {
@@ -90,10 +100,6 @@ interface WJSCDeclare extends WJSCAst {
   type: TypeName
   identifier: string
   rhs: WJSCAst
-}
-
-interface WJSCExpression extends WJSCAst {
-
 }
 
 const WJSCChecker = {

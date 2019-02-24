@@ -28,8 +28,9 @@ class WJSCCodeGenerator {
   private readonly sp = Register.r13
   private readonly lr = Register.r14
   private readonly pc = Register.r15
-  private readonly allViableRegs = [Register.r4, Register.r5, Register.r6, Register.r7,
-                                    Register.r8, Register.r9, Register.r10, Register.r11, Register.r12]
+  private allViableRegs = [Register.r4, Register.r5, Register.r6,
+                           Register.r7, Register.r8, Register.r9,
+                           Register.r10, Register.r11, Register.r12]
 
   constructor(output: string[]) {
     this.output = output
@@ -61,10 +62,8 @@ class WJSCCodeGenerator {
       directive.label('main'),
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
-    // After pushing the lr, we start visiting the children
-    // TODO change to genStatement
-    const stat = atx.children[0]
-    result = this.traverseChildren(atx.children, result)
+    // After pushing the lr, we start visiting the body
+    result = this.traverseStatements(atx.children, result)
     result.push(
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
@@ -89,78 +88,40 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public traverseChildren = (
+  public traverseStatements = (
     children: WJSCAst[],
     instructions: string[],
   ): string[] => {
     // WARNING: Do not concat the results of this function to prior results
     children.forEach((child, index) => {
-      instructions = this.traverseChild(child, instructions)
+      instructions.concat(this.traverseStat(child))
     })
     return instructions
   }
 
-  public traverseChild = (atx: WJSCAst, instructions: string[]): string[] => {
+  public traverseStat = (atx: WJSCAst): string[] => {
     // WARNING: Remember to concat onto instructions, not override it!
     // WARNING: All concatenations occur here!
     // WARNING: Do all LR pushing, PC popping or PC increments here!
-    if (checker.isTerminal(atx)) {
-      instructions = instructions.concat(
-        this.genTerminal(atx),
-      )
-    } else if (checker.isFunction(atx)) {
-      // Function case
-      instructions = instructions.concat(
-        construct.pushPop(ARMOpcode.push, [this.lr]),
-        this.genFunc(atx),
-        construct.pushPop(ARMOpcode.pop, [this.pc]),
-      )
-    } else if (checker.isOperator(atx)) {
-      // Operator case
-      instructions = instructions.concat(
-        this.genOperator(atx),
-      )
-    } else if (checker.isParam(atx)) {
-      // Param case
-      instructions = instructions.concat(
-        this.genParam(atx),
-      )
-    } else if (checker.isStatement(atx)) {
-      // Statement case
-      instructions = instructions.concat(
-        this.genStat(atx),
-      )
-    } else if (checker.isIdent(atx)) {
-      // Ident case
-      instructions = instructions.concat(
-        this.genIdent(atx),
-      )
-    } else {
-      console.log('Checker failed to match')
-      // instructions = instructions.concat(this.genStat(atx, this.allViableRegs))
+    let result: string[] = []
+    switch (atx.parserRule) {
+      case WJSCParserRules.Skip:
+        // Skip does nothing
+        break
+      case WJSCParserRules.Exit:
+        const exitCode = parseInt(atx.children[1].token, 10)
+        result = result.concat(
+            this.genExit(exitCode),
+            construct.branch('exit', true),
+        )
     }
-
-    return instructions
+    return result
   }
 
   public genFunc = (atx: WJSCFunction): string[] => {
     let result = [directive.label(atx.identifier)]
     // We now deal with the children
-    result = this.traverseChildren(atx.children, result)
-    return result
-  }
-
-  public genStat = (atx: WJSCStatement): string[] => {
-    let result: string[] = []
-    console.log(JSON.stringify(atx.children[0]))
-    if (atx.token === 'skip') {
-      // Skip does nothing
-    } else if (atx.children[0] && atx.children[0].token === 'exit') {
-      const exitCode = parseInt(atx.children[1].token, 10)
-      result = result.concat(
-        this.genExit(exitCode).concat(construct.branch('exit', true)),
-      )
-    }
+    result = this.traverseStatements(atx.children, result)
     return result
   }
 
@@ -172,13 +133,13 @@ class WJSCCodeGenerator {
   }
 
   public genAssignment = (atx: WJSCAssignment): string[] => {
-    let result: string[] = []
+    const result: string[] = []
 
     return result
   }
 
   public genDeclare = (atx: WJSCDeclare): string[] => {
-    let result: string[] = []
+    const result: string[] = []
     const type = atx.type
     const id = atx.identifier
     const rhs = atx.rhs
@@ -203,7 +164,7 @@ class WJSCCodeGenerator {
   }
 
   public genAssignRhs = (atx: WJSCAst): string[] => {
-    let result: string[] = []
+    const result: string[] = []
     const child = atx.children[0]
     if (child.parserRule === WJSCParserRules.Expression) {
       return this.genExpr(child)
@@ -212,7 +173,7 @@ class WJSCCodeGenerator {
   }
 
   public genExpr = (atx: WJSCAst): string[] => {
-    let result: string[] = []
+    const result: string[] = []
 
     return result
   }

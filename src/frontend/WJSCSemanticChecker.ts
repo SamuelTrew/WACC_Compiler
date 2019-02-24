@@ -875,11 +875,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else {
       if (skip) {
         result.children.push(this.visitTerminal(skip))
+        result.parserRule = WJSCParserRules.Skip
       } else if (assignment) {
         result.children.push(this.visitAssignment(assignment))
+        result.parserRule = WJSCParserRules.Assignment
       } else if (declare) {
         result.children.push(this.visitDeclare(declare))
+        result.parserRule = WJSCParserRules.Declare
       } else if (read) {
+        result.parserRule = WJSCParserRules.Read
         const lhs = ctx.assignLhs()
         if (!lhs) {
           this.errorLog.semErr(result, SemError.Undefined)
@@ -895,6 +899,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.pushChild(result, this.visitAssignLhs(lhs))
         }
       } else if (stdlib) {
+        result.parserRule = WJSCParserRules.Stdlib
         const expression = ctx.expression()
         const visitedStdlib = this.visitStdlib(stdlib)
         result.children.push(visitedStdlib)
@@ -906,11 +911,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             this.errorLog.semErr(result, SemError.Undefined)
           }
           this.checkStdlibExpressionType(visitedStdlib, visitedExpr)
+          result.parserRule = visitedStdlib.parserRule
           result.children.push(visitedExpr)
+          result.stdlibExpr = visitedExpr
         }
       } else if (conditionals) {
+        result.parserRule = WJSCParserRules.Conditional
         this.pushChild(result, this.visitConditionalBlocks(conditionals))
       } else if (begin) {
+        result.parserRule = WJSCParserRules.Scope
         const stat = ctx.statement()
         const end = ctx.END()
         if (!stat || !end) {
@@ -922,6 +931,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           result.children.push(this.visitTerminal(end))
         }
       } else if (semicolon) {
+        result.parserRule = WJSCParserRules.Sequential
         const stat = ctx.statement()
         if (!stat) {
           this.errorLog.semErr(result, SemError.Undefined)
@@ -959,6 +969,23 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     if (!lib) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
+      switch (lib) {
+        case ctx.FREE():
+          result.parserRule = WJSCParserRules.Free
+          break
+        case ctx.RETURN():
+          result.parserRule = WJSCParserRules.Return
+          break
+        case ctx.EXIT():
+          result.parserRule = WJSCParserRules.Exit
+          break
+        case ctx.PRINT():
+          result.parserRule = WJSCParserRules.Print
+          break
+        case ctx.PRINTLN():
+          result.parserRule = WJSCParserRules.Println
+          break
+      }
       result.children.push(this.visitTerminal(lib))
     }
     return result
