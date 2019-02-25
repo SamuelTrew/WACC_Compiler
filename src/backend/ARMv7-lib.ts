@@ -218,15 +218,19 @@ const construct = {
 
 // ------------------ UTILITY --------------------
 export let msgCount = -1
+
 const directive = {
   ascii: (str: string): string => `.ascii "${str}"`,
   bss: '.bss',
   data: '.data\n',
   global: (...symbol: string[]): string => `.global ${symbol.join(', ')}`,
-  immNum: (num: number): string => `#${num}`,
+  immNum: (num: number | string): string => `#${num}`,
   label: (name: string): string => `${name}:`,
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',
+  malloc: (content: ARMOpcode): string => `${content} malloc`,
+  // TODO: Complete this as stated
+  nextRegister: (viableRegs: Register[]): Register =>  viableRegs[0],
   popSection: '.popsection',
   pushSection: (...args: any): string =>
     `.pushsection ${directive.section(args)}`,
