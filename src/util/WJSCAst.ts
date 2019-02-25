@@ -92,6 +92,7 @@ interface WJSCParam extends WJSCAst {
 interface WJSCStatement extends WJSCAst {
   function: WJSCStandardLibrary
   stdlibExpr: WJSCExpr
+  declaration: WJSCDeclare
 }
 
 interface WJSCIdentifier extends WJSCAst {
