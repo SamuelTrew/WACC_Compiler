@@ -18,6 +18,7 @@ enum WJSCParserRules {
   ConditionalWhile = 'condwhile',
   Expression = 'expr',
   Literal = 'literal',
+  ArrayLiteral = 'array literal',
   Pair = 'pair',
   Parameter = 'param',
   Stdlib = 'stdlib',
@@ -31,6 +32,9 @@ enum WJSCParserRules {
   Exit = 'exit',
   Print = 'print',
   Println = 'print line',
+  Newpair = 'new pair',
+  PairElem = 'pair elem',
+  FunctionCall = 'function call',
 }
 
 enum WJSCStandardLibrary {
@@ -93,14 +97,23 @@ interface WJSCIdentifier extends WJSCAst {
 interface WJSCAssignment extends WJSCAst {
   parserRule: WJSCParserRules.Assignment
   lhs: WJSCAst
-  rhs: WJSCAst
+  rhs: WJSCAssignRhs
 }
 
 interface WJSCDeclare extends WJSCAst {
   parserRule: WJSCParserRules.Declare
   type: TypeName
   identifier: string
-  rhs: WJSCAst
+  rhs: WJSCAssignRhs
+}
+
+interface WJSCAssignRhs extends WJSCAst {
+  expr: WJSCExpr
+  expr2: WJSCExpr
+  arrayLiter: WJSCAst
+  pairElem: WJSCAst
+  ident: string
+  argList: WJSCExpr[]
 }
 
 interface WJSCExpr extends WJSCAst {
@@ -108,6 +121,8 @@ interface WJSCExpr extends WJSCAst {
 }
 
 const WJSCChecker = {
+  isExpr: (ast: WJSCAst): ast is WJSCExpr =>
+      ast.parserRule === WJSCParserRules.Expression,
   isFunction: (ast: WJSCAst): ast is WJSCFunction =>
     ast.parserRule === WJSCParserRules.Function,
   isIdent: (ast: WJSCAst): ast is WJSCIdentifier =>
@@ -135,4 +150,5 @@ export {
   WJSCParam,
   WJSCChecker,
   WJSCExpr,
+  WJSCAssignRhs,
 }

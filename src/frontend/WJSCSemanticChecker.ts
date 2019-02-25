@@ -35,9 +35,10 @@ import {
 } from '../grammar/WJSCParser'
 import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
-  WJSCAssignment,
+  WJSCAssignment, WJSCAssignRhs,
   WJSCAst,
-  WJSCDeclare, WJSCExpr,
+  WJSCDeclare,
+  WJSCExpr,
   WJSCFunction,
   WJSCIdentifier,
   WJSCOperators,
@@ -283,18 +284,23 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   /** Find if array literal, pair element, call function or new pair. Ensure
    * that types or arguments, etc. hold
    */
-  public visitAssignRhs = (ctx: AssignRhsContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx, WJSCParserRules.Assignrhs)
+  public visitAssignRhs = (ctx: AssignRhsContext): WJSCAssignRhs => {
+    const result = this.initWJSCAst(ctx, WJSCParserRules.Assignrhs) as WJSCAssignRhs
     const arrLiter = ctx.arrayLiteral()
     const pairElem = ctx.pairElement()
     const call = ctx.CALL()
     if (arrLiter) {
+      result.parserRule = WJSCParserRules.ArrayLiteral
       const visitedArray = this.visitArrayLiteral(arrLiter)
       this.pushChild(result, visitedArray)
+      result.arrayLiter = visitedArray
     } else if (pairElem) {
+      result.parserRule = WJSCParserRules.PairElem
       const visitedPair = this.visitPairElement(pairElem)
       this.pushChild(result, visitedPair)
+      result.pairElem = visitedPair
     } else if (call) {
+      result.parserRule = WJSCParserRules.FunctionCall
       /* Function call */
       result.children.push(this.visitTerminal(call))
       const ident = ctx.IDENTIFIER()
@@ -343,12 +349,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       /* These are all the children with expr in it */
       const expressions = ctx.expression().map(this.visitExpression)
       if (expressions.length === 1) {
+        result.parserRule = WJSCParserRules.Expression
         if (!expressions[0]) {
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
           this.pushChild(result, expressions[0])
         }
       } else if (expressions.length === 2) {
+        result.parserRule = WJSCParserRules.Newpair
         const newpair = ctx.NEW_PAIR()
         if (!newpair) {
           this.errorLog.semErr(result, SemError.Undefined)
@@ -945,6 +953,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           result.children.push(this.visitTerminal(end))
         }
       } else if (semicolon) {
+        // Sequential statement
         result.parserRule = WJSCParserRules.Sequential
         const stat = ctx.statement()
         if (!stat) {

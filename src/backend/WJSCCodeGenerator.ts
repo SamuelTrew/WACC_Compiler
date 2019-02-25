@@ -1,5 +1,5 @@
 import {
-  WJSCAssignment,
+  WJSCAssignment, WJSCAssignRhs,
   WJSCAst,
   WJSCDeclare,
   WJSCExpr,
@@ -96,7 +96,6 @@ class WJSCCodeGenerator {
     children: WJSCStatement[],
     instructions: string[],
   ): string[] => {
-    // WARNING: Do not concat the results of this function to prior results
     children.forEach((child, index) => {
       instructions.concat(this.traverseStat(child))
     })
@@ -104,9 +103,6 @@ class WJSCCodeGenerator {
   }
 
   public traverseStat = (atx: WJSCStatement): string[] => {
-    // WARNING: Remember to concat onto instructions, not override it!
-    // WARNING: All concatenations occur here!
-    // WARNING: Do all LR pushing, PC popping or PC increments here!
     let result: string[] = []
     switch (atx.parserRule) {
       case WJSCParserRules.Skip:
@@ -127,17 +123,9 @@ class WJSCCodeGenerator {
   }
 
   public genFunc = (atx: WJSCFunction): string[] => {
-    let result = [directive.label(atx.identifier)]
-    // We now deal with the children
-    result = this.traverseStat(atx.body)
+    const result = [directive.label(atx.identifier)]
+        .concat(this.traverseStat(atx.body))
     return result
-  }
-
-  public genExit = (exitCode: number): string[] => {
-    const exitReg = this.allViableRegs[0]
-    return [
-      construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`),
-    ].concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
   }
 
   public genAssignment = (atx: WJSCAssignment): string[] => {
@@ -172,11 +160,11 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public genAssignRhs = (atx: WJSCAst): string[] => {
+  public genAssignRhs = (atx: WJSCAssignRhs): string[] => {
     const result: string[] = []
     const child = atx.children[0]
     if (child.parserRule === WJSCParserRules.Expression) {
-
+      this.genExpr(atx.expr)
     }
     return result
   }
