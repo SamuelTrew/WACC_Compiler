@@ -255,6 +255,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
    * ensure it's in the symbol table, then ensure correct type.
    */
   public visitAssignLhs = (ctx: AssignLhsContext): WJSCAst => {
+    // We need to rewrite the parser rules!
     const result = this.initWJSCAst(ctx, WJSCParserRules.Assignment)
     const lhsElems = ctx.IDENTIFIER() || ctx.arrayElement() || ctx.pairElement()
     if (!lhsElems) {
@@ -263,12 +264,20 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       if (lhsElems instanceof TerminalNode) {
         this.functionUse(result, this.visitTerminal(lhsElems))
       }
-      const lhsNode =
-        lhsElems instanceof TerminalNode
-          ? this.visitTerminal(lhsElems)
-          : lhsElems instanceof ArrayElementContext
-          ? this.visitArrayElement(lhsElems)
-          : this.visitPairElement(lhsElems)
+      let lhsNode
+      if (lhsElems instanceof TerminalNode) {
+        // Ident case
+        lhsNode = this.visitTerminal(lhsElems)
+        result.parserRule = WJSCParserRules.Identifier
+      } else if (lhsElems instanceof ArrayElementContext) {
+        // Array elem case
+        lhsNode = this.visitArrayElement(lhsElems)
+        result.parserRule = WJSCParserRules.ArrayElem
+      } else {
+        // Pair elem case
+        lhsNode = this.visitPairElement(lhsElems)
+        result.parserRule = WJSCParserRules.PairElem
+      }
       this.pushChild(result, lhsNode)
       if (lhsElems instanceof TerminalNode) {
         const type = this.symbolTable.lookup(lhsNode.token)
