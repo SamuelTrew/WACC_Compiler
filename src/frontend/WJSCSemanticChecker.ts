@@ -992,6 +992,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
             } else {
               result.stat = firstStatement
               result.nextStat = lastStatement
+              this.pushChild(result, lastStatement)
             }
           }
         }
