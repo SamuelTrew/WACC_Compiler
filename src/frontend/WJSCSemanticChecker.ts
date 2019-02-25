@@ -37,7 +37,7 @@ import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
   WJSCAssignment,
   WJSCAst,
-  WJSCDeclare,
+  WJSCDeclare, WJSCExpr,
   WJSCFunction,
   WJSCIdentifier,
   WJSCOperators,
@@ -537,8 +537,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
    * childExp.length == 1, if BinOp, childExp == 2, ensure childExpType are
    * not undefined, visit Types
    */
-  public visitExpression = (ctx: ExpressionContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx, WJSCParserRules.Expression)
+  public visitExpression = (ctx: ExpressionContext): WJSCExpr => {
+    const result = this.initWJSCAst(ctx, WJSCParserRules.Expression) as WJSCExpr
     const intLiterals = ctx.integerLiteral()
     const literals =
       ctx.BOOLEAN_LITERAL() ||
@@ -570,10 +570,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         /* literal scenario */
         const terminal = this.visitTerminal(literals)
         this.pushChild(result, terminal)
+        result.value = terminal.value
+        result.parserRule = terminal.parserRule
       } else if (intLiterals) {
-        /* int literal scenario */
+        /* int literal */
         const intValue = this.visitIntegerLiteral(intLiterals)
         this.pushChild(result, intValue)
+        result.value = intValue.value
+        result.parserRule = intValue.parserRule
       } else if (ident) {
         /* Identifier scenario */
         const visitedTerminal = this.visitTerminal(ident)
@@ -581,9 +585,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         if (identType) {
           this.pushChild(result, visitedTerminal)
         }
+        result.value = visitedTerminal.value
+        result.parserRule = visitedTerminal.parserRule
       } else if (arrayElem) {
         /* array elem scenario */
-        this.pushChild(result, this.visitArrayElement(arrayElem))
+        const visitedArrayElem = this.visitArrayElement(arrayElem)
+        this.pushChild(result, visitedArrayElem)
+        result.parserRule = visitedArrayElem.parserRule
       } else if (operators || bracket) {
         const expressions = ctx.expression()
         if (bracket) {
@@ -827,6 +835,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   public visitProgram = (ctx: ProgramContext): WJSCAst => {
     const result = this.initWJSCAst(ctx, WJSCParserRules.Program)
     const functions = ctx.func()
+
+    // Visit function declarations
     if (functions) {
       result.functions = []
       functions.forEach((child) => {
@@ -836,7 +846,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         result.functions.push(this.visitFunc(child))
       })
     }
-    result.children.push(this.visitStatement(ctx.statement()))
+
+    // Visit program body
+    const body = this.visitStatement(ctx.statement())
+    result.body = body
+    result.children.push(body)
     return result
   }
 

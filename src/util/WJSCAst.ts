@@ -52,6 +52,7 @@ interface WJSCAst {
   token: string
   type: TypeName
   functions: WJSCFunction[]
+  body?: WJSCStatement
 }
 
 interface WJSCTerminal extends WJSCAst {
@@ -81,7 +82,7 @@ interface WJSCParam extends WJSCAst {
 
 interface WJSCStatement extends WJSCAst {
   function: WJSCStandardLibrary
-  stdlibExpr: WJSCAst
+  stdlibExpr: WJSCExpr
 }
 
 interface WJSCIdentifier extends WJSCAst {
@@ -100,6 +101,10 @@ interface WJSCDeclare extends WJSCAst {
   type: TypeName
   identifier: string
   rhs: WJSCAst
+}
+
+interface WJSCExpr extends WJSCAst {
+  value: any
 }
 
 const WJSCChecker = {
@@ -129,4 +134,5 @@ export {
   WJSCOperators,
   WJSCParam,
   WJSCChecker,
+  WJSCExpr,
 }

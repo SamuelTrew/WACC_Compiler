@@ -1,8 +1,8 @@
 import {
   WJSCAssignment,
   WJSCAst,
-  WJSCChecker as checker,
   WJSCDeclare,
+  WJSCExpr,
   WJSCFunction,
   WJSCIdentifier,
   WJSCOperators,
@@ -58,12 +58,15 @@ class WJSCCodeGenerator {
     }
 
     // Generate code for the main function body
-    result.concat(
+    result = result.concat(
       directive.label('main'),
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
-    // After pushing the lr, we start visiting the body
-    result = this.traverseStatements(atx.children, result)
+
+    // Generate code for the function body statements
+    if (atx.body) {
+      result = result.concat(this.traverseStat(atx.body))
+    }
     result.push(
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
@@ -78,9 +81,10 @@ class WJSCCodeGenerator {
     let result: string[] = []
     if (reg) {
       switch (atx.terminalType) {
-        case 'bool':
+        case 'bool': {
           result = [construct.move(ARMOpcode.move, reg, `=${val}`)]
           break
+        }
         case 'stdlib':
 
       }
@@ -89,7 +93,7 @@ class WJSCCodeGenerator {
   }
 
   public traverseStatements = (
-    children: WJSCAst[],
+    children: WJSCStatement[],
     instructions: string[],
   ): string[] => {
     // WARNING: Do not concat the results of this function to prior results
@@ -99,7 +103,7 @@ class WJSCCodeGenerator {
     return instructions
   }
 
-  public traverseStat = (atx: WJSCAst): string[] => {
+  public traverseStat = (atx: WJSCStatement): string[] => {
     // WARNING: Remember to concat onto instructions, not override it!
     // WARNING: All concatenations occur here!
     // WARNING: Do all LR pushing, PC popping or PC increments here!
@@ -108,12 +112,16 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Skip:
         // Skip does nothing
         break
-      case WJSCParserRules.Exit:
-        const exitCode = parseInt(atx.children[1].token, 10)
+      case WJSCParserRules.Exit: {
+        result = result.concat(this.genExpr(atx.stdlibExpr))
         result = result.concat(
-            this.genExit(exitCode),
+            construct.move(ARMOpcode.move, this.resultReg, this.allViableRegs[0]),
             construct.branch('exit', true),
         )
+        break
+      }
+      case WJSCParserRules.Declare:
+
     }
     return result
   }
@@ -121,7 +129,7 @@ class WJSCCodeGenerator {
   public genFunc = (atx: WJSCFunction): string[] => {
     let result = [directive.label(atx.identifier)]
     // We now deal with the children
-    result = this.traverseStatements(atx.children, result)
+    result = this.traverseStat(atx.body)
     return result
   }
 
@@ -158,6 +166,7 @@ class WJSCCodeGenerator {
               this.genAssignRhs(rhs),
               construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#4'),
           )
+          break
       }
     }
     return result
@@ -167,13 +176,23 @@ class WJSCCodeGenerator {
     const result: string[] = []
     const child = atx.children[0]
     if (child.parserRule === WJSCParserRules.Expression) {
-      return this.genExpr(child)
+
     }
     return result
   }
 
-  public genExpr = (atx: WJSCAst): string[] => {
+  public genExpr = (atx: WJSCExpr): string[] => {
     const result: string[] = []
+    // TODO use parse rules to switch on expr type
+    if (atx.parserRule === WJSCParserRules.Literal) {
+      switch (atx.type) {
+        case BaseType.Integer: {
+          const value = atx.value
+          const dst = this.allViableRegs[0]
+          result.push(construct.singleDataTransfer(ARMOpcode.load, dst, `=${value}`))
+        }
+      }
+    }
 
     return result
   }
