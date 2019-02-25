@@ -13,7 +13,14 @@ import {
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { BaseType } from '../util/WJSCType'
-import { ARMOpcode, construct, directive, msgCount, Register, tabSpace } from './ARMv7-lib'
+import {
+  ARMOpcode,
+  construct,
+  directive,
+  msgCount,
+  Register,
+  tabSpace,
+} from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -121,6 +128,10 @@ class WJSCCodeGenerator {
         result = result.concat(this.genDeclare(atx.declaration, [head, ...tail]))
         break
       }
+      case WJSCParserRules.Sequential: {
+        result = result.concat(this.traverseStat(atx.stat, [head, ...tail]))
+        result = result.concat(this.traverseStat(atx.nextStat, [head, ...tail]))
+      }
     }
     return result
   }
@@ -149,23 +160,26 @@ class WJSCCodeGenerator {
     const type = atx.type
     const id = atx.identifier
     const rhs = atx.rhs
+    let operand = '#-0'
 
-    if (head) {
-      switch (type) {
-        case BaseType.Boolean:
-          result.concat(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#1'),
-              this.genAssignRhs(rhs, tail),
-              construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#1'),
-          )
-          break
-        case BaseType.Integer:
-          result.concat(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#4'),
-              this.genAssignRhs(rhs, tail),
-              construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#4'),
-          )
-          break
+    switch (type) {
+      case BaseType.Character:
+      case BaseType.Boolean: {
+        operand = '#1'
+        break
+      }
+      case BaseType.String:
+      case BaseType.Integer: {
+        operand = '#4'
+        break
       }
     }
+    // TODO add cases for pairs and arrays
+
+    result.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
+    result.concat(this.genAssignRhs(rhs, tail))
+    result.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
+
     return result
   }
 

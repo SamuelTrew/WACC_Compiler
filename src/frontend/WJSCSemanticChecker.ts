@@ -990,7 +990,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
                 'extraneous statement after return',
               )
             } else {
-              this.pushChild(result, lastStatement)
+              result.stat = firstStatement
+              result.nextStat = lastStatement
             }
           }
         }

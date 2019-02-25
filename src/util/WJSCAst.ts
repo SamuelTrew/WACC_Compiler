@@ -94,6 +94,8 @@ interface WJSCStatement extends WJSCAst {
   function: WJSCStandardLibrary
   stdlibExpr: WJSCExpr
   declaration: WJSCDeclare
+  stat: WJSCStatement
+  nextStat: WJSCStatement
 }
 
 interface WJSCIdentifier extends WJSCAst {
