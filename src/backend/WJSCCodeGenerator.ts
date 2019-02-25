@@ -194,32 +194,30 @@ class WJSCCodeGenerator {
 
   public genExpr = (atx: WJSCExpr, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
-    if (atx.parserRule === WJSCParserRules.Literal) {
-      let value = atx.value
-      switch (atx.type) {
-        case BaseType.Integer: {
+    let value = atx.value
+    switch (atx.parserRule) {
+        case WJSCParserRules.IntLiteral: {
           result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
           break
         }
-        case BaseType.Boolean: {
+        case WJSCParserRules.BoolLiter: {
           value = atx.value ? 1 : 0
           result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
           break
         }
-        case BaseType.Character: {
+        case WJSCParserRules.CharLiter: {
           result.push(construct.move(ARMOpcode.move, head, `#${value}`))
           break
         }
-        case BaseType.String: {
+        case WJSCParserRules.StringLiter: {
           result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgCount))
           break
         }
-        case BaseType.Pair: {
+        case WJSCParserRules.PairLiter: {
           result.push()
           break
         }
       }
-    }
 
     return result
   }

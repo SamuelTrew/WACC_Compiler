@@ -21,6 +21,7 @@ enum WJSCParserRules {
   ConditionalIf = 'condif',
   ConditionalWhile = 'condwhile',
   Expression = 'expr',
+  IntLiteral = 'int literal',
   Literal = 'literal',
   ArrayLiteral = 'array literal',
   Pair = 'pair',
