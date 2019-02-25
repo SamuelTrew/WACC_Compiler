@@ -12,13 +12,7 @@ import {
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { BaseType } from '../util/WJSCType'
-import {
-  ARMOpcode,
-  construct,
-  directive,
-  Register,
-  tabSpace,
-} from './ARMv7-lib'
+import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -36,25 +30,26 @@ class WJSCCodeGenerator {
     this.output = output
   }
 
-  public genIdent = (atx: WJSCIdentifier): string[] => {
+  public genIdent = (atx: WJSCIdentifier, [head, ...tail]: Register[]): string[] => {
     return []
   }
 
-  public genOperator = (atx: WJSCOperators): string[] => {
+  public genOperator = (atx: WJSCOperators, [head, ...tail]: Register[]): string[] => {
     return []
   }
 
-  public genParam = (atx: WJSCParam): string[] => {
+  public genParam = (atx: WJSCParam, [head, ...tail]: Register[]): string[] => {
     return []
   }
 
   public genProgram = (atx: WJSCAst): string[] => {
+    const regList = this.allViableRegs
     let result = [directive.text].concat(directive.global('main'))
 
     // Generate code for function declarations
     const functions = atx.functions
     if (functions) {
-      functions.forEach((func) => result.concat(this.genFunc(func)))
+      functions.forEach((func) => result.concat(this.genFunc(func, regList)))
     }
 
     // Generate code for the main function body
@@ -65,7 +60,7 @@ class WJSCCodeGenerator {
 
     // Generate code for the function body statements
     if (atx.body) {
-      result = result.concat(this.traverseStat(atx.body))
+      result = result.concat(this.traverseStat(atx.body, regList))
     }
     result.push(
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
@@ -75,7 +70,7 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public genTerminal = (atx: WJSCTerminal): string[] => {
+  public genTerminal = (atx: WJSCTerminal, [head, ...tail]: Register[]): string[] => {
     const reg = this.allViableRegs.shift()
     const val = atx.value
     let result: string[] = []
@@ -86,7 +81,7 @@ class WJSCCodeGenerator {
           break
         }
         case 'stdlib':
-
+          result = []
       }
     }
     return result
@@ -94,16 +89,16 @@ class WJSCCodeGenerator {
 
   public traverseStatements = (
     children: WJSCStatement[],
-    instructions: string[],
+    instructions: string[], regList: Register[],
   ): string[] => {
     // WARNING: Do not concat the results of this function to prior results
-    children.forEach((child, index) => {
-      instructions.concat(this.traverseStat(child))
+    children.forEach((child) => {
+      instructions.concat(this.traverseStat(child, regList))
     })
     return instructions
   }
 
-  public traverseStat = (atx: WJSCStatement): string[] => {
+  public traverseStat = (atx: WJSCStatement, [head, ...tail]: Register[]): string[] => {
     // WARNING: Remember to concat onto instructions, not override it!
     // WARNING: All concatenations occur here!
     // WARNING: Do all LR pushing, PC popping or PC increments here!
@@ -113,9 +108,9 @@ class WJSCCodeGenerator {
         // Skip does nothing
         break
       case WJSCParserRules.Exit: {
-        result = result.concat(this.genExpr(atx.stdlibExpr))
+        result = result.concat(this.genExpr(atx.stdlibExpr, tail))
         result = result.concat(
-            construct.move(ARMOpcode.move, this.resultReg, this.allViableRegs[0]),
+            construct.move(ARMOpcode.move, this.resultReg, head),
             construct.branch('exit', true),
         )
         break
@@ -126,44 +121,43 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public genFunc = (atx: WJSCFunction): string[] => {
+  public genFunc = (atx: WJSCFunction, regList: Register[]): string[] => {
     let result = [directive.label(atx.identifier)]
     // We now deal with the children
-    result = this.traverseStat(atx.body)
+    result = this.traverseStat(atx.body, regList)
     return result
   }
 
-  public genExit = (exitCode: number): string[] => {
+  public genExit = (exitCode: number, [head, ...tail]: Register[]): string[] => {
     const exitReg = this.allViableRegs[0]
     return [
       construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`),
     ].concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
   }
 
-  public genAssignment = (atx: WJSCAssignment): string[] => {
+  public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
 
     return result
   }
 
-  public genDeclare = (atx: WJSCDeclare): string[] => {
+  public genDeclare = (atx: WJSCDeclare, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
     const type = atx.type
     const id = atx.identifier
     const rhs = atx.rhs
-    const rd = this.allViableRegs.shift()
 
-    if (rd) {
+    if (head) {
       switch (type) {
         case BaseType.Boolean:
           result.concat(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#1'),
-              this.genAssignRhs(rhs),
+              this.genAssignRhs(rhs, tail),
               construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#1'),
           )
           break
         case BaseType.Integer:
           result.concat(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#4'),
-              this.genAssignRhs(rhs),
+              this.genAssignRhs(rhs, tail),
               construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#4'),
           )
           break
@@ -172,24 +166,37 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public genAssignRhs = (atx: WJSCAst): string[] => {
+  public genAssignRhs = (atx: WJSCAst, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
     const child = atx.children[0]
-    if (child.parserRule === WJSCParserRules.Expression) {
-
-    }
+    // code: if (child.parserRule === WJSCParserRules.Expression) {
+    // }
     return result
   }
 
-  public genExpr = (atx: WJSCExpr): string[] => {
+  public genExpr = (atx: WJSCExpr, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
     // TODO use parse rules to switch on expr type
     if (atx.parserRule === WJSCParserRules.Literal) {
       switch (atx.type) {
         case BaseType.Integer: {
           const value = atx.value
-          const dst = this.allViableRegs[0]
-          result.push(construct.singleDataTransfer(ARMOpcode.load, dst, `=${value}`))
+          result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
+        }
+        case BaseType.Boolean: {
+          const value = atx.value ? 1 : 0
+        }
+        case BaseType.Character: {
+          result.push()
+        }
+        case BaseType.String: {
+          result.push()
+        }
+        case BaseType.Pair: {
+          result.push()
+        }
+        default: {
+          result.push()
         }
       }
     }
