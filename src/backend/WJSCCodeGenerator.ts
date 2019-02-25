@@ -84,11 +84,12 @@ class WJSCCodeGenerator {
           break
         }
         case (WJSCParserRules.ArrayElem): {
-          result = result.concat(this.genArray(child, list))
+          this.genArray(child, list)
           break
         }
         default: {
           childRep = child.token
+          break
         }
       }
       this.output.push(construct.move(ARMOpcode.load, nextItem, childRep))
@@ -213,7 +214,7 @@ class WJSCCodeGenerator {
   }
 
   public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]) => {
-
+    // TODO
   }
 
   public genDeclare = (atx: WJSCDeclare, [head, ...tail]: Register[]) => {
@@ -290,19 +291,22 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genPair = (atx: WJSCAst, [head, ...tail]: Register[]): string[] => {
+  public genPair = (atx: WJSCAst, [head, ...tail]: Register[]) => {
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral: {
-        return construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, `#4`).concat([])
+        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, `#4`))
+        break
       }
       case WJSCParserRules.ArrayLiteral: {
-        return []
+        break
       }
       case WJSCParserRules.Pair: {
-        return this.genPair(atx.children[0], [head, ...tail]).concat(this.genPair(atx.children[1], [head, ...tail]))
+        this.genPair(atx.children[0], [head, ...tail])
+        this.genPair(atx.children[1], [head, ...tail])
+        break
       }
       default: {
-        return []
+        break
       }
     }
   }
