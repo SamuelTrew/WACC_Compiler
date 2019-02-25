@@ -54,8 +54,8 @@ class WJSCCodeGenerator {
 
     // Generate code for the main function body
     result = result.concat(
-      directive.label('main'),
-      construct.pushPop(ARMOpcode.push, [this.lr]),
+        directive.label('main'),
+        construct.pushPop(ARMOpcode.push, [this.lr]),
     )
 
     // Generate code for the function body statements
@@ -63,9 +63,9 @@ class WJSCCodeGenerator {
       result = result.concat(this.traverseStat(atx.body, regList))
     }
     result.push(
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-      tabSpace + directive.ltorg + '\n',
+        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
+        construct.pushPop(ARMOpcode.pop, [this.pc]),
+        tabSpace + directive.ltorg + '\n',
     )
     return result
   }
@@ -203,25 +203,6 @@ class WJSCCodeGenerator {
 
     return result
   }
-
-  /* Prints 'Hello World in assembly */
-  public testprog = () =>
-    [directive.data].concat(
-      directive.label('hello'),
-      directive.ascii('Hello World'),
-      directive.text,
-      directive.global('main'),
-      directive.label('main'),
-      construct.pushPop(ARMOpcode.push, [Register.r7, this.lr]),
-      construct.move(ARMOpcode.move, Register.r7, directive.immNum(4)),
-      construct.move(ARMOpcode.move, Register.r0, directive.immNum(1)),
-      construct.singleDataTransfer(ARMOpcode.load, Register.r1, '=hello'),
-      construct.move(ARMOpcode.move, Register.r2, directive.immNum(11)),
-      construct.softwareInterrupt(directive.immNum(0)),
-      construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
-      construct.pushPop(ARMOpcode.pop, [Register.r7, this.pc]),
-      directive.ltorg,
-    )
 }
 
 export { WJSCCodeGenerator }
