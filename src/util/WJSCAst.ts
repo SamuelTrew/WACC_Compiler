@@ -8,6 +8,7 @@ enum WJSCParserRules {
   Terminal = 'terminal',
   ArgList = 'arg-list',
   Array = 'array',
+  ArrayElem = 'arrayElem',
   Assignment = 'assign',
   Assignrhs = 'assignrhs',
   Declare = 'declare',

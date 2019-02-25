@@ -217,11 +217,11 @@ const construct = {
 }
 
 // ------------------ UTILITY --------------------
-
+export let msgCount = -1
 const directive = {
   ascii: (str: string): string => `.ascii "${str}"`,
   bss: '.bss',
-  data: '.data',
+  data: '.data\n',
   global: (...symbol: string[]): string => `.global ${symbol.join(', ')}`,
   immNum: (num: number): string => `#${num}`,
   label: (name: string): string => `${name}:`,
@@ -250,6 +250,7 @@ const directive = {
     (linkage ? `${linkage} ` : '') +
     (linkOrderSymbol ? `${linkOrderSymbol} ` : '') +
     (unique && uniqueId ? `${unique} ${uniqueId}` : ''),
+  stringDec: (symbol: string): string => 'msg_' + msgCount++ + ':\n' + tabSpace + `.word ${symbol.length}` + tabSpace + directive.ascii(symbol)     ,
   text: '.text\n',
   weak: (...symbol: string[]): string => `.weak ${symbol.join(', ')}`,
 }
