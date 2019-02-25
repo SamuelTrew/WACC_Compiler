@@ -47,15 +47,15 @@ test:
   script:
   - npm run test
 
-lint:
-  stage: test
-  dependencies: 
-  - install
-  - build
-  only:
-  - master
-  script:
-  - npm run lint
+#lint:
+#  stage: test
+#  dependencies:
+#  - install
+#  - build
+#  only:
+#  - master
+#  script:
+#  - npm run lint
 
 deploy:
   stage: deploy

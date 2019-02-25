@@ -12,13 +12,7 @@ import {
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { BaseType } from '../util/WJSCType'
-import {
-  ARMOpcode,
-  construct,
-  directive,
-  Register,
-  tabSpace,
-} from './ARMv7-lib'
+import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -36,46 +30,47 @@ class WJSCCodeGenerator {
     this.output = output
   }
 
-  public genIdent = (atx: WJSCIdentifier): string[] => {
+  public genIdent = (atx: WJSCIdentifier, [head, ...tail]: Register[]): string[] => {
     return []
   }
 
-  public genOperator = (atx: WJSCOperators): string[] => {
+  public genOperator = (atx: WJSCOperators, [head, ...tail]: Register[]): string[] => {
     return []
   }
 
-  public genParam = (atx: WJSCParam): string[] => {
+  public genParam = (atx: WJSCParam, [head, ...tail]: Register[]): string[] => {
     return []
   }
 
   public genProgram = (atx: WJSCAst): string[] => {
+    const regList = this.allViableRegs
     let result = [directive.text].concat(directive.global('main'))
 
     // Generate code for function declarations
     const functions = atx.functions
     if (functions) {
-      functions.forEach((func) => result.concat(this.genFunc(func)))
+      functions.forEach((func) => result.concat(this.genFunc(func, regList)))
     }
 
     // Generate code for the main function body
     result = result.concat(
-      directive.label('main'),
-      construct.pushPop(ARMOpcode.push, [this.lr]),
+        directive.label('main'),
+        construct.pushPop(ARMOpcode.push, [this.lr]),
     )
 
     // Generate code for the function body statements
     if (atx.body) {
-      result = result.concat(this.traverseStat(atx.body))
+      result = result.concat(this.traverseStat(atx.body, regList))
     }
     result.push(
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-      tabSpace + directive.ltorg + '\n',
+        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
+        construct.pushPop(ARMOpcode.pop, [this.pc]),
+        tabSpace + directive.ltorg + '\n',
     )
     return result
   }
 
-  public genTerminal = (atx: WJSCTerminal): string[] => {
+  public genTerminal = (atx: WJSCTerminal, [head, ...tail]: Register[]): string[] => {
     const reg = this.allViableRegs.shift()
     const val = atx.value
     let result: string[] = []
@@ -86,7 +81,7 @@ class WJSCCodeGenerator {
           break
         }
         case 'stdlib':
-
+          result = []
       }
     }
     return result
@@ -94,24 +89,25 @@ class WJSCCodeGenerator {
 
   public traverseStatements = (
     children: WJSCStatement[],
-    instructions: string[],
+    instructions: string[], regList: Register[],
   ): string[] => {
-    children.forEach((child, index) => {
-      instructions.concat(this.traverseStat(child))
+    // WARNING: Do not concat the results of this function to prior results
+    children.forEach((child) => {
+      instructions.concat(this.traverseStat(child, regList))
     })
     return instructions
   }
 
-  public traverseStat = (atx: WJSCStatement): string[] => {
+  public traverseStat = (atx: WJSCStatement, [head, ...tail]: Register[]): string[] => {
     let result: string[] = []
     switch (atx.parserRule) {
       case WJSCParserRules.Skip:
         // Skip does nothing
         break
       case WJSCParserRules.Exit: {
-        result = result.concat(this.genExpr(atx.stdlibExpr))
+        result = result.concat(this.genExpr(atx.stdlibExpr, tail))
         result = result.concat(
-            construct.move(ARMOpcode.move, this.resultReg, this.allViableRegs[0]),
+            construct.move(ARMOpcode.move, this.resultReg, head),
             construct.branch('exit', true),
         )
         break
@@ -122,36 +118,42 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public genFunc = (atx: WJSCFunction): string[] => {
-    const result = [directive.label(atx.identifier)]
-        .concat(this.traverseStat(atx.body))
+  public genFunc = (atx: WJSCFunction, regList: Register[]): string[] => {
+    let result = [directive.label(atx.identifier)]
+    // We now deal with the children
+    result = this.traverseStat(atx.body, regList)
     return result
   }
 
-  public genAssignment = (atx: WJSCAssignment): string[] => {
+  public genExit = (exitCode: number, [head, ...tail]: Register[]): string[] => {
+    return [
+      construct.singleDataTransfer(ARMOpcode.load, head, `=${exitCode}`),
+    ].concat(construct.move(ARMOpcode.move, this.resultReg, head))
+  }
+
+  public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
 
     return result
   }
 
-  public genDeclare = (atx: WJSCDeclare): string[] => {
+  public genDeclare = (atx: WJSCDeclare, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
     const type = atx.type
     const id = atx.identifier
     const rhs = atx.rhs
-    const rd = this.allViableRegs.shift()
 
-    if (rd) {
+    if (head) {
       switch (type) {
         case BaseType.Boolean:
           result.concat(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#1'),
-              this.genAssignRhs(rhs),
+              this.genAssignRhs(rhs, tail),
               construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#1'),
           )
           break
         case BaseType.Integer:
           result.concat(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, '#4'),
-              this.genAssignRhs(rhs),
+              this.genAssignRhs(rhs, tail),
               construct.arithmetic(ARMOpcode.add, this.sp, this.sp, '#4'),
           )
           break
@@ -160,49 +162,44 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public genAssignRhs = (atx: WJSCAssignRhs): string[] => {
+  public genAssignRhs = (atx: WJSCAssignRhs, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
     const child = atx.children[0]
     if (child.parserRule === WJSCParserRules.Expression) {
-      this.genExpr(atx.expr)
+      this.genExpr(atx.expr, [head, ...tail])
     }
     return result
   }
 
-  public genExpr = (atx: WJSCExpr): string[] => {
+  public genExpr = (atx: WJSCExpr, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
     // TODO use parse rules to switch on expr type
     if (atx.parserRule === WJSCParserRules.Literal) {
       switch (atx.type) {
         case BaseType.Integer: {
           const value = atx.value
-          const dst = this.allViableRegs[0]
-          result.push(construct.singleDataTransfer(ARMOpcode.load, dst, `=${value}`))
+          result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
+        }
+        case BaseType.Boolean: {
+          const value = atx.value ? 1 : 0
+        }
+        case BaseType.Character: {
+          result.push()
+        }
+        case BaseType.String: {
+          result.push()
+        }
+        case BaseType.Pair: {
+          result.push()
+        }
+        default: {
+          result.push()
         }
       }
     }
 
     return result
   }
-
-  /* Prints 'Hello World in assembly */
-  public testprog = () =>
-    [directive.data].concat(
-      directive.label('hello'),
-      directive.ascii('Hello World'),
-      directive.text,
-      directive.global('main'),
-      directive.label('main'),
-      construct.pushPop(ARMOpcode.push, [Register.r7, this.lr]),
-      construct.move(ARMOpcode.move, Register.r7, directive.immNum(4)),
-      construct.move(ARMOpcode.move, Register.r0, directive.immNum(1)),
-      construct.singleDataTransfer(ARMOpcode.load, Register.r1, '=hello'),
-      construct.move(ARMOpcode.move, Register.r2, directive.immNum(11)),
-      construct.softwareInterrupt(directive.immNum(0)),
-      construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
-      construct.pushPop(ARMOpcode.pop, [Register.r7, this.pc]),
-      directive.ltorg,
-    )
 }
 
 export { WJSCCodeGenerator }
