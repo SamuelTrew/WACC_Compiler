@@ -13,14 +13,7 @@ import {
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { BaseType } from '../util/WJSCType'
-import {
-  ARMOpcode,
-  construct,
-  directive,
-  msgCount,
-  Register,
-  tabSpace,
-} from './ARMv7-lib'
+import { ARMOpcode, construct, directive, msgCount, Register, tabSpace, } from './ARMv7-lib'
 
 /* TODO: A function that maps base type to bits used
    TODO: A function that finds the total number of declarations
@@ -69,7 +62,7 @@ class WJSCCodeGenerator {
           break
         }
         case (WJSCParserRules.ArrayElem): {
-          // TODO: DO STUFF
+          result = result.concat(this.genArray(child, list))
           break
         }
         default: {
@@ -284,6 +277,23 @@ class WJSCCodeGenerator {
       }
 
     return result
+  }
+
+  public genPair = (atx: WJSCAst, [head, ...tail]: Register[]): string[] => {
+    switch (atx.parserRule) {
+      case WJSCParserRules.IntLiteral: {
+        return construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, `#4`).concat([])
+      }
+      case WJSCParserRules.ArrayLiteral: {
+        return []
+      }
+      case WJSCParserRules.Pair: {
+        return this.genPair(atx.children[0], [head, ...tail]).concat(this.genPair(atx.children[1], [head, ...tail]))
+      }
+      default: {
+        return []
+      }
+    }
   }
 }
 
