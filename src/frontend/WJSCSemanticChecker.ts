@@ -1,7 +1,7 @@
-import {ParserRuleContext} from 'antlr4ts'
-import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
+import { ParserRuleContext } from 'antlr4ts'
+import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
 import _ from 'lodash'
-import {WJSCLexer} from '../grammar/WJSCLexer'
+import { WJSCLexer } from '../grammar/WJSCLexer'
 import {
   ArgListContext,
   ArithmeticOperator2Context,
@@ -33,7 +33,7 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from '../grammar/WJSCParser'
-import {WJSCParserVisitor} from '../grammar/WJSCParserVisitor'
+import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -48,7 +48,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import {SemError, SynError, WJSCErrorLog} from '../util/WJSCErrors'
+import { SemError, SynError, WJSCErrorLog } from '../util/WJSCErrors'
 import {
   BaseType,
   getFstInPair,
@@ -63,7 +63,7 @@ import {
   TerminalOperators,
   TypeName,
 } from '../util/WJSCType'
-import {WJSCSymbolTable} from './WJSCSymbolTable'
+import { WJSCSymbolTable } from './WJSCSymbolTable'
 
 /**
  * Class that represents a semantic checker.
@@ -364,7 +364,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
           this.pushChild(result, expressions[0])
-          result.expr = expressions[0]
         }
       } else if (expressions.length === 2) {
         result.parserRule = WJSCParserRules.Newpair
@@ -914,10 +913,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         result.children.push(this.visitAssignment(assignment))
         result.parserRule = WJSCParserRules.Assignment
       } else if (declare) {
-        const visitedDeclare = this.visitDeclare(declare)
-        result.children.push(visitedDeclare)
+        result.children.push(this.visitDeclare(declare))
         result.parserRule = WJSCParserRules.Declare
-        result.declaration = visitedDeclare
       } else if (read) {
         result.parserRule = WJSCParserRules.Read
         const lhs = ctx.assignLhs()
