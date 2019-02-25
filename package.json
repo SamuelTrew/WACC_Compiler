@@ -4,7 +4,8 @@
   "description": "WACC JavaScript Compiler",
   "main": "build/Index.js",
   "directories": {
-    "lib": "lib"
+    "lib": "lib",
+    "test": "test"
   },
   "scripts": {
     "all": "npm run lint && npm run build:antlr && npm run build && npm test",

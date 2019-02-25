@@ -22,6 +22,11 @@ import {
   tabSpace,
 } from './ARMv7-lib'
 
+/* TODO: A function that maps base type to bits used
+   TODO: A function that finds the total number of declarations
+   TODO: complete "nextRegister" function
+*/
+
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
   public output: string[]
@@ -33,6 +38,51 @@ class WJSCCodeGenerator {
 
   constructor(output: string[]) {
     this.output = output
+  }
+
+  public genArray = (atx: WJSCAst, list: Register[]): string[] => {
+    const children = atx.children
+    // TODO: As mentioned above for typeSize and nextReg
+    // TODO: Extend move to do different thing if 'stack' is a parameter
+    const typeSize = 4
+    const size = (children.length + 1) * (typeSize)
+    // Setup for array
+    const itemUsed = directive.nextRegister(list)
+    let result = [construct.move(ARMOpcode.load, this.pc, directive.immNum(size)),
+                  directive.malloc(ARMOpcode.branchLink),
+                  construct.move(ARMOpcode.move, itemUsed, Register.r0)]
+    if (itemUsed in Register) {
+      list.shift()
+    } else {
+      // We received a stack reference, and such have conducted a modified move (to pop)
+    }
+    // loading in elements
+    const nextItem = directive.nextRegister(list)
+    if (nextItem in Register) {
+      list.shift()
+    }
+    children.forEach((child, index) => {
+      let childRep = ''
+      switch (child.parserRule) {
+        case (WJSCParserRules.IntLiteral): {
+          childRep = directive.immNum(child.token)
+          break
+        }
+        case (WJSCParserRules.ArrayElem): {
+          // TODO: DO STUFF
+          break
+        }
+        default: {
+          childRep = child.token
+        }
+      }
+      result = result.concat(construct.move(ARMOpcode.load, nextItem, childRep))
+      const params = `[${nextItem}, ${directive.immNum(typeSize * (index + 1))}]`
+      result = result.concat(construct.move(ARMOpcode.store, nextItem, params))
+    })
+    result = result.concat(construct.move(ARMOpcode.store, nextItem, itemUsed))
+    result = result.concat(construct.move(ARMOpcode.store, itemUsed, this.sp))
+    return result
   }
 
   public genIdent = (atx: WJSCIdentifier, [head, ...tail]: Register[]): string[] => {
