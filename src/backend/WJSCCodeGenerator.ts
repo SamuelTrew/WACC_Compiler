@@ -129,10 +129,9 @@ class WJSCCodeGenerator {
   }
 
   public genExit = (exitCode: number, [head, ...tail]: Register[]): string[] => {
-    const exitReg = this.allViableRegs[0]
     return [
-      construct.singleDataTransfer(ARMOpcode.load, exitReg, `=${exitCode}`),
-    ].concat(construct.move(ARMOpcode.move, this.resultReg, exitReg))
+      construct.singleDataTransfer(ARMOpcode.load, head, `=${exitCode}`),
+    ].concat(construct.move(ARMOpcode.move, this.resultReg, head))
   }
 
   public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]): string[] => {
