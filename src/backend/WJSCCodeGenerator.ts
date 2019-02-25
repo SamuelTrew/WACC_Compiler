@@ -1,5 +1,6 @@
 import {
-  WJSCAssignment, WJSCAssignRhs,
+  WJSCAssignment,
+  WJSCAssignRhs,
   WJSCAst,
   WJSCDeclare,
   WJSCExpr,
@@ -12,7 +13,7 @@ import {
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { BaseType } from '../util/WJSCType'
-import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
+import { ARMOpcode, construct, directive, msgCount, Register, tabSpace } from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -22,9 +23,6 @@ class WJSCCodeGenerator {
   private readonly sp = Register.r13
   private readonly lr = Register.r14
   private readonly pc = Register.r15
-  private allViableRegs = [Register.r4, Register.r5, Register.r6,
-                           Register.r7, Register.r8, Register.r9,
-                           Register.r10, Register.r11, Register.r12]
 
   constructor(output: string[]) {
     this.output = output
@@ -43,7 +41,15 @@ class WJSCCodeGenerator {
   }
 
   public genProgram = (atx: WJSCAst): string[] => {
-    const regList = this.allViableRegs
+    const regList = [Register.r4, Register.r5, Register.r6,
+                     Register.r7, Register.r8, Register.r9,
+                     Register.r10, Register.r11, Register.r12]
+
+    // TODO: Change result to take strings before .text only when needed
+    // if (has string) {
+    //   let result = [directive.stringDec()].concat(directive.text, directive.global('main'))
+    // }
+
     let result = [directive.text].concat(directive.global('main'))
 
     // Generate code for function declarations
@@ -71,13 +77,12 @@ class WJSCCodeGenerator {
   }
 
   public genTerminal = (atx: WJSCTerminal, [head, ...tail]: Register[]): string[] => {
-    const reg = this.allViableRegs.shift()
     const val = atx.value
     let result: string[] = []
-    if (reg) {
+    if (head) {
       switch (atx.terminalType) {
         case 'bool': {
-          result = [construct.move(ARMOpcode.move, reg, `=${val}`)]
+          result = [construct.move(ARMOpcode.move, head, `=${val}`)]
           break
         }
         case 'stdlib':
@@ -175,24 +180,22 @@ class WJSCCodeGenerator {
     const result: string[] = []
     // TODO use parse rules to switch on expr type
     if (atx.parserRule === WJSCParserRules.Literal) {
+      let value = atx.value
       switch (atx.type) {
         case BaseType.Integer: {
-          const value = atx.value
           result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
         }
         case BaseType.Boolean: {
-          const value = atx.value ? 1 : 0
+          value = atx.value ? 1 : 0
+          result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
         }
         case BaseType.Character: {
-          result.push()
+          result.push(construct.move(ARMOpcode.move, head, `#${value}`))
         }
         case BaseType.String: {
-          result.push()
+          result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgCount))
         }
         case BaseType.Pair: {
-          result.push()
-        }
-        default: {
           result.push()
         }
       }
