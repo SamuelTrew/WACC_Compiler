@@ -199,19 +199,24 @@ class WJSCCodeGenerator {
       switch (atx.type) {
         case BaseType.Integer: {
           result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
+          break
         }
         case BaseType.Boolean: {
           value = atx.value ? 1 : 0
           result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
+          break
         }
         case BaseType.Character: {
           result.push(construct.move(ARMOpcode.move, head, `#${value}`))
+          break
         }
         case BaseType.String: {
           result.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgCount))
+          break
         }
         case BaseType.Pair: {
           result.push()
+          break
         }
       }
     }
