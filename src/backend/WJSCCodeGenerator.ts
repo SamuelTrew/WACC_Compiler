@@ -1,5 +1,6 @@
 import {
-  WJSCAssignment, WJSCAssignRhs,
+  WJSCAssignment,
+  WJSCAssignRhs,
   WJSCAst,
   WJSCDeclare,
   WJSCExpr,
@@ -12,7 +13,13 @@ import {
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { BaseType } from '../util/WJSCType'
-import { ARMOpcode, construct, directive, Register, tabSpace } from './ARMv7-lib'
+import {
+  ARMOpcode,
+  construct,
+  directive,
+  Register,
+  tabSpace
+} from './ARMv7-lib'
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
@@ -112,8 +119,10 @@ class WJSCCodeGenerator {
         )
         break
       }
-      case WJSCParserRules.Declare:
-
+      case WJSCParserRules.Declare: {
+        result = result.concat(this.genDeclare(atx.declaration, [head, ...tail]))
+        break
+      }
     }
     return result
   }
@@ -164,16 +173,29 @@ class WJSCCodeGenerator {
 
   public genAssignRhs = (atx: WJSCAssignRhs, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
-    const child = atx.children[0]
-    if (child.parserRule === WJSCParserRules.Expression) {
-      this.genExpr(atx.expr, [head, ...tail])
+    switch (atx.parserRule) {
+      case WJSCParserRules.Expression: {
+        result.concat(this.genExpr(atx.expr, [head, ...tail]))
+        break
+      }
+      case WJSCParserRules.ArrayLiteral: {
+        break
+      }
+      case WJSCParserRules.Newpair: {
+        break
+      }
+      case WJSCParserRules.PairElem: {
+        break
+      }
+      case WJSCParserRules.FunctionCall: {
+        break
+      }
     }
     return result
   }
 
   public genExpr = (atx: WJSCExpr, [head, ...tail]: Register[]): string[] => {
     const result: string[] = []
-    // TODO use parse rules to switch on expr type
     if (atx.parserRule === WJSCParserRules.Literal) {
       switch (atx.type) {
         case BaseType.Integer: {
