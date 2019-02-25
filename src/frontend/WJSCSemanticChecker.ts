@@ -1,7 +1,7 @@
-import { ParserRuleContext } from 'antlr4ts'
-import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import {ParserRuleContext} from 'antlr4ts'
+import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
 import _ from 'lodash'
-import { WJSCLexer } from '../grammar/WJSCLexer'
+import {WJSCLexer} from '../grammar/WJSCLexer'
 import {
   ArgListContext,
   ArithmeticOperator2Context,
@@ -33,9 +33,10 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from '../grammar/WJSCParser'
-import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
+import {WJSCParserVisitor} from '../grammar/WJSCParserVisitor'
 import {
-  WJSCAssignment, WJSCAssignRhs,
+  WJSCAssignment,
+  WJSCAssignRhs,
   WJSCAst,
   WJSCDeclare,
   WJSCExpr,
@@ -47,7 +48,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { SemError, SynError, WJSCErrorLog } from '../util/WJSCErrors'
+import {SemError, SynError, WJSCErrorLog} from '../util/WJSCErrors'
 import {
   BaseType,
   getFstInPair,
@@ -62,7 +63,7 @@ import {
   TerminalOperators,
   TypeName,
 } from '../util/WJSCType'
-import { WJSCSymbolTable } from './WJSCSymbolTable'
+import {WJSCSymbolTable} from './WJSCSymbolTable'
 
 /**
  * Class that represents a semantic checker.
@@ -129,7 +130,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   public visitArrayElement = (ctx: ArrayElementContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx, WJSCParserRules.Array)
+    const result = this.initWJSCAst(ctx, WJSCParserRules.ArrayElem)
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     this.symbolTable.checkType(ident)
     this.functionUse(result, ident)
@@ -646,6 +647,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               } else {
                 visitedOp = this.visitBooleanOperator(operators)
               }
+              visitedOp.parserRule = WJSCParserRules.BinOp
               result.children.push(visitedOp)
               const exp1 = this.visitExpression(expressions[0])
               const exp2 = this.visitExpression(expressions[1])
@@ -1070,9 +1072,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       terminal.terminalType = TerminalOperators.Operator
     } else if (type === WJSCLexer.BOOLEAN_LITERAL) {
       terminal.terminalType = terminal.type = BaseType.Boolean
+      terminal.parserRule = WJSCParserRules.BoolLiter
       terminal.value = token === 'true'
     } else if (type === WJSCLexer.CHARACTER_LITERAL) {
       terminal.terminalType = terminal.type = BaseType.Character
+      terminal.parserRule = WJSCParserRules.CharLiter
       const charRegexTest =
         // tslint:disable-next-line:max-line-length
         /(?<=')([\u0000-\u0021]|[\u0023-\u0026]|[\u0028-\u005b]|[\u005d-\u007f]|\\(0|b|t|n|f|r|'|\\|"))(?=')/
@@ -1092,9 +1096,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       terminal.value = Number(token)
     } else if (type === WJSCLexer.PAIR_LITERAL) {
       terminal.terminalType = terminal.type = BaseType.Pair
+      terminal.parserRule = WJSCParserRules.PairLiter
       terminal.value = null
     } else if (type === WJSCLexer.STRING_LITERAL) {
       terminal.terminalType = terminal.type = BaseType.String
+      terminal.parserRule = WJSCParserRules.StringLiter
       const strRegexTest =
         // tslint:disable-next-line:max-line-length
         /(?<=")([\u0000-\u0021]|[\u0023-\u0026]|[\u0028-\u005b]|[\u005d-\u007f]|\\(0|b|t|n|f|r|'|\\|"))+(?=")/
@@ -1129,6 +1135,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       }
     } else if (type === WJSCLexer.IDENTIFIER) {
       terminal.terminalType = TerminalKeywords.Identifier
+      terminal.parserRule = WJSCParserRules.Identifier
       terminal.value = token
       terminal.type = this.symbolTable.lookup(token)
     }
@@ -1138,7 +1145,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   public visitUnaryOperator = (ctx: UnaryOperatorContext): WJSCOperators => {
     const result = this.initWJSCAst(
       ctx,
-      WJSCParserRules.Operator,
+      WJSCParserRules.Unop,
     ) as WJSCOperators
     let op
     if (ctx.LOGICAL_NEGATION()) {

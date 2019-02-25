@@ -11,6 +11,9 @@ enum WJSCParserRules {
   ArrayElem = 'arrayElem',
   Assignment = 'assign',
   Assignrhs = 'assignrhs',
+  BinOp = 'binOp',
+  BoolLiter = 'boolLiter',
+  CharLiter = 'charLiter',
   Declare = 'declare',
   Type = 'type',
   Operator = 'op',
@@ -21,13 +24,16 @@ enum WJSCParserRules {
   Literal = 'literal',
   ArrayLiteral = 'array literal',
   Pair = 'pair',
+  PairLiter = 'pairLiter',
   Parameter = 'param',
   Stdlib = 'stdlib',
+  StringLiter = 'stringLiter',
   Identifier = 'ident',
   Skip = 'skip',
   Read = 'read',
   Scope = 'scope',
   Sequential = 'sequential composition',
+  Unop = 'unop',
   Free = 'free',
   Return = 'return',
   Exit = 'exit',
@@ -61,7 +67,6 @@ interface WJSCAst {
 }
 
 interface WJSCTerminal extends WJSCAst {
-  parserRule: WJSCParserRules.Terminal
   terminalType?: TerminalType
   value: any
 }
@@ -74,7 +79,6 @@ interface WJSCFunction extends WJSCAst {
 }
 
 interface WJSCOperators extends WJSCAst {
-  parserRule: WJSCParserRules.Operator
   inputs: TypeName[]
   arrayInput: boolean
   outputs: TypeName
