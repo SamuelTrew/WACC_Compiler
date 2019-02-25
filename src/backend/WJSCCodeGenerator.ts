@@ -13,14 +13,7 @@ import {
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { BaseType } from '../util/WJSCType'
-import {
-  ARMOpcode,
-  construct,
-  directive,
-  msgCount,
-  Register,
-  tabSpace,
-} from './ARMv7-lib'
+import { ARMOpcode, construct, directive, msgCount, Register, tabSpace, } from './ARMv7-lib'
 
 /* TODO: A function that maps base type to bits used
    TODO: A function that finds the total number of declarations
@@ -40,17 +33,39 @@ class WJSCCodeGenerator {
     this.output = output
   }
 
-  public genArray = (atx: WJSCAst, list: Register[]): string[] => {
+  public sizeGen = (atx: WJSCAst): number => {
+    let typeSize = 0
+    switch (atx.parserRule) {
+      case WJSCParserRules.BoolLiter:
+      case WJSCParserRules.CharLiter: {
+        typeSize = 1
+        break
+      }
+      case WJSCParserRules.ArrayElem:
+      case WJSCParserRules.IntLiteral: {
+        typeSize = 4
+        break
+      }
+      case WJSCParserRules.PairLiter: {
+        // TODO: Determine size of pairLiter
+        typeSize = 0
+        break
+      }
+    }
+    return typeSize
+  }
+
+  public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
     // TODO: As mentioned above for typeSize and nextReg
     // TODO: Extend move to do different thing if 'stack' is a parameter
-    const typeSize = 4
-    const size = (children.length + 1) * (typeSize)
+    const typeSize = this.sizeGen(atx.children[0])
+    const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
     const itemUsed = directive.nextRegister(list)
-    let result = [construct.move(ARMOpcode.load, this.pc, directive.immNum(size)),
-                  directive.malloc(ARMOpcode.branchLink),
-                  construct.move(ARMOpcode.move, itemUsed, Register.r0)]
+    this.output = this.output.concat([construct.move(ARMOpcode.load, this.pc, directive.immNum(size)),
+                                      directive.malloc(ARMOpcode.branchLink),
+                                      construct.move(ARMOpcode.move, itemUsed, Register.r0)])
     if (itemUsed in Register) {
       list.shift()
     } else {
@@ -76,13 +91,12 @@ class WJSCCodeGenerator {
           childRep = child.token
         }
       }
-      result = result.concat(construct.move(ARMOpcode.load, nextItem, childRep))
+      this.output.push(construct.move(ARMOpcode.load, nextItem, childRep))
       const params = `[${nextItem}, ${directive.immNum(typeSize * (index + 1))}]`
-      result = result.concat(construct.move(ARMOpcode.store, nextItem, params))
+      this.output.push(construct.move(ARMOpcode.store, nextItem, params))
     })
-    result = result.concat(construct.move(ARMOpcode.store, nextItem, itemUsed))
-    result = result.concat(construct.move(ARMOpcode.store, itemUsed, this.sp))
-    return result
+    this.output.push(construct.move(ARMOpcode.store, nextItem, itemUsed))
+    this.output.push(construct.move(ARMOpcode.store, itemUsed, this.sp))
   }
 
   public genIdent = (atx: WJSCIdentifier, [head, ...tail]: Register[]): string[] => {
@@ -234,6 +248,7 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.ArrayLiteral: {
+        this.genArray(atx, [head, ...tail])
         break
       }
       case WJSCParserRules.Newpair: {
