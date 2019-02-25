@@ -914,11 +914,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         result.children.push(this.visitAssignment(assignment))
         result.parserRule = WJSCParserRules.Assignment
       } else if (declare) {
-          const visitedDeclare = this.visitDeclare(declare)
-          result.children.push(visitedDeclare)
-          result.children.push(this.visitDeclare(declare))
-          result.parserRule = WJSCParserRules.Declare
-          result.declaration = visitedDeclare
+        const visitedDeclare = this.visitDeclare(declare)
+        result.children.push(visitedDeclare)
+        result.parserRule = WJSCParserRules.Declare
+        result.declaration = visitedDeclare
       } else if (read) {
         result.parserRule = WJSCParserRules.Read
         const lhs = ctx.assignLhs()
