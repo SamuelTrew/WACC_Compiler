@@ -12,10 +12,12 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { getTypeSize } from '../util/WJSCType'
+import {getTypeSize} from '../util/WJSCType'
 import {
-  ARMAddress, ARMCondition,
-  ARMOpcode, ARMOperand,
+  ARMAddress,
+  ARMCondition,
+  ARMOpcode,
+  ARMOperand,
   construct,
   directive,
   msgCount,
@@ -117,13 +119,13 @@ class WJSCCodeGenerator {
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
     const itemUsed = this.nextRegister(list)
-    this.output = this.output.concat([construct.move(ARMOpcode.load, this.pc, directive.immNum(size)),
-                                      directive.malloc(ARMOpcode.branchLink),
+    this.move(4, ARMOpcode.load, this.pc, directive.immNum(size))
+    this.output = this.output.concat([directive.malloc(ARMOpcode.branchLink),
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
     if (itemUsed in Register) {
       list.shift()
     } else {
-      // We received a stack reference, and such have conducted a modified move (to pop)
+      // We received a register whose contents have been put back on stack
     }
     // loading in elements
     const nextItem = this.nextRegister(list)
@@ -133,8 +135,8 @@ class WJSCCodeGenerator {
     children.forEach((child, index) => {
       this.genArrayElem(child, list, nextItem, index)
     })
-    this.output.push(construct.move(ARMOpcode.store, nextItem, itemUsed))
-    this.output.push(construct.move(ARMOpcode.store, itemUsed, this.sp))
+    construct.singleDataTransfer(ARMOpcode.store, nextItem, itemUsed)
+    construct.singleDataTransfer(ARMOpcode.store, itemUsed, this.sp)
   }
 
   public genArrayElem = (atx: WJSCAst, list: Register[], nextReg: Register, index: number) => {
