@@ -161,6 +161,27 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   if (tree && !numerrors) {
     const gen = new WJSCCodeGenerator([])
     const result = gen.genProgram(tree)
-    console.log(WJSCCodeGenerator.stringifyAsm(result))
+    const asm = WJSCCodeGenerator.stringifyAsm(result)
+    console.log(asm)
+
+    // Get file name from path
+    const fileName = args.src.substring(args.src.lastIndexOf('/') + 1).split('.', 1)
+    const asmOutput = `${fileName}.s`
+
+    // Write assembly file
+    try {
+      fs.writeFile(asmOutput, asm, (writeErr) => {
+        if (writeErr) {
+          throw writeErr
+        }
+        console.log(
+          `${ConsoleColors.Dim}${info} ` +
+            `Assembly written to ${asmOutput}${ConsoleColors.Reset}`,
+        )
+      })
+    } catch (writeError) {
+      console.error(`${warn} ${writeError}`)
+    }
+
   }
 })

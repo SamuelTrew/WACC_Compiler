@@ -13,7 +13,7 @@ import {
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { BaseType } from '../util/WJSCType'
-import { ARMOpcode, construct, directive, msgCount, Register, tabSpace, } from './ARMv7-lib'
+import { ARMOpcode, construct, directive, msgCount, Register, tabSpace } from './ARMv7-lib'
 
 /* TODO: A function that maps base type to bits used
    TODO: A function that finds the total number of declarations
@@ -291,24 +291,63 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genPair = (atx: WJSCAst, [head, ...tail]: Register[]) => {
-    switch (atx.parserRule) {
-      case WJSCParserRules.IntLiteral: {
-        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, `#4`))
-        break
+  public genPair = (atx: WJSCAst, [head, next, ...tail]: Register[]) => {
+    let pairCount = 4
+    this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, `#4`))
+    this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`))
+    this.output.push(directive.malloc(ARMOpcode.branchLink))
+    this.output.push(construct.move(ARMOpcode.move, head, this.resultReg))
+    atx.children.forEach((child, index) => {
+      switch (atx.parserRule) {
+        case WJSCParserRules.BoolLiter:
+        case WJSCParserRules.IntLiteral: {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `=${atx.token}`))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=4`))
+          this.output.push(directive.malloc(ARMOpcode.branchLink))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`))
+          if (index) {
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
+          } else {
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
+          }
+          break
+        }
+        case WJSCParserRules.StringLiter: {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `#${atx.token}`))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=4`))
+          this.output.push(directive.malloc(ARMOpcode.branchLink))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`))
+          if (index) {
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
+          } else {
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
+          }
+        }
+        case WJSCParserRules.CharLiter: {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `#${atx.token}`))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=1`))
+          this.output.push(directive.malloc(ARMOpcode.branchLink))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`))
+          if (index) {
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
+          } else {
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
+          }
+          break
+        }
+        case WJSCParserRules.ArrayLiteral: {
+          break
+        }
+        case WJSCParserRules.Pair: {
+          pairCount += 4
+          this.genPair(atx, [head, ...tail])
+          break
+        }
       }
-      case WJSCParserRules.ArrayLiteral: {
-        break
-      }
-      case WJSCParserRules.Pair: {
-        this.genPair(atx.children[0], [head, ...tail])
-        this.genPair(atx.children[1], [head, ...tail])
-        break
-      }
-      default: {
-        break
-      }
-    }
+    })
+
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[` + this.sp + `]`))
+    this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, `#${pairCount}`))
   }
 }
 
