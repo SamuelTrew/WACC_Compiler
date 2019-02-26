@@ -12,8 +12,15 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { BaseType } from '../util/WJSCType'
-import { ARMOpcode, construct, directive, msgCount, Register, tabSpace } from './ARMv7-lib'
+import { BaseType, getTypeSize } from '../util/WJSCType'
+import {
+  ARMOpcode,
+  construct,
+  directive,
+  msgCount,
+  Register,
+  tabSpace,
+} from './ARMv7-lib'
 
 /* TODO: A function that maps base type to bits used
    TODO: A function that finds the total number of declarations
@@ -187,7 +194,7 @@ class WJSCCodeGenerator {
         // Skip does nothing
         break
       case WJSCParserRules.Exit: {
-        this.genExpr(atx.stdlibExpr, tail)
+        this.genExpr(atx.stdlibExpr, [head, ...tail])
         this.output = this.output.concat(
             construct.move(ARMOpcode.move, this.resultReg, head),
             construct.branch('exit', true),
@@ -245,24 +252,19 @@ class WJSCCodeGenerator {
     const type = atx.type
     const id = atx.identifier
     const rhs = atx.rhs
-    let operand = '#4'
 
-    switch (type) {
-      case BaseType.Character:
-      case BaseType.Boolean: {
-        operand = '#1'
-        break
-      }
-      case BaseType.String:
-      case BaseType.Integer: {
-        operand = '#4'
-        break
-      }
-    }
+    const typeSize = getTypeSize(type)
+    const operand = `#${typeSize}`
+    const sizeIsByte = typeSize === 1
+
     // TODO add cases for pairs and arrays
 
+    // Write to output
     this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
     this.genAssignRhs(rhs, [head, ...tail])
+
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+
     this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
   }
 
@@ -301,7 +303,7 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.CharLiter: {
-        this.output.push(construct.move(ARMOpcode.move, head, `#${value}`))
+        this.output.push(construct.move(ARMOpcode.move, head, `#'${value}'`))
         break
       }
       case WJSCParserRules.StringLiter: {
