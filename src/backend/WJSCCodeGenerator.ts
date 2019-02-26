@@ -1,3 +1,4 @@
+import { EOL } from 'os'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -28,7 +29,7 @@ import {
 */
 
 class WJSCCodeGenerator {
-  public static stringifyAsm = (asm: string[]) => asm.join('\n')
+  public static stringifyAsm = (asm: string[]) => asm.join(EOL)
   public output: string[] = []
   public data: string[] = [directive.data]
 
