@@ -254,7 +254,7 @@ const directive = {
     (linkage ? `${linkage} ` : '') +
     (linkOrderSymbol ? `${linkOrderSymbol} ` : '') +
     (unique && uniqueId ? `${unique} ${uniqueId}` : ''),
-  stringDec: (symbol: string): string => 'msg_' + msgCount++ + ':\n' + tabSpace + `.word ${symbol.length}` + tabSpace + directive.ascii(symbol)     ,
+  stringDec: (symbol: string): string => 'msg_' + ++msgCount + ':\n' + tabSpace + `.word ${symbol.length}` + tabSpace + directive.ascii(symbol)     ,
   text: '.text\n',
   weak: (...symbol: string[]): string => `.weak ${symbol.join(', ')}`,
 }
