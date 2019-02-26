@@ -12,7 +12,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import {getTypeSize} from '../util/WJSCType'
+import { getTypeSize } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -135,8 +135,8 @@ class WJSCCodeGenerator {
     children.forEach((child, index) => {
       this.genArrayElem(child, list, nextItem, index)
     })
-    construct.singleDataTransfer(ARMOpcode.store, nextItem, itemUsed)
-    construct.singleDataTransfer(ARMOpcode.store, itemUsed, this.sp)
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, itemUsed))
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed, this.sp))
   }
 
   public genArrayElem = (atx: WJSCAst, list: Register[], nextReg: Register, index: number) => {
@@ -149,16 +149,15 @@ class WJSCCodeGenerator {
       }
       case (WJSCParserRules.ArrayElem): {
         this.genArray(atx, list)
-        break
       }
       default: {
         childRep = atx.token
         break
       }
     }
-    this.output.push(construct.move(ARMOpcode.load, nextReg, childRep))
+    this.load(typeSize, ARMOpcode.load, nextReg, childRep)
     const params = `[${nextReg}, ${directive.immNum(typeSize * (index + 1))}]`
-    this.output.push(construct.move(ARMOpcode.store, nextReg, params))
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params))
   }
 
   public genIdent = (atx: WJSCIdentifier, [head, ...tail]: Register[]): string[] => {
