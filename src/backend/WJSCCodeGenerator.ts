@@ -338,8 +338,9 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.StringLiter: {
+        const msgNo = msgCount
         this.data.push(directive.stringDec(atx.value))
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgCount))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgNo))
         break
       }
       case WJSCParserRules.PairLiter: {
