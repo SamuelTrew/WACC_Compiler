@@ -123,7 +123,7 @@ const getTypeSize = (type: TypeName): number => {
     case BaseType.Integer:
       return 4
     default:
-      return -1
+      return 4
   }
 }
 

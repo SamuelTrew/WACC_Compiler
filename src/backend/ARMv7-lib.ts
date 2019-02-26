@@ -157,7 +157,7 @@ const construct = {
     `${opcode}${condition || ''} ${rn}, ${stringify.operand(operand)}`,
   move: (
     opcode: ARMOpcode,
-    rd: Register,
+    rd: Register | undefined,
     operand: ARMOperand,
     condition?: ARMCondition,
     set = false,
@@ -217,20 +217,19 @@ const construct = {
 }
 
 // ------------------ UTILITY --------------------
-export let msgCount = -1
+export let msgCount = 0
 
 const directive = {
   ascii: (str: string): string => `.ascii "${str}"`,
   bss: '.bss',
   data: '.data\n',
   global: (...symbol: string[]): string => `.global ${symbol.join(', ')}`,
+  immAddr: (offset: number): string => `#${offset}`,
   immNum: (num: number | string): string => `#${num}`,
   label: (name: string): string => `${name}:`,
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',
   malloc: (content: ARMOpcode): string => `${content} malloc`,
-  // TODO: Complete this as stated
-  nextRegister: (viableRegs: Register[]): Register =>  viableRegs[0],
   popSection: '.popsection',
   pushSection: (...args: any): string =>
     `.pushsection ${directive.section(args)}`,
@@ -254,7 +253,7 @@ const directive = {
     (linkage ? `${linkage} ` : '') +
     (linkOrderSymbol ? `${linkOrderSymbol} ` : '') +
     (unique && uniqueId ? `${unique} ${uniqueId}` : ''),
-  stringDec: (symbol: string): string => 'msg_' + ++msgCount + ':\n' + tabSpace + `.word ${symbol.length}` + tabSpace + directive.ascii(symbol)     ,
+  stringDec: (symbol: string): string => 'msg_' + msgCount++ + ':\n' + tabSpace + `.word ${symbol.length}` + ':\n' + tabSpace + directive.ascii(symbol),
   text: '.text\n',
   weak: (...symbol: string[]): string => `.weak ${symbol.join(', ')}`,
 }
@@ -328,6 +327,7 @@ const stringify = {
 export {
   ARMCondition,
   ARMOpcode,
+  ARMOperand,
   constructInstruction,
   construct,
   directive,
