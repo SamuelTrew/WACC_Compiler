@@ -12,7 +12,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize } from '../util/WJSCType'
+import { getTypeSize } from '../util/WJSCType'
 import {
   ARMOpcode,
   construct,
@@ -148,7 +148,26 @@ class WJSCCodeGenerator {
 
     // Generate code for the function body statements
     if (atx.body) {
+      const stats = this.flattenSequential(atx.body)
+
+      // Move sp for all declarations at once
+      let totalStackSize = 0
+      stats.forEach((stat) => {
+        if (stat.parserRule === WJSCParserRules.Declare) {
+          totalStackSize += getTypeSize(stat.declaration.type)
+        }
+      })
+      const operand = `#${totalStackSize}`
+      // Decrement sp
+      if (totalStackSize) {
+        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
+      }
+      // Traverse body
       this.traverseStat(atx.body, regList)
+      // Increment sp
+      if (totalStackSize) {
+        this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
+      }
     }
     this.output.push(
         construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
@@ -189,11 +208,10 @@ class WJSCCodeGenerator {
         // Skip does nothing
         break
       case WJSCParserRules.Exit: {
+        // Load exit code then call exit
         this.genExpr(atx.stdlibExpr, [head, ...tail])
-        this.output = this.output.concat(
-            construct.move(ARMOpcode.move, this.resultReg, head),
-            construct.branch('exit', true),
-        )
+        this.output.push(construct.move(ARMOpcode.move, this.resultReg, head))
+        this.output.push(construct.branch('exit', true))
         break
       }
       case WJSCParserRules.Declare: {
@@ -206,6 +224,17 @@ class WJSCCodeGenerator {
         break
       }
     }
+  }
+
+  public flattenSequential = (atx: WJSCStatement): WJSCStatement[] => {
+    const stats = []
+    let curr = atx
+    while (curr.parserRule === WJSCParserRules.Sequential) {
+      stats.push(curr.nextStat)
+      curr = curr.stat
+    }
+    stats.push(curr)
+    return stats.reverse()
   }
 
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
@@ -230,16 +259,13 @@ class WJSCCodeGenerator {
     const rhs = atx.rhs
 
     const typeSize = getTypeSize(type)
-    const operand = `#${typeSize}`
     const sizeIsByte = typeSize === 1
 
     // TODO add cases for pairs and arrays
 
     // Write to output
-    this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
     this.genAssignRhs(rhs, [head, ...tail])
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
-    this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
   }
 
   public genAssignRhs = (atx: WJSCAssignRhs, [head, ...tail]: Register[]) => {
@@ -283,7 +309,6 @@ class WJSCCodeGenerator {
       case WJSCParserRules.StringLiter: {
         directive.stringDec(atx.value)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgCount))
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
         break
       }
       case WJSCParserRules.PairLiter: {
