@@ -221,7 +221,7 @@ class WJSCCodeGenerator {
     const type = atx.type
     const id = atx.identifier
     const rhs = atx.rhs
-    let operand = '#-0'
+    let operand = '#4'
 
     switch (type) {
       case BaseType.Character:
@@ -238,7 +238,7 @@ class WJSCCodeGenerator {
     // TODO add cases for pairs and arrays
 
     this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
-    this.genAssignRhs(rhs, tail)
+    this.genAssignRhs(rhs, [head, ...tail])
     this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
   }
 
@@ -287,7 +287,9 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.PairLiter: {
-        this.output.push()
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=0`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}]`))
         break
       }
     }
@@ -338,6 +340,7 @@ class WJSCCodeGenerator {
           break
         }
         case WJSCParserRules.ArrayLiteral: {
+          this.genArray(child, [head, ...tail])
           break
         }
         case WJSCParserRules.Pair: {
@@ -347,7 +350,6 @@ class WJSCCodeGenerator {
         }
       }
     })
-
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[` + this.sp + `]`))
     this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, `#${pairCount}`))
   }
