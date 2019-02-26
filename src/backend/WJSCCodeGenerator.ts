@@ -31,7 +31,30 @@ class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
   public output: string[] = []
   public data: string[] = [directive.data]
+
+  /* ------------- MEMORY MANAGEMENT --------------*/
   public memIndex: number = 0
+  public registerContentSize = new Map([
+    [ Register.r0, 0 ], [ Register.r1, 0 ], [ Register.r2, 0 ],
+    [Register.r3, 0], [Register.r4, 0], [Register.r5, 0],
+    [Register.r6, 0], [Register.r7, 0], [Register.r8, 0],
+    [Register.r9, 0], [Register.r10, 0], [Register.r11, 0],
+    [Register.r12, 0],
+  ])
+  public setRegSize = (reg: Register, size: number) => {
+    this.registerContentSize.set(reg, size)
+  }
+  public getRegSize = (reg: Register): number => {
+    const value = this.registerContentSize.get(reg)
+    if (typeof(value) === 'number') {
+      return this.registerContentSize.get(reg) as number
+    } else {
+      // WARNING: This should never happen!
+      return 0
+    }
+  }
+
+  /* ----------------------------------------------*/
 
   private readonly resultReg = Register.r0
   private readonly sp = Register.r13
