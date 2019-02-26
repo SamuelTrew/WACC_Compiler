@@ -14,6 +14,7 @@ import {
 } from '../util/WJSCAst'
 import { getTypeSize } from '../util/WJSCType'
 import {
+  ARMAddress, ARMCondition,
   ARMOpcode, ARMOperand,
   construct,
   directive,
@@ -39,10 +40,9 @@ class WJSCCodeGenerator {
     [Register.r3, 0], [Register.r4, 0], [Register.r5, 0],
     [Register.r6, 0], [Register.r7, 0], [Register.r8, 0],
     [Register.r9, 0], [Register.r10, 0], [Register.r11, 0],
-    [Register.r12, 0],
+    [Register.r12, 0], [Register.r13, 0], [Register.r14, 0],
+    [Register.r15, 0],
   ])
-
-  /* ----------------------------------------------*/
 
   private readonly resultReg = Register.r0
   private readonly sp = Register.r13
@@ -60,6 +60,32 @@ class WJSCCodeGenerator {
       return 0
     }
   }
+
+  public nextRegister = (viableRegs: Register[]): Register => {
+    if (viableRegs.length !== 0) {
+      return viableRegs[0]
+    } else {
+      // Pushes contents of last reg to symbol table, returns result
+      // First we store
+      this.output.concat(construct.singleDataTransfer(ARMOpcode.store, Register.r12, directive.immAddr(this.memIndex)))
+      this.memIndex = this.memIndex + this.getRegSize(Register.r12)
+      return Register.r12
+    }
+  }
+
+  public move = (size: number, opcode: ARMOpcode, rd: Register, operand: ARMOperand, condition?: ARMCondition) => {
+    this.setRegSize(rd, size)
+    this.output.push(construct.move(ARMOpcode.load, this.pc, directive.immNum(size)))
+  }
+
+  // load
+  public load = (size: number, opcode: ARMOpcode.load, rd: Register, address: ARMAddress,
+                 condition?: ARMCondition, modifier?: 'H' | 'SB' | 'SH') => {
+    this.setRegSize(rd, size)
+    this.output.push(construct.singleDataTransfer(opcode, rd, address, condition, modifier))
+  }
+
+  /* ----------------------------------------------*/
 
   public sizeGen = (atx: WJSCAst): number => {
     let typeSize = 0
@@ -81,19 +107,6 @@ class WJSCCodeGenerator {
       }
     }
     return typeSize
-  }
-
-  public nextRegister = (viableRegs: Register[]): Register => {
-    if (viableRegs.length !== 0) {
-      return viableRegs[0]
-    } else {
-      // Pushes contents of last reg to symbol table, returns result
-      // First we store
-      this.output.concat(construct.singleDataTransfer(ARMOpcode.store, Register.r12, directive.immAddr(this.memIndex)))
-      // TODO: Size of item in registers?
-      this.memIndex = this.memIndex + 4
-      return Register.r12
-    }
   }
 
   public genArray = (atx: WJSCAst, list: Register[]) => {

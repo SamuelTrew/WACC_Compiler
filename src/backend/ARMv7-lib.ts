@@ -157,7 +157,7 @@ const construct = {
     `${opcode}${condition || ''} ${rn}, ${stringify.operand(operand)}`,
   move: (
     opcode: ARMOpcode,
-    rd: Register | undefined,
+    rd: Register,
     operand: ARMOperand,
     condition?: ARMCondition,
     set = false,
@@ -327,6 +327,7 @@ const stringify = {
 }
 
 export {
+  ARMAddress,
   ARMCondition,
   ARMOpcode,
   ARMOperand,
