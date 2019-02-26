@@ -25,11 +25,6 @@ import {
   tabSpace,
 } from './ARMv7-lib'
 
-/* TODO: A function that maps base type to bits used
-   TODO: A function that finds the total number of declarations
-   TODO: complete "nextRegister" function
-*/
-
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
   public output: string[] = []
@@ -113,8 +108,6 @@ class WJSCCodeGenerator {
 
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
-    // TODO: As mentioned above for typeSize and nextReg
-    // TODO: Extend move to do different thing if 'stack' is a parameter
     const typeSize = this.sizeGen(atx.children[0])
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array

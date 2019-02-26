@@ -230,8 +230,6 @@ const directive = {
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',
   malloc: (content: ARMOpcode): string => tabSpace + `${content} malloc`,
-  // TODO: Complete this as stated
-  nextRegister: (viableRegs: Register[]): Register =>  viableRegs[0],
   popSection: '.popsection',
   pushSection: (...args: any): string =>
     `.pushsection ${directive.section(args)}`,
