@@ -84,8 +84,7 @@ class WJSCCodeGenerator {
 
   /* ----------------------------------------------*/
 
-  public sizeGen = (atx: WJSCAst): number => {
-    // WARNING: sizeGen should only be called by array funcs!
+  public sizeGen = (atx: WJSCAst, calledByArray: boolean): number => {
     let typeSize = 0
     switch (atx.parserRule) {
       case WJSCParserRules.BoolLiter:
@@ -99,7 +98,7 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.PairLiter: {
-        typeSize = 4
+        typeSize = (calledByArray ? 4 : 8)
         break
       }
     }
@@ -108,7 +107,7 @@ class WJSCCodeGenerator {
 
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
-    const typeSize = this.sizeGen(atx.children[0])
+    const typeSize = this.sizeGen(atx.children[0], true)
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
     const itemUsed = this.nextRegister(list)
@@ -133,7 +132,7 @@ class WJSCCodeGenerator {
   }
 
   public genArrayElem = (atx: WJSCAst, list: Register[], nextReg: Register, index: number) => {
-    const typeSize = this.sizeGen(atx)
+    const typeSize = this.sizeGen(atx, true)
     let childRep = ''
     switch (atx.parserRule) {
       case (WJSCParserRules.IntLiteral): {
