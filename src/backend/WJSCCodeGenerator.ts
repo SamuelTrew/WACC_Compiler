@@ -12,7 +12,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { getTypeSize } from '../util/WJSCType'
+import {getTypeSize} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -85,6 +85,7 @@ class WJSCCodeGenerator {
   /* ----------------------------------------------*/
 
   public sizeGen = (atx: WJSCAst): number => {
+    // WARNING: sizeGen should only be called by array funcs!
     let typeSize = 0
     switch (atx.parserRule) {
       case WJSCParserRules.BoolLiter:
@@ -98,7 +99,6 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.PairLiter: {
-        // TODO: Determine size of pairLiter
         typeSize = 4
         break
       }
@@ -112,7 +112,7 @@ class WJSCCodeGenerator {
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
     const itemUsed = this.nextRegister(list)
-    this.move(4, ARMOpcode.load, this.pc, directive.immNum(size))
+    this.load(4, ARMOpcode.load, this.pc, directive.immNum(size)) // <- 4 refers to size of int type (for size)
     this.output = this.output.concat([directive.malloc(ARMOpcode.branchLink),
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
     if (itemUsed in Register) {
