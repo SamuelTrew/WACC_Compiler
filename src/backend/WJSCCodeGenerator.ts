@@ -281,7 +281,9 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.StringLiter: {
+        directive.stringDec(atx.value)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgCount))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
         break
       }
       case WJSCParserRules.PairLiter: {
