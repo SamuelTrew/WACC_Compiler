@@ -30,6 +30,7 @@ import {
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
   public output: string[] = []
+  public data: string[] = [directive.data]
 
   private readonly resultReg = Register.r0
   private readonly sp = Register.r13
@@ -179,7 +180,14 @@ class WJSCCodeGenerator {
         construct.pushPop(ARMOpcode.pop, [this.pc]),
         tabSpace + directive.ltorg + '\n',
     )
-    return this.output
+
+    // Add .data section if it is not empty
+    let result = this.output
+    if (msgCount > 0) {
+      result = this.data.concat(this.output)
+    }
+
+    return result
   }
 
   public genTerminal = (atx: WJSCTerminal, [head, ...tail]: Register[]) => {
@@ -194,17 +202,6 @@ class WJSCCodeGenerator {
           break
       }
     }
-  }
-
-  public traverseStatements = (
-    children: WJSCStatement[],
-    instructions: string[], regList: Register[],
-  ): string[] => {
-    // WARNING: Do not concat the results of this function to prior results
-    children.forEach((child) => {
-      this.traverseStat(child, regList)
-    })
-    return instructions
   }
 
   public traverseStat = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
@@ -331,7 +328,7 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.StringLiter: {
-        directive.stringDec(atx.value)
+        this.data.push(directive.stringDec(atx.value))
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgCount))
         break
       }
