@@ -182,7 +182,7 @@ class WJSCCodeGenerator {
         // Skip does nothing
         break
       case WJSCParserRules.Exit: {
-        this.genExpr(atx.stdlibExpr, tail)
+        this.genExpr(atx.stdlibExpr, [head, ...tail])
         this.output = this.output.concat(
             construct.move(ARMOpcode.move, this.resultReg, head),
             construct.branch('exit', true),
