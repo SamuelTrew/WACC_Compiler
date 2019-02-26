@@ -19,7 +19,7 @@ import {
   directive,
   msgCount,
   Register,
-  tabSpace
+  tabSpace,
 } from './ARMv7-lib'
 
 /* TODO: A function that maps base type to bits used
@@ -35,10 +35,6 @@ class WJSCCodeGenerator {
   private readonly sp = Register.r13
   private readonly lr = Register.r14
   private readonly pc = Register.r15
-
-  constructor(output: string[]) {
-    this.output = output
-  }
 
   public sizeGen = (atx: WJSCAst): number => {
     let typeSize = 0
