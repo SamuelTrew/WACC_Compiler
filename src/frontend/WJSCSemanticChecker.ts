@@ -732,7 +732,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   public visitIntegerLiteral = (ctx: IntegerLiteralContext): WJSCTerminal => {
     const result = this.initWJSCAst(
       ctx,
-      WJSCParserRules.Literal,
+      WJSCParserRules.IntLiteral,
     ) as WJSCTerminal
     const sign = ctx.PLUS() || ctx.MINUS()
     const digits = ctx.DIGIT()
