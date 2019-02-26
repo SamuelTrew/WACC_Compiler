@@ -13,7 +13,14 @@ import {
   WJSCTerminal,
 } from '../util/WJSCAst'
 import { BaseType } from '../util/WJSCType'
-import { ARMOpcode, construct, directive, msgCount, Register, tabSpace } from './ARMv7-lib'
+import {
+  ARMOpcode,
+  construct,
+  directive,
+  msgCount,
+  Register,
+  tabSpace
+} from './ARMv7-lib'
 
 /* TODO: A function that maps base type to bits used
    TODO: A function that finds the total number of declarations
@@ -222,11 +229,13 @@ class WJSCCodeGenerator {
     const id = atx.identifier
     const rhs = atx.rhs
     let operand = '#-0'
+    let sizeIsByte = false
 
     switch (type) {
       case BaseType.Character:
       case BaseType.Boolean: {
         operand = '#1'
+        sizeIsByte = true
         break
       }
       case BaseType.String:
@@ -237,8 +246,10 @@ class WJSCCodeGenerator {
     }
     // TODO add cases for pairs and arrays
 
+    // Write to output
     this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
-    this.genAssignRhs(rhs, tail)
+    this.genAssignRhs(rhs, [head, ...tail])
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
     this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
   }
 
