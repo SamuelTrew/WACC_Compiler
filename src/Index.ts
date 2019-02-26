@@ -157,16 +157,16 @@ fs.readFile(args.src, 'utf8', (err, data) => {
     }
   }
 
-  const fileName = args.src.split('.', 1)
-  const asmOutput = `${fileName}.s`
-  console.log('Filename: 'fileName)
-
   /* back end code gen check */
   if (tree && !numerrors) {
     const gen = new WJSCCodeGenerator([])
     const result = gen.genProgram(tree)
     const asm = WJSCCodeGenerator.stringifyAsm(result)
     console.log(asm)
+
+    // Get file name from path
+    const fileName = args.src.substring(args.src.lastIndexOf('/') + 1).split('.', 1)
+    const asmOutput = `${fileName}.s`
 
     // Write assembly file
     try {
