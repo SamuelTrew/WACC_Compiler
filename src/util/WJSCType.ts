@@ -114,6 +114,19 @@ const getSndInPair = (pairType: PairType): TypeName => {
   return pairType.pairType[1]
 }
 
+const getTypeSize = (type: TypeName): number => {
+  switch (type) {
+    case BaseType.Character:
+    case BaseType.Boolean:
+      return 1
+    case BaseType.String:
+    case BaseType.Integer:
+      return 4
+    default:
+      return -1
+  }
+}
+
 export {
   MAX_INT,
   MIN_INT,
@@ -130,4 +143,5 @@ export {
   getFstInPair,
   getSndInPair,
   Stdlib,
+  getTypeSize,
 }

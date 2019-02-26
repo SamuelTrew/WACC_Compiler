@@ -12,7 +12,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { BaseType } from '../util/WJSCType'
+import { BaseType, getTypeSize } from '../util/WJSCType'
 import {
   ARMOpcode,
   construct,
@@ -228,22 +228,11 @@ class WJSCCodeGenerator {
     const type = atx.type
     const id = atx.identifier
     const rhs = atx.rhs
-    let operand = '#-0'
-    let sizeIsByte = false
 
-    switch (type) {
-      case BaseType.Character:
-      case BaseType.Boolean: {
-        operand = '#1'
-        sizeIsByte = true
-        break
-      }
-      case BaseType.String:
-      case BaseType.Integer: {
-        operand = '#4'
-        break
-      }
-    }
+    const typeSize = getTypeSize(type)
+    const operand = `#${typeSize}`
+    const sizeIsByte = typeSize === 1
+
     // TODO add cases for pairs and arrays
 
     // Write to output
