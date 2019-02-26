@@ -228,7 +228,7 @@ const directive = {
   label: (name: string): string => `${name}:`,
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',
-  malloc: (content: ARMOpcode): string => `${content} malloc`,
+  malloc: (content: ARMOpcode): string => tabSpace + `${content} malloc`,
   // TODO: Complete this as stated
   nextRegister: (viableRegs: Register[]): Register =>  viableRegs[0],
   popSection: '.popsection',

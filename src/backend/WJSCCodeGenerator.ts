@@ -55,7 +55,7 @@ class WJSCCodeGenerator {
       }
       case WJSCParserRules.PairLiter: {
         // TODO: Determine size of pairLiter
-        typeSize = 0
+        typeSize = 4
         break
       }
     }
@@ -205,6 +205,11 @@ class WJSCCodeGenerator {
         this.genDeclare(atx.declaration, [head, ...tail])
         break
       }
+      case WJSCParserRules.Assignment: {
+        this.output.push('HELLO\n')
+        this.genAssignment(atx.assignment, [head, ...tail])
+        break
+      }
       case WJSCParserRules.Sequential: {
         this.traverseStat(atx.stat, [head, ...tail])
         this.traverseStat(atx.nextStat, [head, ...tail])
@@ -242,15 +247,14 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.Pair: {
-        this.genPairType(atx, [head, ...tail])
+        this.output.push()
         break
       }
     }
   }
 
-  public genDeclare = (atx: WJSCDeclare, [head, ...tail]: Register[]) => {
+  public genDeclare = (atx: WJSCDeclare, [head, next, ...tail]: Register[]) => {
     const type = atx.type
-    const id = atx.identifier
     const rhs = atx.rhs
 
     const typeSize = getTypeSize(type)
@@ -261,24 +265,37 @@ class WJSCCodeGenerator {
 
     // Write to output
     this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
-    this.genAssignRhs(rhs, [head, ...tail])
+    this.genAssignRhs(rhs, [head, next, ...tail])
 
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
 
     this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
   }
 
-  public genAssignRhs = (atx: WJSCAssignRhs, [head, ...tail]: Register[]) => {
+  public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
     switch (atx.parserRule) {
       case WJSCParserRules.Expression: {
-        this.genExpr(atx.expr, [head, ...tail])
+        this.genExpr(atx.expr, [head, next, ...tail])
         break
       }
       case WJSCParserRules.ArrayLiteral: {
-        this.genArray(atx, [head, ...tail])
+        this.genArray(atx, [head, next, ...tail])
         break
       }
       case WJSCParserRules.Newpair: {
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`))
+        this.output.push(directive.malloc(ARMOpcode.branchLink))
+        this.output.push(construct.move(ARMOpcode.move, head, this.resultReg))
+
+        this.genExpr(atx.expr, [head, next, ...tail])
+        this.output.push(directive.malloc(ARMOpcode.branchLink))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
+
+        this.genExpr(atx.expr2, [head, next, ...tail])
+        this.output.push(directive.malloc(ARMOpcode.branchLink))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
         break
       }
       case WJSCParserRules.PairElem: {
@@ -295,6 +312,7 @@ class WJSCCodeGenerator {
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral: {
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=4`))
         break
       }
       case WJSCParserRules.BoolLiter: {
@@ -304,11 +322,13 @@ class WJSCCodeGenerator {
       }
       case WJSCParserRules.CharLiter: {
         this.output.push(construct.move(ARMOpcode.move, head, `#'${value}'`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=1`))
         break
       }
       case WJSCParserRules.StringLiter: {
         directive.stringDec(atx.value)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgCount))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=4`))
         this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
         break
       }
@@ -319,66 +339,6 @@ class WJSCCodeGenerator {
         break
       }
     }
-  }
-
-  public genPairType = (atx: WJSCAst, [head, next, ...tail]: Register[]) => {
-    let pairCount = 4
-    this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, `#4`))
-    this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`))
-    this.output.push(directive.malloc(ARMOpcode.branchLink))
-    this.output.push(construct.move(ARMOpcode.move, head, this.resultReg))
-    atx.children.forEach((child, index) => {
-      switch (atx.parserRule) {
-        case WJSCParserRules.BoolLiter:
-        case WJSCParserRules.IntLiteral: {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `=${atx.token}`))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=4`))
-          this.output.push(directive.malloc(ARMOpcode.branchLink))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`))
-          if (index) {
-            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
-          } else {
-            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
-          }
-          break
-        }
-        case WJSCParserRules.StringLiter: {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `#${atx.token}`))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=4`))
-          this.output.push(directive.malloc(ARMOpcode.branchLink))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`))
-          if (index) {
-            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
-          } else {
-            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
-          }
-          break
-        }
-        case WJSCParserRules.CharLiter: {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `#${atx.token}`))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=1`))
-          this.output.push(directive.malloc(ARMOpcode.branchLink))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`))
-          if (index) {
-            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
-          } else {
-            this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
-          }
-          break
-        }
-        case WJSCParserRules.ArrayLiteral: {
-          this.genArray(child, [head, ...tail])
-          break
-        }
-        case WJSCParserRules.Pair: {
-          pairCount += 4
-          this.genPairType(atx, [head, ...tail])
-          break
-        }
-      }
-    })
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[` + this.sp + `]`))
-    this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, `#${pairCount}`))
   }
 }
 
