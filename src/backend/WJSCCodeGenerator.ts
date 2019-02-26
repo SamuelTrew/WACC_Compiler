@@ -77,27 +77,32 @@ class WJSCCodeGenerator {
       list.shift()
     }
     children.forEach((child, index) => {
-      let childRep = ''
-      switch (child.parserRule) {
-        case (WJSCParserRules.IntLiteral): {
-          childRep = directive.immNum(child.token)
-          break
-        }
-        case (WJSCParserRules.ArrayElem): {
-          this.genArray(child, list)
-          break
-        }
-        default: {
-          childRep = child.token
-          break
-        }
-      }
-      this.output.push(construct.move(ARMOpcode.load, nextItem, childRep))
-      const params = `[${nextItem}, ${directive.immNum(typeSize * (index + 1))}]`
-      this.output.push(construct.move(ARMOpcode.store, nextItem, params))
+      this.genArrayElem(child, list, nextItem, index)
     })
     this.output.push(construct.move(ARMOpcode.store, nextItem, itemUsed))
     this.output.push(construct.move(ARMOpcode.store, itemUsed, this.sp))
+  }
+
+  public genArrayElem = (atx: WJSCAst, list: Register[], nextReg: Register, index: number) => {
+    const typeSize = this.sizeGen(atx)
+    let childRep = ''
+    switch (atx.parserRule) {
+      case (WJSCParserRules.IntLiteral): {
+        childRep = directive.immNum(atx.token)
+        break
+      }
+      case (WJSCParserRules.ArrayElem): {
+        this.genArray(atx, list)
+        break
+      }
+      default: {
+        childRep = atx.token
+        break
+      }
+    }
+    this.output.push(construct.move(ARMOpcode.load, nextReg, childRep))
+    const params = `[${nextReg}, ${directive.immNum(typeSize * (index + 1))}]`
+    this.output.push(construct.move(ARMOpcode.store, nextReg, params))
   }
 
   public genIdent = (atx: WJSCIdentifier, [head, ...tail]: Register[]): string[] => {
@@ -214,7 +219,26 @@ class WJSCCodeGenerator {
   }
 
   public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]) => {
-    // TODO
+    this.genAssignLhs(atx.lhs, [head, ...tail])
+    this.genAssignRhs(atx.rhs, [head, ...tail])
+  }
+
+  public genAssignLhs = (atx: WJSCAst, [head, ...tail]: Register[]) => {
+    switch (atx.parserRule) {
+      case WJSCParserRules.Identifier: {
+        this.output.push()
+        // TODO: this code won't work as genIdent need an IdentAst      this.genIdent(atx, [head, ...tail])
+        break
+      }
+      case WJSCParserRules.ArrayElem: {
+        this.genArrayElem(atx, tail, head, 0)
+        break
+      }
+      case WJSCParserRules.Pair: {
+        this.genPairType(atx, [head, ...tail])
+        break
+      }
+    }
   }
 
   public genDeclare = (atx: WJSCDeclare, [head, ...tail]: Register[]) => {
@@ -295,7 +319,7 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genPair = (atx: WJSCAst, [head, next, ...tail]: Register[]) => {
+  public genPairType = (atx: WJSCAst, [head, next, ...tail]: Register[]) => {
     let pairCount = 4
     this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, `#4`))
     this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`))
@@ -326,6 +350,7 @@ class WJSCCodeGenerator {
           } else {
             this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
           }
+          break
         }
         case WJSCParserRules.CharLiter: {
           this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `#${atx.token}`))
@@ -345,7 +370,7 @@ class WJSCCodeGenerator {
         }
         case WJSCParserRules.Pair: {
           pairCount += 4
-          this.genPair(atx, [head, ...tail])
+          this.genPairType(atx, [head, ...tail])
           break
         }
       }
