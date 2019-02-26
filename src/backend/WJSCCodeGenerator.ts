@@ -12,7 +12,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { getTypeSize } from '../util/WJSCType'
+import { getTypeSize, isPairType } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -261,13 +261,12 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.Assignment: {
-        this.output.push('HELLO\n')
         this.genAssignment(atx.assignment, [head, ...tail])
         break
       }
       case WJSCParserRules.Sequential: {
         this.traverseStat(atx.stat, [head, ...tail])
-        this.traverseStat(atx.nextStat, [head, ...tail])
+        // what are you doing?????: this.traverseStat(atx.nextStat, [head, ...tail])
         break
       }
     }
@@ -330,7 +329,12 @@ class WJSCCodeGenerator {
 
     // Write to output
     this.genAssignRhs(rhs, [head, next, ...tail])
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${typeSize}]`, undefined, undefined, sizeIsByte))
+    // TODO: NOT CORRECT NEED TO CHECK FOR REFERENCES TO PAIR
+    if (isPairType(type)) {
+      this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${typeSize}]`, undefined, undefined, sizeIsByte))
+      this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+    }
   }
 
   public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
@@ -368,28 +372,28 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genExpr = (atx: WJSCExpr, [head, ...tail]: Register[]) => {
+  public genExpr = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
     let value = atx.value
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral: {
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `=${value}`))
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=4`))
         break
       }
       case WJSCParserRules.BoolLiter: {
         value = atx.value ? 1 : 0
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `=${value}`))
         break
       }
       case WJSCParserRules.CharLiter: {
-        this.output.push(construct.move(ARMOpcode.move, head, `#'${value}'`))
+        this.output.push(construct.move(ARMOpcode.move, next, `#'${value}'`))
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=1`))
         break
       }
       case WJSCParserRules.StringLiter: {
         const msgNo = msgCount
         this.data.push(directive.stringDec(atx.value))
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgNo))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `=msg_` + msgNo))
         break
       }
       case WJSCParserRules.PairLiter: {
