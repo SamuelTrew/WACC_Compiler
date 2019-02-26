@@ -277,7 +277,7 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.CharLiter: {
-        this.output.push(construct.move(ARMOpcode.move, head, `#${value}`))
+        this.output.push(construct.move(ARMOpcode.move, head, `#'${value}'`))
         break
       }
       case WJSCParserRules.StringLiter: {
