@@ -22,4 +22,8 @@ test/report
 
 #test output files
 out.json
+tree.json
 *.log
+
+# Assembly
+*.s

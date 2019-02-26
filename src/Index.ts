@@ -1,9 +1,9 @@
 /* Library imports */
 import * as argparse from 'argparse'
 import * as fs from 'fs'
+import * as path from 'path'
 
 /* Our code */
-import { WJSCCodeGenerator } from './backend/WJSCCodeGenerator'
 import { ConsoleColors } from './util/Colors'
 import { WJSCAst } from './util/WJSCAst'
 import WJSCCompiler from './WJSCCompiler'
@@ -24,7 +24,6 @@ argp.addArgument('src', {
 
 argp.addArgument(['-o', '--output'], {
   action: 'store',
-  defaultValue: 'out.json',
   help: 'Path to output tree.',
 })
 
@@ -45,8 +44,15 @@ argp.addArgument(['-pa', '--print-ast'], {
   help: 'Print errors to STDERR',
 })
 
+argp.addArgument(['-t', '--tree'], {
+  action: 'store',
+  defaultValue: 'tree.json',
+  help: 'Output tree to a file',
+})
+
 const args = argp.parseArgs()
-const output = args.output
+const output = args.output || (path.parse(args.src).name + '.s')
+const treeout = args.tree
 const errors = args.errors
 const printErrors = args.print_errors
 const printAst = args.print_ast
@@ -91,40 +97,28 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   }
 
   if (numerrors === 0) {
-    console.log(
-      `  ${ConsoleColors.FgGreen}[OK]${ConsoleColors.Reset}` +
-        ` Compilation succeeded.`,
-    )
+    console.log(`  ${ConsoleColors.FgGreen}[OK]${ConsoleColors.Reset} Checking succeeded.`)
   } else {
     console.log(
-      `  ${ConsoleColors.FgRed}[NG]${ConsoleColors.Reset}` +
-        ` Compilation failed with ` +
-        (synerrors > 0
-          ? `${synerrors} syntax error${synerrors !== 1 ? 's' : ''}`
-          : '') +
-        (synerrors > 0 && semerrors > 0 ? ' and ' : '') +
-        (semerrors > 0
-          ? `${semerrors} semantic error${semerrors !== 1 ? 's' : ''}`
-          : ''),
+      `  ${ConsoleColors.FgRed}[NG]${ConsoleColors.Reset} Compilation failed with ` +
+      (synerrors > 0 ? `${synerrors} syntax error${synerrors !== 1 ? 's' : ''}` : '') +
+      (synerrors > 0 && semerrors > 0 ? ' and ' : '') +
+      (semerrors > 0 ? `${semerrors} semantic error${semerrors !== 1 ? 's' : ''}` : ''),
     )
   }
 
   /* Write the output */
   if (tree) {
     const stringifiedTree = JSON.stringify(tree, null, 2)
-    try {
-      fs.writeFile(output, stringifiedTree, (writeErr) => {
-        if (writeErr) {
-          throw writeErr
-        }
-        console.log(
-          `${ConsoleColors.Dim}${info} ` +
-            `Output written to ${output}${ConsoleColors.Reset}`,
-        )
-      })
-    } catch (writeError) {
-      console.error(`${warn} ${writeError}`)
-    }
+    fs.writeFile(treeout, stringifiedTree, (writeErr) => {
+      if (writeErr) {
+        console.error(`${warn} ${writeErr}`)
+      }
+      console.log(
+        `${ConsoleColors.Dim}${info} ` +
+        `Output written to ${treeout}${ConsoleColors.Reset}`,
+      )
+    })
     if (printAst) {
       console.log('--- AST ---')
       console.log(stringifiedTree + '\n')
@@ -132,56 +126,34 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   } else {
     console.log(
       `${ConsoleColors.Dim}${info} ` +
-        `No output written${ConsoleColors.Reset}`,
+      `No output written${ConsoleColors.Reset}`,
     )
   }
 
   /* Write the errors */
   if (numerrors > 0) {
-    try {
-      fs.writeFile(errors, compiler.errorLog.printErrors(), (writeErr) => {
-        if (writeErr) {
-          throw writeErr
-        }
-        console.log(
-          `${ConsoleColors.Dim}${info}` +
-            ` Errors written to ${errors}${ConsoleColors.Reset}`,
-        )
-      })
-    } catch (writeError) {
-      console.error(`${warn} ${writeError}`)
-    }
+    fs.writeFile(errors, compiler.errorLog.printErrors(), (writeErr) => {
+      if (writeErr) {
+        console.error(`${warn} ${writeErr}`)
+      }
+      console.log(
+        `${ConsoleColors.Dim}${info}` +
+        ` Errors written to ${errors}${ConsoleColors.Reset}`,
+      )
+    })
     if (printErrors) {
       console.error('--- ERRORS ---')
       console.error(compiler.errorLog.printErrors() + '\n')
     }
   }
 
-  /* back end code gen check */
-  if (tree && !numerrors) {
-    const gen = new WJSCCodeGenerator([])
-    const result = gen.genProgram(tree)
-    const asm = WJSCCodeGenerator.stringifyAsm(result)
-    console.log(asm)
-
-    // Get file name from path
-    const fileName = args.src.substring(args.src.lastIndexOf('/') + 1).split('.', 1)
-    const asmOutput = `${fileName}.s`
-
-    // Write assembly file
-    try {
-      fs.writeFile(asmOutput, asm, (writeErr) => {
-        if (writeErr) {
-          throw writeErr
-        }
-        console.log(
-          `${ConsoleColors.Dim}${info} ` +
-            `Assembly written to ${asmOutput}${ConsoleColors.Reset}`,
-        )
-      })
-    } catch (writeError) {
-      console.error(`${warn} ${writeError}`)
-    }
-
-  }
+  /* Transpile to Assembly */
+  compiler.write(output).then((success) => {
+    console.log(
+      `${ConsoleColors.Dim}${info} ` +
+      `Assembly written to ${output}${ConsoleColors.Reset}`,
+    )
+  }).catch((reason) => {
+    console.error(`${warn} ${reason}`)
+  })
 })

@@ -12,9 +12,9 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize } from '../util/WJSCType'
+import { getTypeSize } from '../util/WJSCType'
 import {
-  ARMOpcode,
+  ARMOpcode, ARMOperand,
   construct,
   directive,
   msgCount,
@@ -30,14 +30,35 @@ import {
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
   public output: string[] = []
+  public data: string[] = [directive.data]
+
+  /* ------------- MEMORY MANAGEMENT --------------*/
+  public memIndex: number = 0
+  public registerContentSize = new Map([
+    [ Register.r0, 0 ], [ Register.r1, 0 ], [ Register.r2, 0 ],
+    [Register.r3, 0], [Register.r4, 0], [Register.r5, 0],
+    [Register.r6, 0], [Register.r7, 0], [Register.r8, 0],
+    [Register.r9, 0], [Register.r10, 0], [Register.r11, 0],
+    [Register.r12, 0],
+  ])
+
+  /* ----------------------------------------------*/
 
   private readonly resultReg = Register.r0
   private readonly sp = Register.r13
   private readonly lr = Register.r14
   private readonly pc = Register.r15
-
-  constructor(output: string[]) {
-    this.output = output
+  public setRegSize = (reg: Register, size: number) => {
+    this.registerContentSize.set(reg, size)
+  }
+  public getRegSize = (reg: Register): number => {
+    const value = this.registerContentSize.get(reg)
+    if (typeof(value) === 'number') {
+      return this.registerContentSize.get(reg) as number
+    } else {
+      // WARNING: This should never happen!
+      return 0
+    }
   }
 
   public sizeGen = (atx: WJSCAst): number => {
@@ -62,6 +83,19 @@ class WJSCCodeGenerator {
     return typeSize
   }
 
+  public nextRegister = (viableRegs: Register[]): Register => {
+    if (viableRegs.length !== 0) {
+      return viableRegs[0]
+    } else {
+      // Pushes contents of last reg to symbol table, returns result
+      // First we store
+      this.output.concat(construct.singleDataTransfer(ARMOpcode.store, Register.r12, directive.immAddr(this.memIndex)))
+      // TODO: Size of item in registers?
+      this.memIndex = this.memIndex + 4
+      return Register.r12
+    }
+  }
+
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
     // TODO: As mentioned above for typeSize and nextReg
@@ -69,7 +103,7 @@ class WJSCCodeGenerator {
     const typeSize = this.sizeGen(atx.children[0])
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
-    const itemUsed = directive.nextRegister(list)
+    const itemUsed = this.nextRegister(list)
     this.output = this.output.concat([construct.move(ARMOpcode.load, this.pc, directive.immNum(size)),
                                       directive.malloc(ARMOpcode.branchLink),
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
@@ -79,7 +113,7 @@ class WJSCCodeGenerator {
       // We received a stack reference, and such have conducted a modified move (to pop)
     }
     // loading in elements
-    const nextItem = directive.nextRegister(list)
+    const nextItem = this.nextRegister(list)
     if (nextItem in Register) {
       list.shift()
     }
@@ -153,14 +187,40 @@ class WJSCCodeGenerator {
 
     // Generate code for the function body statements
     if (atx.body) {
+      const stats = this.flattenSequential(atx.body)
+
+      // Move sp for all declarations at once
+      let totalStackSize = 0
+      stats.forEach((stat) => {
+        if (stat.parserRule === WJSCParserRules.Declare) {
+          totalStackSize += getTypeSize(stat.declaration.type)
+        }
+      })
+      const operand = `#${totalStackSize}`
+      // Decrement sp
+      if (totalStackSize) {
+        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
+      }
+      // Traverse body
       this.traverseStat(atx.body, regList)
+      // Increment sp
+      if (totalStackSize) {
+        this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
+      }
     }
     this.output.push(
         construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
         construct.pushPop(ARMOpcode.pop, [this.pc]),
         tabSpace + directive.ltorg + '\n',
     )
-    return this.output
+
+    // Add .data section if it is not empty
+    let result = this.output
+    if (msgCount > 0) {
+      result = this.data.concat(this.output)
+    }
+
+    return result
   }
 
   public genTerminal = (atx: WJSCTerminal, [head, ...tail]: Register[]) => {
@@ -177,28 +237,16 @@ class WJSCCodeGenerator {
     }
   }
 
-  public traverseStatements = (
-    children: WJSCStatement[],
-    instructions: string[], regList: Register[],
-  ): string[] => {
-    // WARNING: Do not concat the results of this function to prior results
-    children.forEach((child) => {
-      this.traverseStat(child, regList)
-    })
-    return instructions
-  }
-
   public traverseStat = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
     switch (atx.parserRule) {
       case WJSCParserRules.Skip:
         // Skip does nothing
         break
       case WJSCParserRules.Exit: {
+        // Load exit code then call exit
         this.genExpr(atx.stdlibExpr, [head, ...tail])
-        this.output = this.output.concat(
-            construct.move(ARMOpcode.move, this.resultReg, head),
-            construct.branch('exit', true),
-        )
+        this.output.push(construct.move(ARMOpcode.move, this.resultReg, head))
+        this.output.push(construct.branch('exit', true))
         break
       }
       case WJSCParserRules.Declare: {
@@ -216,6 +264,17 @@ class WJSCCodeGenerator {
         break
       }
     }
+  }
+
+  public flattenSequential = (atx: WJSCStatement): WJSCStatement[] => {
+    const stats = []
+    let curr = atx
+    while (curr.parserRule === WJSCParserRules.Sequential) {
+      stats.push(curr.nextStat)
+      curr = curr.stat
+    }
+    stats.push(curr)
+    return stats.reverse()
   }
 
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
@@ -258,18 +317,13 @@ class WJSCCodeGenerator {
     const rhs = atx.rhs
 
     const typeSize = getTypeSize(type)
-    const operand = `#${typeSize}`
     const sizeIsByte = typeSize === 1
 
     // TODO add cases for pairs and arrays
 
     // Write to output
-    this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
     this.genAssignRhs(rhs, [head, next, ...tail])
-
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
-
-    this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
   }
 
   public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
@@ -326,10 +380,9 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.StringLiter: {
-        directive.stringDec(atx.value)
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgCount))
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=4`))
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
+        const msgNo = msgCount
+        this.data.push(directive.stringDec(atx.value))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgNo))
         break
       }
       case WJSCParserRules.PairLiter: {
