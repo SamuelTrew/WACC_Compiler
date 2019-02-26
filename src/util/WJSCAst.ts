@@ -96,6 +96,7 @@ interface WJSCStatement extends WJSCAst {
   declaration: WJSCDeclare
   stat: WJSCStatement
   nextStat: WJSCStatement
+  assignment: WJSCAssignment
 }
 
 interface WJSCIdentifier extends WJSCAst {

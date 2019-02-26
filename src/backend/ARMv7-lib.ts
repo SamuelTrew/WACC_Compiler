@@ -157,7 +157,7 @@ const construct = {
     `${opcode}${condition || ''} ${rn}, ${stringify.operand(operand)}`,
   move: (
     opcode: ARMOpcode,
-    rd: Register | undefined,
+    rd: Register,
     operand: ARMOperand,
     condition?: ARMCondition,
     set = false,
@@ -229,7 +229,7 @@ const directive = {
   label: (name: string): string => `${name}:`,
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',
-  malloc: (content: ARMOpcode): string => `${content} malloc`,
+  malloc: (content: ARMOpcode): string => tabSpace + `${content} malloc`,
   popSection: '.popsection',
   pushSection: (...args: any): string =>
     `.pushsection ${directive.section(args)}`,
@@ -253,7 +253,7 @@ const directive = {
     (linkage ? `${linkage} ` : '') +
     (linkOrderSymbol ? `${linkOrderSymbol} ` : '') +
     (unique && uniqueId ? `${unique} ${uniqueId}` : ''),
-  stringDec: (symbol: string): string => 'msg_' + msgCount++ + ':\n' + tabSpace + `.word ${symbol.length}` + ':\n' + tabSpace + directive.ascii(symbol),
+  stringDec: (symbol: string): string => 'msg_' + msgCount++ + ':\n' + tabSpace + `.word ${(symbol || '').length}` + '\n' + tabSpace + directive.ascii(symbol || ''),
   text: '.text\n',
   weak: (...symbol: string[]): string => `.weak ${symbol.join(', ')}`,
 }
@@ -325,6 +325,7 @@ const stringify = {
 }
 
 export {
+  ARMAddress,
   ARMCondition,
   ARMOpcode,
   ARMOperand,

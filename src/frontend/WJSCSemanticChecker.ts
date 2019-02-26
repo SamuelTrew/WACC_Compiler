@@ -374,6 +374,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         } else {
           const firstElem = expressions[0]
           const secondElem = expressions[1]
+          result.expr = firstElem
+          result.expr2 = secondElem
           result.children.push(firstElem)
           result.children.push(secondElem)
           result.type = {
@@ -911,8 +913,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         result.children.push(this.visitTerminal(skip))
         result.parserRule = WJSCParserRules.Skip
       } else if (assignment) {
-        result.children.push(this.visitAssignment(assignment))
+        const visitedAssignment = this.visitAssignment(assignment) as WJSCAssignment
+        result.children.push(visitedAssignment)
         result.parserRule = WJSCParserRules.Assignment
+        result.assignment = visitedAssignment
       } else if (declare) {
         const visitedDeclare = this.visitDeclare(declare)
         result.children.push(visitedDeclare)
