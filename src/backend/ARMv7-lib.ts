@@ -224,13 +224,12 @@ const directive = {
   bss: '.bss',
   data: '.data\n',
   global: (...symbol: string[]): string => `.global ${symbol.join(', ')}`,
+  immAddr: (offset: number): string => `#${offset}`,
   immNum: (num: number | string): string => `#${num}`,
   label: (name: string): string => `${name}:`,
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',
   malloc: (content: ARMOpcode): string => `${content} malloc`,
-  // TODO: Complete this as stated
-  nextRegister: (viableRegs: Register[]): Register =>  viableRegs[0],
   popSection: '.popsection',
   pushSection: (...args: any): string =>
     `.pushsection ${directive.section(args)}`,
@@ -328,6 +327,7 @@ const stringify = {
 export {
   ARMCondition,
   ARMOpcode,
+  ARMOperand,
   constructInstruction,
   construct,
   directive,

@@ -31,6 +31,7 @@ class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join('\n')
   public output: string[] = []
   public data: string[] = [directive.data]
+  public memIndex: number = 0
 
   private readonly resultReg = Register.r0
   private readonly sp = Register.r13
@@ -63,6 +64,19 @@ class WJSCCodeGenerator {
     return typeSize
   }
 
+  public nextRegister = (viableRegs: Register[]): Register => {
+    if (viableRegs.length !== 0) {
+      return viableRegs[0]
+    } else {
+      // Pushes contents of last reg to symbol table, returns result
+      // First we store
+      this.output.concat(construct.singleDataTransfer(ARMOpcode.store, Register.r12, directive.immAddr(this.memIndex)))
+      // TODO: Size of item in registers?
+      this.memIndex = this.memIndex + 4
+      return Register.r12
+    }
+  }
+
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
     // TODO: As mentioned above for typeSize and nextReg
@@ -70,7 +84,7 @@ class WJSCCodeGenerator {
     const typeSize = this.sizeGen(atx.children[0])
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
-    const itemUsed = directive.nextRegister(list)
+    const itemUsed = this.nextRegister(list)
     this.output = this.output.concat([construct.move(ARMOpcode.load, this.pc, directive.immNum(size)),
                                       directive.malloc(ARMOpcode.branchLink),
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
@@ -80,7 +94,7 @@ class WJSCCodeGenerator {
       // We received a stack reference, and such have conducted a modified move (to pop)
     }
     // loading in elements
-    const nextItem = directive.nextRegister(list)
+    const nextItem = this.nextRegister(list)
     if (nextItem in Register) {
       list.shift()
     }
