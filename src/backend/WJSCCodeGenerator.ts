@@ -49,6 +49,7 @@ class WJSCCodeGenerator {
   private readonly switchFault = 'No Matching Parser Rule'
   private totalStackSize = 0
   private decStackSize = 0
+  private ltorgCheck = true
   public setRegSize = (reg: Register, size: number) => {
     this.registerContentSize.set(reg, size)
   }
@@ -191,7 +192,6 @@ class WJSCCodeGenerator {
       [directive.text],
       directive.global('main'),
     )
-
     // Generate code for function declarations
     const functions = atx.functions
     if (functions) {
@@ -230,8 +230,10 @@ class WJSCCodeGenerator {
     this.output.push(
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
-      tabSpace + directive.ltorg + '\n',
     )
+    if (this.ltorgCheck) {
+      this.output.push(tabSpace + directive.ltorg + '\n')
+    }
 
     // Add .data section if it is not empty
     let result = this.output
@@ -308,9 +310,15 @@ class WJSCCodeGenerator {
   }
 
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
-    this.output.push(directive.label(atx.identifier))
+    this.output.push(directive.label(`f_${atx.identifier}`))
+    this.output.push(construct.pushPop(ARMOpcode.push, [this.lr]))
     // We now deal with the children
     this.traverseStat(atx.body, regList)
+    if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || WJSCParserRules.ConditionalIf) {
+      this.ltorgCheck = false
+    } else {
+      this.output.push(tabSpace + directive.ltorg + '\n')
+    }
   }
 
   public genExit = (exitCode: number, [head, ..._]: Register[]) => {
