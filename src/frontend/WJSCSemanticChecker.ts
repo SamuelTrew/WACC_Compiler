@@ -190,7 +190,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           comma.length + 1,
         ])
       }
-      result.children.push(this.visitTerminal(ctx.LBRACK()))
+      // result.children.push(this.visitTerminal(ctx.LBRACK()))
       const firstChild = this.visitExpression(expressions[0])
       if (!firstChild.type) {
         this.errorLog.semErr(result, SemError.Undefined)
@@ -208,7 +208,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       while (index !== length) {
         if (index < comma.length) {
           const currComma = this.visitTerminal(comma[index])
-          result.children.push(currComma)
+          // result.children.push(currComma)
         }
         if (index < expressions.length - 1) {
           const childStat = this.visitExpression(expressions[index + 1])
@@ -223,7 +223,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         index++
       }
 
-      result.children.push(this.visitTerminal(ctx.RBRACK()))
+      // result.children.push(this.visitTerminal(ctx.RBRACK()))
     }
     return result
   }
@@ -654,6 +654,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               result.children.push(visitedOp)
               const exp1 = this.visitExpression(expressions[0])
               const exp2 = this.visitExpression(expressions[1])
+              result.expr1 = exp1
+              result.expr2 = exp2
+              result.operator = visitedOp
               result.children.push(exp1)
               result.children.push(exp2)
               result.type = this.checkOperator(visitedOp, exp1, exp2)
