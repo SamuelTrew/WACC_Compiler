@@ -55,7 +55,7 @@ class WJSCCodeGenerator {
   private ltorgCheck = true
 
   /* ----------------------------------------------*/
-
+  // TODO: Gen array elem for pair and arrays
   constructor(symbolTable: WJSCSymbolTable) {
     this.symbolTable = symbolTable
   }
