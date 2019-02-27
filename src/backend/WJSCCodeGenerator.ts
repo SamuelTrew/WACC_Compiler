@@ -25,8 +25,10 @@ import {
   directive,
   msgCount,
   Register,
+  RuntimeError,
   tabSpace,
 } from './ARMv7-lib'
+import {Runtime} from "inspector"
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join(EOL)
@@ -386,7 +388,6 @@ class WJSCCodeGenerator {
     if (functions) {
       functions.forEach((func) => this.genFunc(func, regList))
     }
-
     // Generate code for the main function body
     this.output = this.output.concat(
       directive.label('main'),
@@ -532,6 +533,7 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.ArrayElem: {
+        // TODO get declaration of parent and its parent's length
         this.genArrayElem(atx, tail, head, 0)
         break
       }
@@ -556,7 +558,7 @@ class WJSCCodeGenerator {
     this.decStackSize -= typeSize
     this.symbolTable.setVarMemAddr(id, this.decStackSize)
     // Save content of 'head' to memory
-    if (this.decStackSize > 4) {
+    if (this.decStackSize > 0) {
       this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, ${directive.immNum(this.decStackSize)}]`, undefined, undefined, sizeIsByte))
     } else {
       this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
@@ -573,24 +575,25 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.Newpair:
         const typeSize = getTypeSize(atx.type)
-        const sizeIsByte = typeSize === 1
         const exprSize = getTypeSize(atx.expr.type)
         const expr2Size = getTypeSize(atx.expr2.type)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`),
           directive.malloc(ARMOpcode.branchLink),
           construct.move(ARMOpcode.move, head, this.resultReg))
         this.genExpr(atx.expr, [next, ...tail])
+        const sizeIsByte = exprSize === 1
         this.output.push(
             construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${exprSize}`),
             directive.malloc(ARMOpcode.branchLink),
-            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`),
+            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`, undefined, undefined, sizeIsByte),
             construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
         this.genExpr(atx.expr2, [next, ...tail])
+        const size2IsByte = expr2Size === 1
         this.output.push(
             construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${expr2Size}`),
             directive.malloc(ARMOpcode.branchLink),
             // TODO check if is byte and use SERB
-            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`),
+            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`, undefined, undefined, size2IsByte),
             construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
         // code: if (this.totalStackSize > 4) {
         //   this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
@@ -643,6 +646,15 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Unop:
         this.genUnOp(atx, [head, next, ...tail])
         break
+    }
+  }
+
+  public throwArrayOutOfBounds = () => {
+    if (!this.data.includes(RuntimeError.negIndex)) {
+      this.output.push(directive.stringDec(RuntimeError.negIndex))
+    }
+    if (!this.data.includes(RuntimeError.largeIndex)) {
+      this.output.push(directive.stringDec(RuntimeError.largeIndex))
     }
   }
 }

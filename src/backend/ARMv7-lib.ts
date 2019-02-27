@@ -86,11 +86,11 @@ enum Register {
 }
 
 enum RuntimeError {
-  divByZero = 'DivideByZeroError: divide or modulo by zero\\n\\0',
-  intOverFlow = 'OverflowError: the result is too small/large to store in a 4-byte signed-integer.\\n',
-  negIndex = 'ArrayIndexOutOfBoundsError: negative index\\n\\0',
-  largeIndex = 'ArrayIndexOutOfBoundsError: index too large\\n\\0',
-  nullDeref = 'NullReferenceError: dereference a null reference\\n\\',
+  divByZero = 'DivideByZeroError: divide or modulo by zero\n\0',
+  intOverFlow = 'OverflowError: the result is too small/large to store in a 4-byte signed-integer.\n',
+  negIndex = 'ArrayIndexOutOfBoundsError: negative index\n\0',
+  largeIndex = 'ArrayIndexOutOfBoundsError: index too large\n\0',
+  nullDeref = 'NullReferenceError: dereference a null reference\n\0',
 }
 
 type ARMAddress = ARMExpression | ARMAddressPreIndex | ARMAddressPostIndex
@@ -279,7 +279,8 @@ const directive = {
     (linkage ? `${linkage} ` : '') +
     (linkOrderSymbol ? `${linkOrderSymbol} ` : '') +
     (unique && uniqueId ? `${unique} ${uniqueId}` : ''),
-  stringDec: (symbol: string): string => 'msg_' + msgCount++ + ':\n' + tabSpace + `.word ${(symbol || '').length}` + '\n' + tabSpace + directive.ascii(symbol || ''),
+  stringDec: (symbol: string): string => 'msg_' + msgCount++ + ':\n' + tabSpace + `.word ${(symbol || '').length}` +
+      '\n' + tabSpace + directive.ascii(symbol || ''),
   text: '.text\n',
   weak: (...symbol: string[]): string => `.weak ${symbol.join(', ')}`,
 }
@@ -358,4 +359,5 @@ export {
   construct,
   directive,
   Register,
+  RuntimeError,
 }
