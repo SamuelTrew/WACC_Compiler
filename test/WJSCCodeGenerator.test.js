@@ -5,7 +5,8 @@ const path = require('path')
 const fs = require('fs')
 const WJSCCompiler = require('../build/WJSCCompiler')
 const diff = require('diff')
-const { EOL } = require('os')
+const child = require('child_process')
+const os = require('os')
 
 describe.skip('Environment is setup correctly', function () {
   it('should be linux/darwin', function () {
@@ -53,9 +54,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
             fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
               if (asmreaderr) { throw asmreaderr }
               const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-              assert(difference.length === 0, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => {
-                return a + (b.added ? (b.value.split(EOL).map(line => `+ ${line}`).join(EOL)) : (b.removed ? b.value.split(EOL).map(line => `- ${line}`).join(EOL) : b.value.split(EOL).map(line => `  ${line}`).join(EOL))) + EOL
-              }, ''))
+              assert(difference.length === 0, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
               done()
             })
           })
