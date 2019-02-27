@@ -385,7 +385,6 @@ class WJSCCodeGenerator {
     if (functions) {
       functions.forEach((func) => this.genFunc(func, regList))
     }
-    this.throwArrayOutOfBounds()
     // Generate code for the main function body
     this.output = this.output.concat(
       directive.label('main'),
@@ -645,7 +644,7 @@ class WJSCCodeGenerator {
       this.output.push(directive.stringDec(RuntimeError.negIndex))
     }
     if (!this.data.includes(RuntimeError.largeIndex)) {
-      this.output.push(directive.stringDec(RuntimeError.negIndex))
+      this.output.push(directive.stringDec(RuntimeError.largeIndex))
     }
   }
 }
