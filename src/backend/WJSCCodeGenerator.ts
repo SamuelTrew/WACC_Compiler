@@ -266,8 +266,11 @@ class WJSCCodeGenerator {
         this.printLine()
         break
       case '-':
+        this.output.push(construct.arithmetic(ARMOpcode.reverseSubtract, head, head, `#0`))
         break
       case 'len':
+        this.symbolTable.lookup(atx.value)
+        // TODO: divide the pointer count by 4
         break
       case 'ord':
         break
@@ -633,6 +636,12 @@ class WJSCCodeGenerator {
         const offsetString = spOffset ? `, #${spOffset}` : ''
 
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
+        break
+      case WJSCParserRules.BinOp:
+        this.genBinOp(atx, [head, next, ...tail])
+        break
+      case WJSCParserRules.Unop:
+        this.genUnOp(atx, [head, next, ...tail])
         break
     }
   }
