@@ -25,8 +25,10 @@ import {
   directive,
   msgCount,
   Register,
+  RuntimeError,
   tabSpace,
 } from './ARMv7-lib'
+import {Runtime} from "inspector"
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join(EOL)
@@ -334,7 +336,7 @@ class WJSCCodeGenerator {
     if (functions) {
       functions.forEach((func) => this.genFunc(func, regList))
     }
-
+    this.throwArrayOutOfBounds()
     // Generate code for the main function body
     this.output = this.output.concat(
       directive.label('main'),
@@ -480,6 +482,7 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.ArrayElem: {
+        // TODO get declaration of parent and its parent's length
         this.genArrayElem(atx, tail, head, 0)
         break
       }
@@ -586,6 +589,15 @@ class WJSCCodeGenerator {
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `[${this.sp}, #${spOffset}]`, undefined, undefined, sizeIsByte))
         break
+    }
+  }
+
+  public throwArrayOutOfBounds = () => {
+    if (!this.data.includes(RuntimeError.negIndex)) {
+      this.output.push(directive.stringDec(RuntimeError.negIndex))
+    }
+    if (!this.data.includes(RuntimeError.largeIndex)) {
+      this.output.push(directive.stringDec(RuntimeError.negIndex))
     }
   }
 }

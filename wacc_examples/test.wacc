@@ -1,3 +1,4 @@
 begin
-  char[] a = ['1']
+  int[] a = [1];
+  a[0] = 5
 end
