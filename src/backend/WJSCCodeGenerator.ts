@@ -580,11 +580,10 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Identifier:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
-        // TODO Lookup identifier from symbol table and find entry and address
-
-        // TODO load from storage address of the identifier
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `[${this.sp}, #${spOffset}]`, undefined, undefined, sizeIsByte))
+        const offsetString = spOffset ? `, #${spOffset}` : ''
+
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
         break
     }
   }
