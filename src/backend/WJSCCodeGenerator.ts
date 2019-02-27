@@ -271,8 +271,24 @@ class WJSCCodeGenerator {
         this.traverseStat(atx.nextStat, [head, ...tail])
         break
       }
+      case WJSCParserRules.ConditionalIf: {
+        this.genExpr(atx.stdlibExpr, [head, ...tail])
+        this.traverseStat(atx.stat, [head, ...tail])
+        this.traverseStat(atx.nextStat, [head, ...tail])
+        break
+      }
+      case WJSCParserRules.ConditionalWhile: {
+        this.genExpr(atx.stdlibExpr, [head, ...tail])
+        this.traverseStat(atx.stat, [head, ...tail])
+        break
+      }
     }
   }
+
+  // public genConditionalIf = (atx: WJSCStatement, [head, next, ...tail]: Register[]) => {
+  //   // Literally no clue how to change things for conditional branches
+  //   this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, atx))
+  // }
 
   public flattenSequential = (atx: WJSCStatement): WJSCStatement[] => {
     const stats = []
@@ -408,8 +424,15 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Identifier: {
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${typeSize}]`, undefined, undefined, sizeIsByte))
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+
+        if (!atx.value) {
+          // This is the case for linked list but I have no idea how to actually check for it
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `[${this.sp}, #${this.decStackSize + 4}]`, undefined, undefined, sizeIsByte))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `=4`, undefined, undefined, sizeIsByte))
+        } else {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+        }
         break
       }
     }
