@@ -6,7 +6,7 @@ enum ARMCondition {
   lessEqual = 'LE',
   lessThan = 'LT',
   negative = 'MI',
-  nequal = 'NQ',
+  nequal = 'NE',
   noOverflow = 'VC',
   overflow = 'VS',
   positiveZero = 'PL',
@@ -85,6 +85,14 @@ enum Register {
   spsr = 'SPSR',
 }
 
+enum RuntimeError {
+  divByZero = 'DivideByZeroError: divide or modulo by zero\\n\\0',
+  intOverFlow = 'OverflowError: the result is too small/large to store in a 4-byte signed-integer.\\n',
+  negIndex = 'ArrayIndexOutOfBoundsError: negative index\\n\\0',
+  largeIndex = 'ArrayIndexOutOfBoundsError: index too large\\n\\0',
+  nullDeref = 'NullReferenceError: dereference a null reference\\n\\',
+}
+
 type ARMAddress = ARMExpression | ARMAddressPreIndex | ARMAddressPostIndex
 type ARMAddressPreIndex =
   | [Register]
@@ -94,7 +102,7 @@ type ARMAddressPostIndex =
   | ['post', Register, ARMExpression]
   | ['post', Register, ARMShiftType, Register, ARMShift]
 type ARMExpression = string
-type ARMOperand = [Register, ARMShift] | ARMExpression | string
+type ARMOperand = [Register, ARMShift] | ARMExpression | Register | string
 type ARMShift = [ARMShiftname, Register | ARMExpression] | 'RRX'
 type ARMShiftType = '+' | '-'
 type ARMBDTAddressingModes =
@@ -134,12 +142,25 @@ const construct = {
     `${opcode}${condition || ''}${addrMode} ${rn}${
       writeBack ? '!' : ''
     } {${rlist.join(', ')}}${sbit ? '^' : ''}`,
+  boolCalc: (
+    opcode: ARMOpcode.and | ARMOpcode.or | ARMOpcode.exclusiveOr,
+    rd: Register,
+    rd2: Register,
+    rn?: Register,
+    num?: string,
+    set = false,
+  ) =>
+    tabSpace +
+    `${opcode}${
+      set ? 'S' : ''
+      } ${rd}, ${rd2}, ${rn}, ${num}`,
   branch: (
     expression: ARMExpression,
     link = false,
+    jump?: string,
     condition?: ARMCondition,
   ): string =>
-    tabSpace + `B${link ? 'L' : ''}${condition ? condition : ''} ${expression}`,
+    tabSpace + `B${link ? 'L' : ''}${condition ? condition : ''} ${expression} ${jump}`,
   branchExchange: (rn: Register, condition?: ARMCondition): string =>
     tabSpace + `BX${condition} ${rn}`,
   compareTest: (
@@ -147,6 +168,7 @@ const construct = {
     rn: Register,
     operand: ARMOperand,
     condition?: ARMCondition,
+    asr?: string,
   ): string =>
     tabSpace +
     `${opcode}${condition || ''} ${rn}, ${stringify.operand(operand)}`,
@@ -179,8 +201,8 @@ const construct = {
     rm: Register,
     rs: Register,
     condition?: ARMCondition,
-    set = false,
     acc = false,
+    set = false,
     rn?: Register,
   ): string =>
     tabSpace +
@@ -188,6 +210,16 @@ const construct = {
       set ? 'S' : ''
     } ${rd}, ${rm}, ${rs}` +
     (acc ? `, ${rn}` : ''),
+  multiplyLong: (
+    signed: boolean,
+    rdLo: Register,
+    rdHi: Register,
+    rm: Register,
+    rs: Register,
+    condition?: ARMCondition,
+    acc = false,
+    set = false,
+  ) => `${tabSpace}${signed ? 'S' : 'U'}${acc ? 'MLA' : 'MUL'}${set ? 'S' : ''}${condition || ''} ${rdLo}, ${rdHi}, ${rm}, ${rs}`,
   pushPop: (
     opcode: ARMOpcode.push | ARMOpcode.pop,
     regList: Register[],

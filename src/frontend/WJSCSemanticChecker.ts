@@ -79,10 +79,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
    * Returns a new Semantic Checker instance.
    * @param errorLog The error log to use for logging
    */
-  constructor(errorLog: WJSCErrorLog) {
+  constructor(errorLog: WJSCErrorLog, symbolTable: WJSCSymbolTable) {
     super()
     this.errorLog = errorLog
-    this.symbolTable = new WJSCSymbolTable(0, undefined, false, errorLog)
+    this.symbolTable = symbolTable
   }
 
   public visitArithmeticOperator = (
