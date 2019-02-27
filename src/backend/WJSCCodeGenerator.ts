@@ -119,6 +119,7 @@ class WJSCCodeGenerator {
       case '%':
         break
       case '+':
+        this.output.push()
         break
       case '-':
         break
@@ -392,8 +393,8 @@ class WJSCCodeGenerator {
     const type = atx.type
     const rhs = atx.rhs
 
-    const typSize = getTypeSize(type)
-    const sizeIsByte = typSize === 1
+    const typeSize = getTypeSize(type)
+    const sizeIsByte = typeSize === 1
 
     // TODO add cases for pairs and arrays
 
@@ -401,6 +402,7 @@ class WJSCCodeGenerator {
     this.genAssignRhs(rhs, [head, next, ...tail])
     // Save to memory
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+    this.decStackSize -= typeSize
   }
 
   public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
@@ -414,7 +416,6 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Newpair:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
-        this.decStackSize -= typeSize
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`),
           directive.malloc(ARMOpcode.branchLink),
           construct.move(ARMOpcode.move, head, this.resultReg))
