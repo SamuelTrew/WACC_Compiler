@@ -117,41 +117,86 @@ class WJSCCodeGenerator {
     return typeSize
   }
 
-  public genBinOp = (atx: WJSCExpr, regList: Register[]) => {
-    this.genExpr(atx.expr1, regList)
+  public genBinOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
+    this.genExpr(atx.expr1, [head, next, ...tail])
     switch (atx.operator.token) {
       case '*':
+        this.output.push(construct.multiply(head, next, head))
+        this.output.push(construct.compareTest(ARMOpcode.compare, next, head, undefined, `ASR #31`))
+        this.output.push(construct.branch(ARMOpcode.branchLink, false, ARMCondition.overflow))
         break
       case '/':
+        this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
+        this.move(getTypeSize(atx.type), ARMOpcode.move, Register.r1, next)
+        this.output.push(construct.branch(ARMOpcode.branchLink, true, `__aeabi_idiv`))
+        this.move(getTypeSize(atx.type), ARMOpcode.move, head, this.resultReg)
+        this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         break
       case '%':
+        this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
+        this.move(getTypeSize(atx.type), ARMOpcode.move, Register.r1, next)
+        this.output.push(construct.branch(ARMOpcode.branchLink, true, `__aeabi_idivmod`))
+        this.move(getTypeSize(atx.type), ARMOpcode.move, head, Register.r1)
+        this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         break
       case '+':
-        this.output.push()
+        this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next))
+        this.output.push(construct.branch(ARMOpcode.branchLink, true, ARMCondition.nequal))
         break
       case '-':
+        this.output.push(construct.arithmetic(ARMOpcode.subtract, head, head, next))
+        this.output.push(construct.branch(ARMOpcode.branchLink, true, ARMCondition.overflow))
         break
       case '>':
+        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+          construct.move(ARMOpcode.move, head, `#1`, ARMCondition.greaterThan),
+          construct.move(ARMOpcode.move, head, `#0`, ARMCondition.lessEqual),
+        )
         break
       case '>=':
+        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+          construct.move(ARMOpcode.move, head, `#1`, ARMCondition.greaterEqual),
+          construct.move(ARMOpcode.move, head, `#0`, ARMCondition.lessThan),
+        )
         break
       case '<':
+        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+          construct.move(ARMOpcode.move, head, `#1`, ARMCondition.lessThan),
+          construct.move(ARMOpcode.move, head, `#0`, ARMCondition.greaterEqual),
+        )
         break
       case '<=':
+        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+          construct.move(ARMOpcode.move, head, `#1`, ARMCondition.lessEqual),
+          construct.move(ARMOpcode.move, head, `#0`, ARMCondition.greaterThan),
+        )
         break
       case '==':
+        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+          construct.move(ARMOpcode.move, head, `#1`, ARMCondition.equal),
+          construct.move(ARMOpcode.move, head, `#0`, ARMCondition.nequal),
+          )
         break
       case '!=':
+        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+          construct.move(ARMOpcode.move, head, `#1`, ARMCondition.nequal),
+          construct.move(ARMOpcode.move, head, `#0`, ARMCondition.equal),
+        )
         break
       case '&&':
+        this.output.push(construct.boolCalc(ARMOpcode.and, head, head, next))
+        // TODO: the subsequent STR and LDR should be STRB and LDRB in this case
         break
       case '||':
+        this.output.push(construct.boolCalc(ARMOpcode.or, head, head, next),
+          construct.boolCalc(ARMOpcode.exclusiveOr, head, head, undefined, `#1`),
+          )
         break
     }
-    this.genExpr(atx.expr2, regList)
+    this.genExpr(atx.expr2, [head, next, ...tail])
   }
 
-  public genUnOp = (atx: WJSCExpr, regList: Register[]) => {
+  public genUnOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
     switch (atx.operator.token) {
       case '!':
         break
@@ -164,7 +209,7 @@ class WJSCCodeGenerator {
       case 'chr':
         break
     }
-    this.genExpr(atx.expr1, regList)
+    this.genExpr(atx.expr1, [head, next, ...tail])
   }
 
   // For genArray Literal
@@ -294,13 +339,13 @@ class WJSCCodeGenerator {
       const operand = `#${this.totalStackSize}`
       // Decrement sp
       if (this.totalStackSize) {
-        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
+        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, undefined, operand))
       }
       // Traverse body
       this.traverseStat(atx.body, regList)
       // Increment sp
       if (this.totalStackSize) {
-        this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
+        this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, undefined, operand))
       }
     }
     this.output.push(
