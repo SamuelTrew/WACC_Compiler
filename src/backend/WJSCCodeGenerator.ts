@@ -409,8 +409,6 @@ class WJSCCodeGenerator {
           this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
         }
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${typeSize}]`, undefined, undefined, sizeIsByte),
-          construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
         break
     }
   }
