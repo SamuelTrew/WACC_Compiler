@@ -311,6 +311,7 @@ class WJSCCodeGenerator {
   }
 
   public traverseStat = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
+    // console.log(atx.parserRule)
     switch (atx.parserRule) {
       case WJSCParserRules.Skip:
         // Skip does nothing
@@ -381,17 +382,17 @@ class WJSCCodeGenerator {
   }
 
   public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]) => {
-    const sizeIsByte = (getTypeSize(atx.type)) === 1
-    this.genAssignLhs(atx.lhs, [head, ...tail])
     this.genAssignRhs(atx.rhs, [head, ...tail])
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+    this.genAssignLhs(atx.lhs, [head, ...tail])
   }
 
   public genAssignLhs = (atx: WJSCAst, [head, ...tail]: Register[]) => {
     switch (atx.parserRule) {
       case WJSCParserRules.Identifier: {
-        this.output.push()
-        // TODO: this code won't work as genIdent need an IdentAst      this.genIdent(atx, [head, ...tail])
+        const sizeIsByte = getTypeSize(atx.type) === 1
+
+        // TODO get address of ident and store it there instead of sp
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
         break
       }
       case WJSCParserRules.ArrayElem: {
@@ -413,9 +414,9 @@ class WJSCCodeGenerator {
 
     // TODO add cases for pairs and arrays
 
-    // Write to output
+    // Load rhs expression into 'head' register
     this.genAssignRhs(rhs, [head, next, ...tail])
-    // Save to memory
+    // Save content of 'head' to memory
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
     this.decStackSize -= typeSize
   }
@@ -431,22 +432,29 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Newpair:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
+        const exprSize = getTypeSize(atx.expr.type)
+        const expr2Size = getTypeSize(atx.expr2.type)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`),
           directive.malloc(ARMOpcode.branchLink),
           construct.move(ARMOpcode.move, head, this.resultReg))
-        this.genExpr(atx.expr, [head, next, ...tail])
-        this.output.push(directive.malloc(ARMOpcode.branchLink),
-          construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`),
-          construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
-        this.genExpr(atx.expr2, [head, next, ...tail])
-        this.output.push(directive.malloc(ARMOpcode.branchLink),
-          construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`),
-          construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
-        if (this.totalStackSize > 4) {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
-        } else {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
-        }
+        this.genExpr(atx.expr, [next, ...tail])
+        this.output.push(
+            construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${exprSize}`),
+            directive.malloc(ARMOpcode.branchLink),
+            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`),
+            construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
+        this.genExpr(atx.expr2, [next, ...tail])
+        this.output.push(
+            construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${expr2Size}`),
+            directive.malloc(ARMOpcode.branchLink),
+            // TODO check if is byte and use SERB
+            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`),
+            construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
+        // if (this.totalStackSize > 4) {
+        //   this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
+        // } else {
+        //   this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+        // }
         break
       case WJSCParserRules.PairElem:
       case WJSCParserRules.FunctionCall:
@@ -475,28 +483,18 @@ class WJSCCodeGenerator {
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgNo))
         break
       case WJSCParserRules.PairLiter:
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=0`),
-          construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`),
-          construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}]`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=0`))
         break
       // TODO: Check if this is allowed
       // This is to catch the case when assigning a new pair to an existing one (createRefPair.wacc)
       case WJSCParserRules.Identifier:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
-        if (!atx.value) {
-          // This is the case for linked list but I have no idea how to actually check for it
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `[${this.sp}, #${this.decStackSize + 4}]`, undefined, undefined, sizeIsByte))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `=4`, undefined, undefined, sizeIsByte))
-        } else {
-          if (this.decStackSize > 4) {
-            this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
-            // this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
-          } else {
-            this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
-            // this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
-          }
-        }
+        // TODO Lookup identifier from symbol table and find entry and address
+
+        // TODO load from storage address of the identifier
+        const spOffset = -1
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `[${this.sp}, #${spOffset}]`, undefined, undefined, sizeIsByte))
         break
     }
   }
