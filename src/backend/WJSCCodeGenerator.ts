@@ -112,6 +112,8 @@ class WJSCCodeGenerator {
   // For genArray Literal
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
+    console.log(children)
+    console.log(children.length)
     let typeSize
     if (children.length !== 0) {
       typeSize = this.sizeGen(atx.children[0], true)
