@@ -16,7 +16,7 @@ cache:
 validate:
   stage: validate
   script:
-    - echo $(git log -1 --pretty=%B) | node ./test/postflight.js
+    - echo $(git log -1 --pretty=%B) | node ./src/postflight.js
   
 install:
   stage: install
@@ -47,15 +47,15 @@ test:
   script:
   - npm run test
 
-#lint:
-#  stage: test
-#  dependencies:
-#  - install
-#  - build
-#  only:
-#  - master
-#  script:
-#  - npm run lint
+lint:
+  stage: test
+  dependencies:
+  - install
+  - build
+  only:
+  - master
+  script:
+  - npm run lint
 
 deploy:
   stage: deploy
