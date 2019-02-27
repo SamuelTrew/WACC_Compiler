@@ -179,8 +179,8 @@ const construct = {
     rm: Register,
     rs: Register,
     condition?: ARMCondition,
-    set = false,
     acc = false,
+    set = false,
     rn?: Register,
   ): string =>
     tabSpace +
@@ -188,6 +188,16 @@ const construct = {
       set ? 'S' : ''
     } ${rd}, ${rm}, ${rs}` +
     (acc ? `, ${rn}` : ''),
+  multiplyLong: (
+    signed: boolean,
+    rdLo: Register,
+    rdHi: Register,
+    rm: Register,
+    rs: Register,
+    condition?: ARMCondition,
+    acc = false,
+    set = false,
+  ) => `${tabSpace}${signed ? 'S' : 'U'}${acc ? 'MLA' : 'MUL'}${set ? 'S' : ''}${condition || ''} ${rdLo}, ${rdHi}, ${rm}, ${rs}`,
   pushPop: (
     opcode: ARMOpcode.push | ARMOpcode.pop,
     regList: Register[],
