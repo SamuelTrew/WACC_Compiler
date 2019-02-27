@@ -6,7 +6,7 @@ enum ARMCondition {
   lessEqual = 'LE',
   lessThan = 'LT',
   negative = 'MI',
-  nequal = 'NQ',
+  nequal = 'NE',
   noOverflow = 'VC',
   overflow = 'VS',
   positiveZero = 'PL',
@@ -113,15 +113,16 @@ const construct = {
   arithmetic: (
     opcode: ARMOpcode,
     rd: Register,
-    rn: Register,
-    operand: ARMOperand,
+    rd2: Register,
+    rn?: Register,
+    operand?: ARMOperand,
     condition?: ARMCondition,
     set = false,
   ) =>
     tabSpace +
     `${opcode}${condition || ''}${
       set ? 'S' : ''
-    } ${rd}, ${rn}, ${stringify.operand(operand)}`,
+    } ${rd}, ${rd2}, ${rn}, ${stringify.operand(operand)}`,
   blockDataTransfer: (
     opcode: ARMOpcode.loadMultiple | ARMOpcode.storeMultiple,
     addrMode: ARMBDTAddressingModes,
@@ -134,12 +135,25 @@ const construct = {
     `${opcode}${condition || ''}${addrMode} ${rn}${
       writeBack ? '!' : ''
     } {${rlist.join(', ')}}${sbit ? '^' : ''}`,
+  boolCalc: (
+    opcode: ARMOpcode.and | ARMOpcode.or | ARMOpcode.exclusiveOr,
+    rd: Register,
+    rd2: Register,
+    rn?: Register,
+    num?: string,
+    set = false,
+  ) =>
+    tabSpace +
+    `${opcode}${
+      set ? 'S' : ''
+      } ${rd}, ${rd2}, ${rn}, ${num}`,
   branch: (
     expression: ARMExpression,
     link = false,
+    jump?: string,
     condition?: ARMCondition,
   ): string =>
-    tabSpace + `B${link ? 'L' : ''}${condition ? condition : ''} ${expression}`,
+    tabSpace + `B${link ? 'L' : ''}${condition ? condition : ''} ${expression} ${jump}`,
   branchExchange: (rn: Register, condition?: ARMCondition): string =>
     tabSpace + `BX${condition} ${rn}`,
   compareTest: (
@@ -147,6 +161,7 @@ const construct = {
     rn: Register,
     operand: ARMOperand,
     condition?: ARMCondition,
+    asr?: string,
   ): string =>
     tabSpace +
     `${opcode}${condition || ''} ${rn}, ${stringify.operand(operand)}`,
