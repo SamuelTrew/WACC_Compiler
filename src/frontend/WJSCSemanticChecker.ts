@@ -190,7 +190,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           comma.length + 1,
         ])
       }
-      result.children.push(this.visitTerminal(ctx.LBRACK()))
+      // result.children.push(this.visitTerminal(ctx.LBRACK()))
       const firstChild = this.visitExpression(expressions[0])
       if (!firstChild.type) {
         this.errorLog.semErr(result, SemError.Undefined)
@@ -223,7 +223,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         index++
       }
 
-      result.children.push(this.visitTerminal(ctx.RBRACK()))
+      // result.children.push(this.visitTerminal(ctx.RBRACK()))
     }
     return result
   }
