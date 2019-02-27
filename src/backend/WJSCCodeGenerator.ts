@@ -129,14 +129,14 @@ class WJSCCodeGenerator {
       case '/':
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         this.move(getTypeSize(atx.type), ARMOpcode.move, Register.r1, next)
-        this.output.push(construct.branch(ARMOpcode.branchLink, true, `__aeabi_idiv`))
+        this.output.push(construct.branch(`__aeabi_idiv`, true))
         this.move(getTypeSize(atx.type), ARMOpcode.move, head, this.resultReg)
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         break
       case '%':
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         this.move(getTypeSize(atx.type), ARMOpcode.move, Register.r1, next)
-        this.output.push(construct.branch(ARMOpcode.branchLink, true, `__aeabi_idivmod`))
+        this.output.push(construct.branch(`__aeabi_idivmod`, true))
         this.move(getTypeSize(atx.type), ARMOpcode.move, head, Register.r1)
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         break
@@ -203,9 +203,9 @@ class WJSCCodeGenerator {
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`, ARMCondition.nequal),
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`, ARMCondition.equal),
       construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(ARMOpcode.branchLink, false, `printf`),
+      construct.branch(`printf`, false),
       construct.move(ARMOpcode.move, this.resultReg, `#0`),
-      construct.branch(ARMOpcode.branchLink, false, `fflush`),
+      construct.branch(`fflush`, false),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
     )
   }
@@ -213,7 +213,7 @@ class WJSCCodeGenerator {
   public genUnOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
     switch (atx.operator.token) {
       case '!':
-        this.output.push(construct.branch(ARMOpcode.branchLink, false, `p_print_bool`))
+        this.output.push(construct.branch(`p_print_bool`, true))
         this.printBool()
         break
       case '-':
