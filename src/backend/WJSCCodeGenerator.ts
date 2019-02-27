@@ -645,7 +645,7 @@ class WJSCCodeGenerator {
       this.output.push(directive.stringDec(RuntimeError.negIndex))
     }
     if (!this.data.includes(RuntimeError.largeIndex)) {
-      this.output.push(directive.stringDec(RuntimeError.negIndex))
+      this.output.push(directive.stringDec(RuntimeError.largeIndex))
     }
   }
 }
