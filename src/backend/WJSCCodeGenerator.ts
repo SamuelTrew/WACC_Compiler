@@ -47,6 +47,7 @@ class WJSCCodeGenerator {
   private readonly lr = Register.r14
   private readonly pc = Register.r15
   private totalStackSize = 0
+  private decStackSize = 0
   public setRegSize = (reg: Register, size: number) => {
     this.registerContentSize.set(reg, size)
   }
@@ -203,6 +204,7 @@ class WJSCCodeGenerator {
           this.totalStackSize += getTypeSize(stat.declaration.type)
         }
       })
+      this.decStackSize = this.totalStackSize
       const operand = `#${this.totalStackSize}`
       // Decrement sp
       if (this.totalStackSize) {
@@ -339,6 +341,7 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Newpair: {
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
+        this.decStackSize -= typeSize
 
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`))
         this.output.push(directive.malloc(ARMOpcode.branchLink))
@@ -355,7 +358,7 @@ class WJSCCodeGenerator {
         this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
 
         if (this.totalStackSize > 4) {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.totalStackSize - typeSize}]`, undefined, undefined, sizeIsByte))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
         } else {
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
         }
