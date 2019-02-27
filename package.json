@@ -18,7 +18,7 @@
     "build:basicgrammar": "cd antlr_config && antlr4ts -visitor BasicLexer.g4 BasicParser.g4 -o ../src/grammar",
     "build:compile": "tsc",
     "lint": "tslint -p tsconfig.json -c tslint.json",
-    "test": "mocha --reporter mochawesome --reporter-options reportDir=test/report --bail --exit",
+    "test": "mocha --reporter mochawesome --reporter-options reportDir=test/report --exit",
     "test:watch": "mocha -w --reporter mochawesome --reporter-options reportDir=test/report",
     "test:serve": "live-server --port=9000 --mount=/:test/report/ --entry-file=test/report/mochawesome.html",
     "start:test": "concurrently --kill-others \"npm run test:watch\" \"npm run test:serve\" \"npm run build:tscw\""

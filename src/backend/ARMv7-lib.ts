@@ -108,12 +108,6 @@ type ARMBDTAddressingModes =
 
 export const tabSpace = '\t'
 
-const constructInstruction = (
-  mnemonic: ARMOpcode,
-  condition: ARMCondition,
-  ...operands: ARMOperand[]
-) => 'hello'
-
 const construct = {
   arithmetic: (
     opcode: ARMOpcode,
@@ -329,7 +323,6 @@ export {
   ARMCondition,
   ARMOpcode,
   ARMOperand,
-  constructInstruction,
   construct,
   directive,
   Register,
