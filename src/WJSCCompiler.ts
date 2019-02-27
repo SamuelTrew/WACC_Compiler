@@ -1,6 +1,7 @@
 import { ANTLRInputStream, CommonTokenStream } from 'antlr4ts'
 import { WJSCCodeGenerator } from './backend/WJSCCodeGenerator'
 import { WJSCSemanticChecker } from './frontend/WJSCSemanticChecker'
+import { WJSCSymbolTable } from './frontend/WJSCSymbolTable'
 import { WJSCLexer } from './grammar/WJSCLexer'
 import { WJSCParser } from './grammar/WJSCParser'
 import { WJSCAst } from './util/WJSCAst'
@@ -10,10 +11,11 @@ import { WJSCErrorLog } from './util/WJSCErrors'
 class WJSCCompiler {
   public readonly errorLog: WJSCErrorLog
   public readonly semanticChecker: WJSCSemanticChecker
+  private readonly symbolTable: WJSCSymbolTable
   private readonly errorListener: WJSCErrorListener
   private readonly lexer: WJSCLexer
   private readonly parser: WJSCParser
-  private readonly codeGenerator: WJSCCodeGenerator
+  private codeGenerator: WJSCCodeGenerator
 
   private ast?: WJSCAst
   private asm?: string
@@ -21,10 +23,11 @@ class WJSCCompiler {
   constructor(data: string) {
     this.errorLog = new WJSCErrorLog()
     this.errorListener = new WJSCErrorListener(this.errorLog)
-    this.semanticChecker = new WJSCSemanticChecker(this.errorLog)
+    this.symbolTable = new WJSCSymbolTable(0, undefined, false, this.errorLog)
+    this.semanticChecker = new WJSCSemanticChecker(this.errorLog, this.symbolTable)
     this.lexer = new WJSCLexer(new ANTLRInputStream(data))
     this.parser = new WJSCParser(new CommonTokenStream(this.lexer))
-    this.codeGenerator = new WJSCCodeGenerator()
+    this.codeGenerator = new WJSCCodeGenerator(this.semanticChecker.symbolTable)
     this.parser.removeErrorListeners()
     this.parser.addErrorListener(this.errorListener)
   }

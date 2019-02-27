@@ -86,5 +86,6 @@ export class WJSCSymbolTable {
 
 export interface WJSCSymbolTableValue {
   type: TypeName
+  spOffset?: number
   params?: TypeName[]
 }
