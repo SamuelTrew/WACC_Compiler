@@ -103,7 +103,7 @@ class WJSCCodeGenerator {
         typeSize = (calledByArray ? 4 : 8)
         break
       default:
-        throw new Error(this.switchFault)
+        break
     }
     return typeSize
   }
@@ -264,7 +264,7 @@ class WJSCCodeGenerator {
         this.traverseStat(atx.nextStat, [head, ...tail])
         break
       default:
-        throw new Error(this.switchFault)
+        break
     }
   }
 
@@ -353,9 +353,8 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.PairElem:
       case WJSCParserRules.FunctionCall:
-        break
       default:
-        throw new Error(this.switchFault)
+        break
     }
   }
 
