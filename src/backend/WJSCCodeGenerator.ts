@@ -15,6 +15,7 @@ import {
 } from '../util/WJSCAst'
 import { getTypeSize } from '../util/WJSCType'
 
+import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
   ARMAddress,
   ARMCondition,
@@ -29,6 +30,7 @@ import {
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join(EOL)
+  public symbolTable: WJSCSymbolTable
   public output: string[] = []
   public data: string[] = [directive.data]
 
@@ -51,6 +53,13 @@ class WJSCCodeGenerator {
   private totalStackSize = 0
   private decStackSize = 0
   private ltorgCheck = true
+
+  /* ----------------------------------------------*/
+
+  constructor(symbolTable: WJSCSymbolTable) {
+    this.symbolTable = symbolTable
+  }
+
   public setRegSize = (reg: Register, size: number) => {
     this.registerContentSize.set(reg, size)
   }
@@ -87,8 +96,6 @@ class WJSCCodeGenerator {
     this.setRegSize(rd, size)
     this.output.push(construct.singleDataTransfer(opcode, rd, address, condition, modifier))
   }
-
-  /* ----------------------------------------------*/
 
   public sizeGen = (atx: WJSCAst, calledByArray: boolean): number => {
     let typeSize = 0
