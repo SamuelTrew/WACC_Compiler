@@ -13,7 +13,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { getTypeSize } from '../util/WJSCType'
+import { getTypeSize, isArrayType} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -108,6 +108,7 @@ class WJSCCodeGenerator {
     return typeSize
   }
 
+  // For genArray Literal
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
     const typeSize = this.sizeGen(atx.children[0], true)
@@ -117,7 +118,7 @@ class WJSCCodeGenerator {
     this.load(4, ARMOpcode.load, this.pc, directive.immNum(size)) // <- 4 refers to size of int type (for size)
     this.output = this.output.concat([directive.malloc(ARMOpcode.branchLink),
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
-    if (itemUsed in Register) {
+    if (list.includes(itemUsed)) {
       list.shift()
     } else {
       // We received a register whose contents have been put back on stack
@@ -351,7 +352,7 @@ class WJSCCodeGenerator {
         this.genExpr(atx.expr, [head, next, ...tail])
         break
       case WJSCParserRules.ArrayLiteral:
-        this.genArray(atx, [head, next, ...tail])
+        this.genArray(atx.arrayLiter, [head, next, ...tail])
         break
       case WJSCParserRules.Newpair:
         const typeSize = getTypeSize(atx.type)
