@@ -48,6 +48,7 @@ enum ARMOpcode {
   storeCoprocessorMemory = 'STC',
   storeMultiple = 'STM',
   store = 'STR',
+  storeBoolean = 'STRB',
   subtract = 'SUB',
   subtractCarry = 'SBC',
   swapRegMem = 'SWP',
@@ -194,7 +195,7 @@ const construct = {
     condition?: ARMCondition,
   ): string => tabSpace + `${opcode}${condition || ''} {${regList.join(', ')}}`,
   singleDataTransfer: (
-    opcode: ARMOpcode.load | ARMOpcode.store,
+    opcode: ARMOpcode.load | ARMOpcode.store | ARMOpcode.storeBoolean,
     rd: Register,
     address: ARMAddress,
     condition?: ARMCondition,

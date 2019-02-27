@@ -76,7 +76,7 @@ class WJSCCodeGenerator {
 
   public move = (size: number, opcode: ARMOpcode, rd: Register, operand: ARMOperand, condition?: ARMCondition) => {
     this.setRegSize(rd, size)
-    this.output.push(construct.move(ARMOpcode.load, this.pc, directive.immNum(size)))
+    this.output.push(construct.move(opcode, rd, operand, condition))
   }
 
   // load
@@ -264,7 +264,10 @@ class WJSCCodeGenerator {
         this.traverseStat(atx.nextStat, [head, ...tail])
         break
       case WJSCParserRules.ConditionalIf:
+        this.output.push('HELLOOOOOOOO')
         this.genExpr(atx.stdlibExpr, [head, ...tail])
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`),
+          construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}]`))
         this.traverseStat(atx.stat, [head, ...tail])
         this.traverseStat(atx.nextStat, [head, ...tail])
         break
@@ -379,7 +382,8 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.BoolLiter:
         value = atx.value ? 1 : 0
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
+        this.move(1, ARMOpcode.move, head, directive.immNum(value))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.storeBoolean, head, `[${this.sp}]`))
         break
       case WJSCParserRules.CharLiter:
         this.output.push(construct.move(ARMOpcode.move, head, `#'${value}'`))
