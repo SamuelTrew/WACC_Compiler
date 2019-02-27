@@ -199,15 +199,63 @@ class WJSCCodeGenerator {
     this.genExpr(atx.expr2, [head, next, ...tail])
   }
 
-  public printBool = () => {
-    this.output.push(construct.pushPop(ARMOpcode.push, [this.lr]),
+  public printBool = (boolInput: boolean) => {
+    const bool = boolInput ? `true\0` : `false\0`
+    const notBool = boolInput ? `false\0` : `true\0`
+    directive.stringDec(bool)
+    this.postFunc.push(`p_print_bool`,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
       construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`, ARMCondition.nequal),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`, ARMCondition.equal),
+    )
+    directive.stringDec(notBool)
+    this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`, ARMCondition.equal),
       construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(`printf`, false),
+      construct.branch(`printf`, true),
       construct.move(ARMOpcode.move, this.resultReg, `#0`),
-      construct.branch(`fflush`, false),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
+  public printString = (stringInput: string) => {
+    directive.stringDec(stringInput)
+    this.postFunc.push(`p_print_string`,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
+      construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, `#4`),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`printf`, true),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
+  public printLine = () => {
+    directive.stringDec(`\n`)
+    this.postFunc.push(`p_print_ln`,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`puts`, true),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
+  public printInt = (intInput: number) => {
+    const int = `${intInput}`
+    this.postFunc.push(`p_print_int`,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.move(ARMOpcode.move, Register.r1, this.resultReg),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`puts`, true),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(`fflush`, true),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
     )
   }
@@ -216,7 +264,8 @@ class WJSCCodeGenerator {
     switch (atx.operator.token) {
       case '!':
         this.output.push(construct.branch(`p_print_bool`, true))
-        this.printBool()
+        this.printBool(atx.value)
+        this.printLine()
         break
       case '-':
         break
@@ -583,11 +632,10 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Identifier:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
-        // TODO Lookup identifier from symbol table and find entry and address
-
-        // TODO load from storage address of the identifier
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `[${this.sp}, #${spOffset}]`, undefined, undefined, sizeIsByte))
+        const offsetString = spOffset ? `, #${spOffset}` : ''
+
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
         break
     }
   }
