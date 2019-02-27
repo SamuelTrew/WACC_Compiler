@@ -1,3 +1,4 @@
+import { EOL } from 'os'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -26,7 +27,7 @@ import {
 } from './ARMv7-lib'
 
 class WJSCCodeGenerator {
-  public static stringifyAsm = (asm: string[]) => asm.join('\n')
+  public static stringifyAsm = (asm: string[]) => asm.join(EOL)
   public output: string[] = []
   public data: string[] = [directive.data]
 
@@ -84,7 +85,7 @@ class WJSCCodeGenerator {
 
   /* ----------------------------------------------*/
 
-  public sizeGen = (atx: WJSCAst): number => {
+  public sizeGen = (atx: WJSCAst, calledByArray: boolean): number => {
     let typeSize = 0
     switch (atx.parserRule) {
       case WJSCParserRules.BoolLiter:
@@ -98,8 +99,7 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.PairLiter: {
-        // TODO: Determine size of pairLiter
-        typeSize = 4
+        typeSize = (calledByArray ? 4 : 8)
         break
       }
     }
@@ -108,11 +108,11 @@ class WJSCCodeGenerator {
 
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
-    const typeSize = this.sizeGen(atx.children[0])
+    const typeSize = this.sizeGen(atx.children[0], true)
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
     const itemUsed = this.nextRegister(list)
-    this.move(4, ARMOpcode.load, this.pc, directive.immNum(size))
+    this.load(4, ARMOpcode.load, this.pc, directive.immNum(size)) // <- 4 refers to size of int type (for size)
     this.output = this.output.concat([directive.malloc(ARMOpcode.branchLink),
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
     if (itemUsed in Register) {
@@ -133,7 +133,7 @@ class WJSCCodeGenerator {
   }
 
   public genArrayElem = (atx: WJSCAst, list: Register[], nextReg: Register, index: number) => {
-    const typeSize = this.sizeGen(atx)
+    const typeSize = this.sizeGen(atx, true)
     let childRep = ''
     switch (atx.parserRule) {
       case (WJSCParserRules.IntLiteral): {
