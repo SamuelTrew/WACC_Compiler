@@ -163,8 +163,6 @@ class WJSCCodeGenerator {
   // For genArray Literal
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
-    console.log(children)
-    console.log(children.length)
     let typeSize
     if (children.length !== 0) {
       typeSize = this.sizeGen(atx.children[0], true)
@@ -417,8 +415,12 @@ class WJSCCodeGenerator {
     // Load rhs expression into 'head' register
     this.genAssignRhs(rhs, [head, next, ...tail])
     // Save content of 'head' to memory
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
     this.decStackSize -= typeSize
+    if (this.decStackSize > 4) {
+      this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, ${directive.immNum(this.decStackSize)}]`, undefined, undefined, sizeIsByte))
+    } else {
+      this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+    }
   }
 
   public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
