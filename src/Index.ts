@@ -1,6 +1,8 @@
 /* Library imports */
 import * as argparse from 'argparse'
+import { auto as autoEol } from 'eol'
 import * as fs from 'fs'
+import { EOL } from 'os'
 import * as path from 'path'
 
 /* Our code */
@@ -9,6 +11,7 @@ import { WJSCAst } from './util/WJSCAst'
 import WJSCCompiler from './WJSCCompiler'
 
 const antinos = 'HXLY' + 311
+const indent = '       '
 
 const argp = new argparse.ArgumentParser({
   addHelp: true,
@@ -44,33 +47,46 @@ argp.addArgument(['-pa', '--print-ast'], {
   help: 'Print errors to STDERR',
 })
 
+argp.addArgument(['-ps', '--print-asm'], {
+  action: 'storeTrue',
+  help: 'Print assembly',
+})
+
 argp.addArgument(['-t', '--tree'], {
   action: 'store',
   defaultValue: 'tree.json',
   help: 'Output tree to a file',
 })
 
+argp.addArgument(['--debug'], {
+  action: 'storeTrue',
+  help: 'Activate debugging superpowers',
+})
+
 const args = argp.parseArgs()
-const output = args.output || (path.parse(args.src).name + '.s')
-const treeout = args.tree
-const errors = args.errors
+const output = path.resolve(args.output || (path.parse(args.src).name + '.s'))
+const treeout = path.resolve(args.tree)
+const errout = path.resolve(args.errors)
 const printErrors = args.print_errors
 const printAst = args.print_ast
-const info = `[info]`
-const warn = `${ConsoleColors.FgRed}[warn]${ConsoleColors.Reset}`
+const printAsm = args.print_asm
+const info = (information: string) => console.log(`${ConsoleColors.Dim}[info] ${information}${ConsoleColors.Reset}`)
+const warn = (warning: string) => console.error(`${ConsoleColors.FgRed}[warn] ${warning}${ConsoleColors.Reset}`)
 
 /* Read file and run the callback */
 fs.readFile(args.src, 'utf8', (err, data) => {
   if (err) {
-    throw err
+    warn('Error reading file: ' + err.message)
+    if (args.debug) {
+      console.error('Stack trace: ')
+      console.error(err.stack)
+    }
   }
 
   /* Instantiate our compiler */
   const compiler = new WJSCCompiler(data)
-
-  /* Allocate the tree, may be undefined */
-  let tree: WJSCAst | undefined
-
+  let tree
+  let asm
   /* Visit the tree */
   try {
     tree = compiler.check()
@@ -98,6 +114,20 @@ fs.readFile(args.src, 'utf8', (err, data) => {
 
   if (numerrors === 0) {
     console.log(`  ${ConsoleColors.FgGreen}[OK]${ConsoleColors.Reset} Checking succeeded.`)
+    asm = compiler.generate()
+
+    if (tree) {
+      writeOut(treeout, JSON.stringify(tree, null, 2), 'AST', printAst ? 'log' : undefined).catch((error) => {
+        warn(error)
+      })
+    }
+
+    if (asm) {
+      writeOut(output, asm, 'ASM', printAsm ? 'log' : undefined).catch((error) => {
+        warn(error)
+      })
+    }
+
   } else {
     console.log(
       `  ${ConsoleColors.FgRed}[NG]${ConsoleColors.Reset} Compilation failed with ` +
@@ -105,55 +135,27 @@ fs.readFile(args.src, 'utf8', (err, data) => {
       (synerrors > 0 && semerrors > 0 ? ' and ' : '') +
       (semerrors > 0 ? `${semerrors} semantic error${semerrors !== 1 ? 's' : ''}` : ''),
     )
-  }
-
-  /* Write the output */
-  if (tree) {
-    const stringifiedTree = JSON.stringify(tree, null, 2)
-    fs.writeFile(treeout, stringifiedTree, (writeErr) => {
-      if (writeErr) {
-        console.error(`${warn} ${writeErr}`)
-      }
-      console.log(
-        `${ConsoleColors.Dim}${info} ` +
-        `Output written to ${treeout}${ConsoleColors.Reset}`,
-      )
+    writeOut(errout, compiler.errorLog.printErrors(), 'Errors', printErrors ? 'error' : undefined).catch((error) => {
+      warn(error)
     })
-    if (printAst) {
-      console.log('--- AST ---')
-      console.log(stringifiedTree + '\n')
-    }
-  } else {
-    console.log(
-      `${ConsoleColors.Dim}${info} ` +
-      `No output written${ConsoleColors.Reset}`,
-    )
   }
 
-  /* Write the errors */
-  if (numerrors > 0) {
-    fs.writeFile(errors, compiler.errorLog.printErrors(), (writeErr) => {
-      if (writeErr) {
-        console.error(`${warn} ${writeErr}`)
-      }
-      console.log(
-        `${ConsoleColors.Dim}${info}` +
-        ` Errors written to ${errors}${ConsoleColors.Reset}`,
-      )
-    })
-    if (printErrors) {
-      console.error('--- ERRORS ---')
-      console.error(compiler.errorLog.printErrors() + '\n')
-    }
-  }
+})
 
-  /* Transpile to Assembly */
-  compiler.write(output).then((success) => {
-    console.log(
-      `${ConsoleColors.Dim}${info} ` +
-      `Assembly written to ${output}${ConsoleColors.Reset}`,
-    )
-  }).catch((reason) => {
-    console.error(`${warn} ${reason}`)
+const writeOut = (pathname: string | number | Buffer | URL, data: string, name: string, copyout?: 'log' | 'error'): Promise<void> => new Promise((resolve, reject) => {
+  if (copyout) {
+    console[copyout](`${indent}--- ${name} ---`)
+    console[copyout](indent + (autoEol(data)).split(EOL).join(EOL + indent))
+    console[copyout](`${indent}----${[...name].map(() => '-').join('')}----`)
+  }
+  fs.writeFile(pathname, data, (err) => {
+    if (err) {
+      warn(err.message)
+      info('No output written')
+      reject(err)
+    } else {
+      info(`${name} written to ${pathname}`)
+      resolve()
+    }
   })
 })

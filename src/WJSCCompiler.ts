@@ -1,5 +1,4 @@
 import { ANTLRInputStream, CommonTokenStream } from 'antlr4ts'
-import { writeFile } from 'fs'
 import { WJSCCodeGenerator } from './backend/WJSCCodeGenerator'
 import { WJSCSemanticChecker } from './frontend/WJSCSemanticChecker'
 import { WJSCLexer } from './grammar/WJSCLexer'
@@ -31,34 +30,27 @@ class WJSCCompiler {
   }
 
   public check = (): WJSCAst | undefined => {
-    const ctx = this.parser.program()
-    if (this.errorLog.numSyntaxErrors() === 0) {
-      return this.ast = this.semanticChecker.visit(ctx)
+    if (!this.ast) {
+      const ctx = this.parser.program()
+      if (this.errorLog.numSyntaxErrors() === 0) {
+        return this.ast = this.semanticChecker.visit(ctx)
+      }
+    } else {
+      return this.ast
     }
   }
 
   public generate = (): string => {
-    if (!this.ast) { this.check() }
-    if (this.errorLog.numErrors() > 0 || !this.ast) {
-      throw new Error('Cannot generate code: encountered errors on parse')
-    }
-    return this.asm = WJSCCodeGenerator.stringifyAsm(this.codeGenerator.genProgram(this.ast))
-  }
-
-  public write = (filename: string): Promise<boolean> => new Promise((resolve, reject) => {
-    if (!this.asm) { this.generate() }
-    if (this.errorLog.numErrors() > 0 || !this.asm) {
-      reject(new Error('Cannot write code: encountered errors on generate'))
+    if (!this.asm) {
+      if (!this.ast) { this.check() }
+      if (this.errorLog.numErrors() > 0 || !this.ast) {
+        throw new Error('Cannot generate code: encountered errors on parse')
+      }
+      return this.asm = WJSCCodeGenerator.stringifyAsm(this.codeGenerator.genProgram(this.ast))
     } else {
-      writeFile(filename, this.asm, (fserr) => {
-        if (fserr) {
-          reject(fserr)
-        } else {
-          resolve(true)
-        }
-      })
+      return this.asm
     }
-  })
+  }
 
 }
 
