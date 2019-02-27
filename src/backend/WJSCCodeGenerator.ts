@@ -150,7 +150,7 @@ class WJSCCodeGenerator {
     let childRep = ''
     switch (atx.parserRule) {
       case (WJSCParserRules.IntLiteral):
-        childRep = directive.immNum(atx.token)
+        childRep = `=${atx.token}`
         break
       case (WJSCParserRules.ArrayElem):
         this.genArray(atx, list)
