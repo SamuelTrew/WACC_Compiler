@@ -1,3 +1,5 @@
 begin
-  int[] a = [43, 2]
+  int[] a = [1,2,3];
+  int[] b = [3,4];
+  int[][] c = [a,b]
 end

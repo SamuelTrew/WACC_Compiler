@@ -174,7 +174,7 @@ class WJSCCodeGenerator {
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
     const itemUsed = this.nextRegister(list)
-    this.load(4, ARMOpcode.load, Register.r0, directive.immNum(size)) // <- 4 refers to size of int type (for size)
+    this.load(4, ARMOpcode.load, Register.r0, `=${size}`) // <- 4 refers to size of int type (for size)
     this.output = this.output.concat([directive.malloc(ARMOpcode.branchLink),
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
     if (list.includes(itemUsed)) {
