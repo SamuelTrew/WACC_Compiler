@@ -1,4 +1,4 @@
-import { EOL } from 'os'
+import {EOL} from 'os'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -13,7 +13,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { getTypeSize } from '../util/WJSCType'
+import {getTypeSize} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -306,6 +306,7 @@ class WJSCCodeGenerator {
   public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]) => {
     this.genAssignLhs(atx.lhs, [head, ...tail])
     this.genAssignRhs(atx.rhs, [head, ...tail])
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
   }
 
   public genAssignLhs = (atx: WJSCAst, [head, ...tail]: Register[]) => {
@@ -331,7 +332,8 @@ class WJSCCodeGenerator {
 
     // Write to output
     this.genAssignRhs(rhs, [head, next, ...tail])
-    // TODO: NOT CORRECT NEED TO CHECK FOR REFERENCES TO PAIR
+    // Save to memory
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
   }
 
   public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
@@ -400,14 +402,18 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Identifier:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
-
         if (!atx.value) {
           // This is the case for linked list but I have no idea how to actually check for it
           this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `[${this.sp}, #${this.decStackSize + 4}]`, undefined, undefined, sizeIsByte))
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `=4`, undefined, undefined, sizeIsByte))
         } else {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+          if (this.decStackSize > 4) {
+            this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
+            // this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+          } else {
+            this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+            // this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+          }
         }
         break
     }
