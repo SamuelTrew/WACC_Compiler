@@ -654,6 +654,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               result.children.push(visitedOp)
               const exp1 = this.visitExpression(expressions[0])
               const exp2 = this.visitExpression(expressions[1])
+              result.expr1 = exp1
+              result.expr2 = exp2
+              result.operator = visitedOp
               result.children.push(exp1)
               result.children.push(exp2)
               result.type = this.checkOperator(visitedOp, exp1, exp2)

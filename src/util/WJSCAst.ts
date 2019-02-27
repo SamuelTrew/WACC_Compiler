@@ -128,6 +128,9 @@ interface WJSCAssignRhs extends WJSCAst {
 
 interface WJSCExpr extends WJSCAst {
   value: any
+  operator: WJSCOperators
+  expr1: WJSCExpr
+  expr2: WJSCExpr
 }
 
 const WJSCChecker = {

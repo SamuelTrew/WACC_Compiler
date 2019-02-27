@@ -13,7 +13,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { getTypeSize, isArrayType} from '../util/WJSCType'
+import { getTypeSize } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -107,6 +107,55 @@ class WJSCCodeGenerator {
         break
     }
     return typeSize
+  }
+
+  public genBinOp = (atx: WJSCExpr, regList: Register[]) => {
+    this.genExpr(atx.expr1, regList)
+    switch (atx.operator.token) {
+      case '*':
+        break
+      case '/':
+        break
+      case '%':
+        break
+      case '+':
+        break
+      case '-':
+        break
+      case '>':
+        break
+      case '>=':
+        break
+      case '<':
+        break
+      case '<=':
+        break
+      case '==':
+        break
+      case '!=':
+        break
+      case '&&':
+        break
+      case '||':
+        break
+    }
+    this.genExpr(atx.expr2, regList)
+  }
+
+  public genUnOp = (atx: WJSCExpr, regList: Register[]) => {
+    switch (atx.operator.token) {
+      case '!':
+        break
+      case '-':
+        break
+      case 'len':
+        break
+      case 'ord':
+        break
+      case 'chr':
+        break
+    }
+    this.genExpr(atx.expr1, regList)
   }
 
   // For genArray Literal
