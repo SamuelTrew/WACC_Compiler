@@ -94,7 +94,7 @@ type ARMAddressPostIndex =
   | ['post', Register, ARMExpression]
   | ['post', Register, ARMShiftType, Register, ARMShift]
 type ARMExpression = string
-type ARMOperand = [Register, ARMShift] | ARMExpression | string
+type ARMOperand = [Register, ARMShift] | ARMExpression | Register | string
 type ARMShift = [ARMShiftname, Register | ARMExpression] | 'RRX'
 type ARMShiftType = '+' | '-'
 type ARMBDTAddressingModes =
@@ -113,16 +113,15 @@ const construct = {
   arithmetic: (
     opcode: ARMOpcode,
     rd: Register,
-    rd2: Register,
-    rn?: Register,
-    operand?: ARMOperand,
+    rn: Register,
+    operand: ARMOperand,
     condition?: ARMCondition,
     set = false,
   ) =>
     tabSpace +
     `${opcode}${condition || ''}${
       set ? 'S' : ''
-    } ${rd}, ${rd2}, ${rn}, ${stringify.operand(operand)}`,
+    } ${rd}, ${rn}, ${stringify.operand(operand)}`,
   blockDataTransfer: (
     opcode: ARMOpcode.loadMultiple | ARMOpcode.storeMultiple,
     addrMode: ARMBDTAddressingModes,

@@ -1,4 +1,6 @@
-import {EOL} from 'os'
+import { EOL } from 'os'
+
+import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -13,9 +15,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import {getTypeSize} from '../util/WJSCType'
-
-import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
+import { getTypeSize } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -33,6 +33,7 @@ class WJSCCodeGenerator {
   public symbolTable: WJSCSymbolTable
   public output: string[] = []
   public data: string[] = [directive.data]
+  public postFunc: string[] = []
 
   /* ------------- MEMORY MANAGEMENT --------------*/
   public memIndex: number = 0
@@ -196,9 +197,24 @@ class WJSCCodeGenerator {
     this.genExpr(atx.expr2, [head, next, ...tail])
   }
 
+  public printBool = () => {
+    this.output.push(construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`, ARMCondition.nequal),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`, ARMCondition.equal),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(ARMOpcode.branchLink, false, `printf`),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(ARMOpcode.branchLink, false, `fflush`),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
   public genUnOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
     switch (atx.operator.token) {
       case '!':
+        this.output.push(construct.branch(ARMOpcode.branchLink, false, `p_print_bool`))
+        this.printBool()
         break
       case '-':
         break
@@ -339,13 +355,13 @@ class WJSCCodeGenerator {
       const operand = `#${this.totalStackSize}`
       // Decrement sp
       if (this.totalStackSize) {
-        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, undefined, operand))
+        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
       }
       // Traverse body
       this.traverseStat(atx.body, regList)
       // Increment sp
       if (this.totalStackSize) {
-        this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, undefined, operand))
+        this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
       }
     }
     this.output.push(
@@ -359,7 +375,7 @@ class WJSCCodeGenerator {
     // Add .data section if it is not empty
     let result = this.output
     if (msgCount > 0) {
-      result = this.data.concat(this.output)
+      result = this.data.concat(this.output, this.postFunc)
     }
 
     return result
@@ -522,7 +538,7 @@ class WJSCCodeGenerator {
             // TODO check if is byte and use SERB
             construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`),
             construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
-        // if (this.totalStackSize > 4) {
+        // code: if (this.totalStackSize > 4) {
         //   this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
         // } else {
         //   this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
