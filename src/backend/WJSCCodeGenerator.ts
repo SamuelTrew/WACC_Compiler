@@ -231,11 +231,39 @@ class WJSCCodeGenerator {
     )
   }
 
+  public printLine = () => {
+    directive.stringDec(`\n`)
+    this.postFunc.push(`p_print_ln`,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`puts`, true),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
+  public printInt = (intInput: number) => {
+    const int = `${intInput}`
+    this.postFunc.push(`p_print_int`,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.move(ARMOpcode.move, Register.r1, this.resultReg),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`puts`, true),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
   public genUnOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
     switch (atx.operator.token) {
       case '!':
         this.output.push(construct.branch(`p_print_bool`, true))
         this.printBool(atx.value)
+        this.printLine()
         break
       case '-':
         break
