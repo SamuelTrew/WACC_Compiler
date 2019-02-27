@@ -1,4 +1,4 @@
-import {EOL} from 'os'
+import { EOL, type } from 'os'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -13,7 +13,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import {getTypeSize} from '../util/WJSCType'
+import { getTypeSize } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -307,9 +307,10 @@ class WJSCCodeGenerator {
   }
 
   public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]) => {
+    const sizeIsByte = (getTypeSize(atx.type)) === 1
     this.genAssignLhs(atx.lhs, [head, ...tail])
     this.genAssignRhs(atx.rhs, [head, ...tail])
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
   }
 
   public genAssignLhs = (atx: WJSCAst, [head, ...tail]: Register[]) => {
@@ -330,13 +331,18 @@ class WJSCCodeGenerator {
   }
 
   public genDeclare = (atx: WJSCDeclare, [head, next, ...tail]: Register[]) => {
+    const type = atx.type
     const rhs = atx.rhs
+
+    const typSize = getTypeSize(type)
+    const sizeIsByte = typSize === 1
+
     // TODO add cases for pairs and arrays
 
     // Write to output
     this.genAssignRhs(rhs, [head, next, ...tail])
     // Save to memory
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
   }
 
   public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
@@ -385,7 +391,6 @@ class WJSCCodeGenerator {
       case WJSCParserRules.BoolLiter:
         value = atx.value ? 1 : 0
         this.move(1, ARMOpcode.move, head, directive.immNum(value))
-        this.output.push(construct.singleDataTransfer(ARMOpcode.storeBoolean, head, `[${this.sp}]`))
         break
       case WJSCParserRules.CharLiter:
         this.output.push(construct.move(ARMOpcode.move, head, `#'${value}'`))
