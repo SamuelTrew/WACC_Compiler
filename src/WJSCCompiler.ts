@@ -42,7 +42,7 @@ class WJSCCompiler {
     if (this.errorLog.numErrors() > 0 || !this.ast) {
       throw new Error('Cannot generate code: encountered errors on parse')
     }
-    return this.asm = WJSCCodeGenerator.stringifyAsm(this.codeGenerator.genProgram(this.ast as WJSCAst))
+    return this.asm = WJSCCodeGenerator.stringifyAsm(this.codeGenerator.genProgram(this.ast))
   }
 
   public write = (filename: string): Promise<boolean> => new Promise((resolve, reject) => {

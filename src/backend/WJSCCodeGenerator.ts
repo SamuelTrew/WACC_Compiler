@@ -13,7 +13,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { getTypeSize, isPairType } from '../util/WJSCType'
+import { getTypeSize } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -46,6 +46,7 @@ class WJSCCodeGenerator {
   private readonly sp = Register.r13
   private readonly lr = Register.r14
   private readonly pc = Register.r15
+  private totalStackSize = 0
   public setRegSize = (reg: Register, size: number) => {
     this.registerContentSize.set(reg, size)
   }
@@ -65,7 +66,7 @@ class WJSCCodeGenerator {
     } else {
       // Pushes contents of last reg to symbol table, returns result
       // First we store
-      this.output.concat(construct.singleDataTransfer(ARMOpcode.store, Register.r12, directive.immAddr(this.memIndex)))
+      this.output.push(construct.singleDataTransfer(ARMOpcode.store, Register.r12, directive.immAddr(this.memIndex)))
       this.memIndex = this.memIndex + this.getRegSize(Register.r12)
       return Register.r12
     }
@@ -197,21 +198,20 @@ class WJSCCodeGenerator {
       const stats = this.flattenSequential(atx.body)
 
       // Move sp for all declarations at once
-      let totalStackSize = 0
       stats.forEach((stat) => {
         if (stat.parserRule === WJSCParserRules.Declare) {
-          totalStackSize += getTypeSize(stat.declaration.type)
+          this.totalStackSize += getTypeSize(stat.declaration.type)
         }
       })
-      const operand = `#${totalStackSize}`
+      const operand = `#${this.totalStackSize}`
       // Decrement sp
-      if (totalStackSize) {
+      if (this.totalStackSize) {
         this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
       }
       // Traverse body
       this.traverseStat(atx.body, regList)
       // Increment sp
-      if (totalStackSize) {
+      if (this.totalStackSize) {
         this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
       }
     }
@@ -266,7 +266,7 @@ class WJSCCodeGenerator {
       }
       case WJSCParserRules.Sequential: {
         this.traverseStat(atx.stat, [head, ...tail])
-        // what are you doing?????: this.traverseStat(atx.nextStat, [head, ...tail])
+        this.traverseStat(atx.nextStat, [head, ...tail])
         break
       }
     }
@@ -312,29 +312,18 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.Pair: {
-        this.output.push()
         break
       }
     }
   }
 
   public genDeclare = (atx: WJSCDeclare, [head, next, ...tail]: Register[]) => {
-    const type = atx.type
     const rhs = atx.rhs
-
-    const typeSize = getTypeSize(type)
-    const sizeIsByte = typeSize === 1
-
     // TODO add cases for pairs and arrays
 
     // Write to output
     this.genAssignRhs(rhs, [head, next, ...tail])
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${typeSize}]`, undefined, undefined, sizeIsByte))
     // TODO: NOT CORRECT NEED TO CHECK FOR REFERENCES TO PAIR
-    if (isPairType(type)) {
-      this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${typeSize}]`, undefined, undefined, sizeIsByte))
-      this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
-    }
   }
 
   public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
@@ -348,6 +337,9 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.Newpair: {
+        const typeSize = getTypeSize(atx.type)
+        const sizeIsByte = typeSize === 1
+
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`))
         this.output.push(directive.malloc(ARMOpcode.branchLink))
         this.output.push(construct.move(ARMOpcode.move, head, this.resultReg))
@@ -361,6 +353,12 @@ class WJSCCodeGenerator {
         this.output.push(directive.malloc(ARMOpcode.branchLink))
         this.output.push(construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`))
         this.output.push(construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
+
+        if (this.totalStackSize > 4) {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.totalStackSize - typeSize}]`, undefined, undefined, sizeIsByte))
+        } else {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+        }
         break
       }
       case WJSCParserRules.PairElem: {
@@ -400,6 +398,15 @@ class WJSCCodeGenerator {
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=0`))
         this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`))
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}]`))
+        break
+      }
+      // TODO: Check if this is allowed
+      // This is to catch the case when assigning a new pair to an existing one (createRefPair.wacc)
+      case WJSCParserRules.Identifier: {
+        const typeSize = getTypeSize(atx.type)
+        const sizeIsByte = typeSize === 1
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}, #${typeSize}]`, undefined, undefined, sizeIsByte))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
         break
       }
     }
