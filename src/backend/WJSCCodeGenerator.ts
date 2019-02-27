@@ -1,4 +1,4 @@
-import { EOL } from 'os'
+import {EOL} from 'os'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -13,7 +13,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { getTypeSize } from '../util/WJSCType'
+import {getTypeSize} from '../util/WJSCType'
 
 import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
@@ -203,25 +203,43 @@ class WJSCCodeGenerator {
 
   public genArrayElem = (atx: WJSCAst, list: Register[], nextReg: Register, index: number, prevReg?: Register) => {
     const typeSize = this.sizeGen(atx, true)
-    let childRep = ''
+    let params
     switch (atx.parserRule) {
       case (WJSCParserRules.IntLiteral):
-        childRep = `=${atx.token}`
+        this.load(typeSize, ARMOpcode.load, nextReg, `=${atx.token}`)
+        if (!prevReg) {
+          params = `[${nextReg}, ${directive.immNum(typeSize * (index + 1))}]`
+        } else {
+          params = `[${prevReg}, ${directive.immNum(typeSize * (index + 1))}]`
+        }
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params))
         break
-      case (WJSCParserRules.ArrayElem):
+      case (WJSCParserRules.CharLiter):
+      case (WJSCParserRules.BoolLiter):
+        const value = (atx.parserRule === WJSCParserRules.CharLiter ? `#${atx.token}` :
+            (atx.token === 'true' ? directive.immNum(1) : directive.immNum(0)))
+        this.move(typeSize, ARMOpcode.move, nextReg, value)
+        if (!prevReg) {
+          params = `[${nextReg}, ${directive.immNum(4 + typeSize * (index))}]`
+        } else {
+          params = `[${prevReg}, ${directive.immNum(4 + typeSize * (index))}]`
+        }
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params, undefined, undefined, true))
+        break
+      case (WJSCParserRules.ArrayLiteral):
         this.genArray(atx, list)
+        this.load(typeSize, ARMOpcode.load, nextReg, `${atx.token}`)
+        break
       default:
-        childRep = atx.token
+        this.load(typeSize, ARMOpcode.load, nextReg, `${atx.token}`)
+        if (!prevReg) {
+          params = `[${nextReg}, ${directive.immNum(typeSize * (index + 1))}]`
+        } else {
+          params = `[${prevReg}, ${directive.immNum(typeSize * (index + 1))}]`
+        }
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params))
         break
     }
-    this.load(typeSize, ARMOpcode.load, nextReg, childRep)
-    let params
-    if (!prevReg) {
-      params = `[${nextReg}, ${directive.immNum(typeSize * (index + 1))}]`
-    } else {
-      params = `[${prevReg}, ${directive.immNum(typeSize * (index + 1))}]`
-    }
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params))
   }
 
   public genIdent = (atx: WJSCIdentifier, [head, ...tail]: Register[]): string[] => {
