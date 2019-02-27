@@ -73,6 +73,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   implements WJSCParserVisitor<WJSCAst> {
   public errorLog: WJSCErrorLog
   public symbolTable: WJSCSymbolTable
+  private tableCounter = 0
 
   /**
    * Returns a new Semantic Checker instance.
@@ -484,19 +485,25 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         result.parserRule = WJSCParserRules.ConditionalIf
         const [trueBranch, falseBranch] = childStat
         /* Ensure that children[0] = true, children[1] = false */
-        this.symbolTable = this.symbolTable.enterScope()
+        this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
         const visitedTrueBranch = this.visitStatement(trueBranch)
         this.symbolTable = this.symbolTable.exitScope()
-        this.symbolTable = this.symbolTable.enterScope()
+        visitedTrueBranch.tableNumber = this.tableCounter
+
+        this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
         const visitedFalseBranch = this.visitStatement(falseBranch)
         this.symbolTable = this.symbolTable.exitScope()
+        visitedFalseBranch.tableNumber = this.tableCounter
+
         this.pushChild(result, visitedTrueBranch, true)
         this.pushChild(result, visitedFalseBranch, true)
       } else if (whileB) {
         result.parserRule = WJSCParserRules.ConditionalWhile
-        this.symbolTable = this.symbolTable.enterScope()
+        this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
         const childStatType = this.visitStatement(childStat[0])
         this.symbolTable = this.symbolTable.exitScope()
+        childStatType.tableNumber = this.tableCounter
+
         this.pushChild(result, childStatType)
         if (!childStatType) {
           this.errorLog.semErr(result, SemError.Undefined)
@@ -682,7 +689,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.identifier = ident.value
     result.type = visitedType
     /* Check types of Params and Statements, enter child scope */
-    this.symbolTable = this.symbolTable.enterFuncScope(ident.value)
+    this.symbolTable = this.symbolTable.enterFuncScope(ident.value, this.getTableNumber())
     if (paramList) {
       const visitedParamList = this.visitParamList(paramList)
       this.pushChild(result, visitedParamList)
@@ -707,7 +714,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     const paramList = ctx.paramList()
     let paramTypes: TypeName[]
-    this.symbolTable = this.symbolTable.enterFuncScope(ident.value)
+    this.symbolTable = this.symbolTable.enterFuncScope(ident.value, this.getTableNumber())
     if (paramList) {
       const visitedParamList = this.checkParamDoubleDeclaration(paramList)
       paramTypes = visitedParamList.paramTypes
@@ -968,7 +975,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         if (!stat || !end) {
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
-          this.symbolTable = this.symbolTable.enterScope()
+          this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
+          result.tableNumber = this.tableCounter
           this.pushChild(result, this.visitStatement(stat[0]))
           this.symbolTable = this.symbolTable.exitScope()
           result.children.push(this.visitTerminal(end))
@@ -1480,6 +1488,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
     this.symbolTable.insertSymbol(result.identifier, result.type)
     return result
+  }
+
+  private getTableNumber = (): number => {
+    this.tableCounter += 1
+    return this.tableCounter
   }
 }
 

@@ -97,6 +97,7 @@ interface WJSCStatement extends WJSCAst {
   stat: WJSCStatement
   nextStat: WJSCStatement
   assignment: WJSCAssignment
+  tableNumber: number
 }
 
 interface WJSCIdentifier extends WJSCAst {

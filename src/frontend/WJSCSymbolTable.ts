@@ -6,13 +6,13 @@ export class WJSCSymbolTable {
   private symbolTable: Map<string, WJSCSymbolTableValue>
   private childrenTables: WJSCSymbolTable[]
   private isInFunction: boolean
-  private readonly currentScopeLevel: number
+  private readonly tableNumber: number
   private readonly errorLog: WJSCErrorLog
   private functionName?: string
   private parentLevel?: WJSCSymbolTable
 
   constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, isInFunction: boolean, errorLog: WJSCErrorLog) {
-    this.currentScopeLevel = scopeLevel
+    this.tableNumber = scopeLevel
     this.symbolTable = new Map()
     this.childrenTables = []
     this.parentLevel = parentLevel
@@ -20,7 +20,7 @@ export class WJSCSymbolTable {
     this.errorLog = errorLog
   }
 
-  public getScopeLevel = (): number => this.currentScopeLevel
+  public getTableNumber = (): number => this.tableNumber
 
   public getParentTable = (): WJSCSymbolTable | undefined => this.parentLevel
 
@@ -31,15 +31,15 @@ export class WJSCSymbolTable {
   public getFunctionName = (): string | undefined => this.functionName || (this.parentLevel ? this.parentLevel.getFunctionName() : undefined)
 
   // Create new child symbol table
-  public enterScope = (): WJSCSymbolTable => {
-    const childTable = new WJSCSymbolTable(this.currentScopeLevel + 1, this, this.isInFunction, this.errorLog)
+  public enterScope = (tableNumber: number): WJSCSymbolTable => {
+    const childTable = new WJSCSymbolTable(tableNumber, this, this.isInFunction, this.errorLog)
     this.childrenTables.push(childTable)
     return childTable
   }
 
   // Create new child symbol table and store function name
-  public enterFuncScope = (functionName: string): WJSCSymbolTable => {
-    const childTable = this.enterScope()
+  public enterFuncScope = (functionName: string, tableNumber: number): WJSCSymbolTable => {
+    const childTable = this.enterScope(tableNumber)
     childTable.functionName = functionName
     childTable.isInFunction = true
     return childTable
@@ -73,6 +73,27 @@ export class WJSCSymbolTable {
       }
     }
     return true
+  }
+
+  // Store stack pointer offset of id
+  public setVarMemAddr(id: string, offset: number) {
+    const entry = this.getGlobalEntry(id)
+    if (entry) {
+      entry.spOffset = offset
+    } else {
+      console.log(`Can't set variable memory address`)
+    }
+  }
+
+  // Get stack pointer offset of id
+  public getVarMemAddr(id: string): number {
+    const entry = this.getGlobalEntry(id)
+    if (entry && entry.spOffset) {
+      return entry.spOffset
+    } else {
+      console.log(`Can't get variable memory address`)
+    }
+    return -10000
   }
 
   // Decircularize the symbol table for printing

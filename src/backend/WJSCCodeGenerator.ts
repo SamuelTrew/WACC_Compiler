@@ -413,6 +413,7 @@ class WJSCCodeGenerator {
   public genDeclare = (atx: WJSCDeclare, [head, next, ...tail]: Register[]) => {
     const type = atx.type
     const rhs = atx.rhs
+    const id = atx.identifier
 
     const typeSize = getTypeSize(type)
     const sizeIsByte = typeSize === 1
@@ -421,8 +422,9 @@ class WJSCCodeGenerator {
 
     // Load rhs expression into 'head' register
     this.genAssignRhs(rhs, [head, next, ...tail])
-    // Save content of 'head' to memory
     this.decStackSize -= typeSize
+    this.symbolTable.setVarMemAddr(id, this.decStackSize)
+    // Save content of 'head' to memory
     if (this.decStackSize > 4) {
       this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, ${directive.immNum(this.decStackSize)}]`, undefined, undefined, sizeIsByte))
     } else {
@@ -502,7 +504,7 @@ class WJSCCodeGenerator {
         // TODO Lookup identifier from symbol table and find entry and address
 
         // TODO load from storage address of the identifier
-        const spOffset = -1
+        const spOffset = this.symbolTable.getVarMemAddr(atx.value)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, `[${this.sp}, #${spOffset}]`, undefined, undefined, sizeIsByte))
         break
     }
