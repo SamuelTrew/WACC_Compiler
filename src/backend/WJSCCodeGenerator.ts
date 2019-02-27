@@ -111,7 +111,12 @@ class WJSCCodeGenerator {
   // For genArray Literal
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
-    const typeSize = this.sizeGen(atx.children[0], true)
+    let typeSize
+    if (children.length !== 0) {
+      typeSize = this.sizeGen(atx.children[0], true)
+    } else {
+      typeSize = 0
+    }
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
     const itemUsed = this.nextRegister(list)
@@ -129,13 +134,15 @@ class WJSCCodeGenerator {
       list.shift()
     }
     children.forEach((child, index) => {
-      this.genArrayElem(child, list, nextItem, index)
+      this.genArrayElem(child, list, nextItem, index, itemUsed)
     })
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, itemUsed))
-    this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed, this.sp))
+    // Load argument size
+    this.load(4, ARMOpcode.load, nextItem, `=${children.length}`)
+    // Store r+1 to r
+    this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, `[${itemUsed}]`))
   }
 
-  public genArrayElem = (atx: WJSCAst, list: Register[], nextReg: Register, index: number) => {
+  public genArrayElem = (atx: WJSCAst, list: Register[], nextReg: Register, index: number, prevReg?: Register) => {
     const typeSize = this.sizeGen(atx, true)
     let childRep = ''
     switch (atx.parserRule) {
@@ -149,7 +156,12 @@ class WJSCCodeGenerator {
         break
     }
     this.load(typeSize, ARMOpcode.load, nextReg, childRep)
-    const params = `[${nextReg}, ${directive.immNum(typeSize * (index + 1))}]`
+    let params
+    if (!prevReg) {
+      params = `[${nextReg}, ${directive.immNum(typeSize * (index + 1))}]`
+    } else {
+      params = `[${prevReg}, ${directive.immNum(typeSize * (index + 1))}]`
+    }
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params))
   }
 
