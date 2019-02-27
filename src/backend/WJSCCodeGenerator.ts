@@ -1,4 +1,4 @@
-import { EOL, type } from 'os'
+import { EOL } from 'os'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
