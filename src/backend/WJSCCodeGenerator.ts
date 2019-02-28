@@ -307,12 +307,9 @@ class WJSCCodeGenerator {
         break
       case '&&':
         this.output.push(construct.logical(ARMOpcode.and, head, head, next))
-        // TODO: the subsequent STR and LDR should be STRB and LDRB in this case
         break
       case '||':
-        this.output.push(construct.logical(ARMOpcode.or, head, head, next),
-          construct.logical(ARMOpcode.exclusiveOr, head, head, `#1`),
-        )
+        this.output.push(construct.logical(ARMOpcode.or, head, head, next))
         break
     }
   }
@@ -1014,19 +1011,11 @@ class WJSCCodeGenerator {
       construct.branch('p_print_string', true),
       construct.move(ARMOpcode.move, Register.r0, directive.immNum(-1)),
       construct.branch('exit', true),
-      // directive.label('p_print_string'),
-      // construct.pushPop(ARMOpcode.push, [this.lr]),
-      // construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r0}]`),
-      // construct.arithmetic(ARMOpcode.add, Register.r2, Register.r0, directive.immNum(4)),
-      // construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-      //   `=msg_${this.findTrueMessageIndex('%.*s\\0')}`),
-      // construct.arithmetic(ARMOpcode.add, Register.r0, Register.r0, directive.immNum(4)),
-      // construct.branch('printf', true),
-      // construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
-      // construct.branch('fflush', true),
-      // construct.pushPop(ARMOpcode.pop, [this.pc]),
     )
-    this.pushCheck(Check.printString)
+    if (!this.checkingArray.includes(Check.printString)) {
+      this.msgCount--
+      this.printString()
+    }
   }
 
   /* -----------------------------------------*/
