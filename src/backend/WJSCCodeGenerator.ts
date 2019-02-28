@@ -820,7 +820,7 @@ class WJSCCodeGenerator {
         if (value.toString()[0] === '\\') {
           value = value.toString()[1]
         }
-        this.output.push(construct.move(ARMOpcode.move, head, `#${value}`))
+        this.output.push(construct.move(ARMOpcode.move, head, `#'${value}'`))
         break
       case WJSCParserRules.StringLiter:
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + this.msgCount))
