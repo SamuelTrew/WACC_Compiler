@@ -452,14 +452,11 @@ class WJSCCodeGenerator {
     let result = this.output
     // Add error warning if there is potential for RE
 
+    this.postFuncCheck()
+
     if (this.msgCount > 0) {
       result = this.data.concat(this.output)
     }
-    // Add error warning if there is potential for RE
-    if (this.errorPresent) {
-      this.throwError()
-    }
-    this.postFuncCheck()
 
     return result.concat(this.postFunc)
   }
@@ -468,6 +465,10 @@ class WJSCCodeGenerator {
     // TODO: TURN THIS INTO AN ENUM SWITCH FOOL OR SMTH THAT ISN'T DISGUSTING
     if (this.printStringCheck) {
       this.printString()
+    }
+    if (this.printIntCheck) {
+      this.printInt()
+      this.stringDec('%d\\0')
     }
     if (this.printBoolCheck) {
       this.printBool()
@@ -481,10 +482,6 @@ class WJSCCodeGenerator {
     }
     if (this.printReadIntCheck) {
       this.printReadInt()
-      this.stringDec('%d\\0')
-    }
-    if (this.printIntCheck) {
-      this.printInt()
       this.stringDec('%d\\0')
     }
     if (this.printReadCharCheck) {
@@ -836,12 +833,6 @@ class WJSCCodeGenerator {
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
         const offsetString = spOffset ? `, #${spOffset}` : ''
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
-        if (typeof atx.value === 'boolean') {
-          // TODO: NOT CORRECT
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, 'SB', false))
-        } else {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
-        }
         break
       case WJSCParserRules.ArrayElem:
         this.genArrayElem(atx, regList)
