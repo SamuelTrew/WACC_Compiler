@@ -1,6 +1,6 @@
-import { EOL } from 'os'
+import {EOL} from 'os'
 
-import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
+import {WJSCSymbolTable} from '../frontend/WJSCSymbolTable'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -15,7 +15,7 @@ import {
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { getTypeSize } from '../util/WJSCType'
+import {getTypeSize} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -28,7 +28,6 @@ import {
   RuntimeError,
   tabSpace,
 } from './ARMv7-lib'
-import {Runtime} from "inspector"
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join(EOL)
@@ -390,7 +389,7 @@ class WJSCCodeGenerator {
       directive.label('main'),
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
-
+    this.checkArrayOutOfBounds()
     // Generate code for the function body statements
     if (atx.body) {
       const stats = this.flattenSequential(atx.body)
@@ -639,12 +638,32 @@ class WJSCCodeGenerator {
     }
   }
 
-  public throwArrayOutOfBounds = () => {
+  public checkArrayOutOfBounds = () => {
+    // Setting up the messages if not already set up
     if (!this.data.includes(RuntimeError.negIndex)) {
-      this.output.push(directive.stringDec(RuntimeError.negIndex))
+      this.data.push(directive.stringDec(RuntimeError.negIndex))
     }
     if (!this.data.includes(RuntimeError.largeIndex)) {
-      this.output.push(directive.stringDec(RuntimeError.largeIndex))
+      this.data.push(directive.stringDec(RuntimeError.largeIndex))
+    }
+    // checks in instruction body itself
+    this.output.push(construct.branch('p_check_array_bounds', true))
+    // appending function to end of messages, if not already set up
+    if (!this.postFunc.includes('p_check_array_bounds')) {
+      this.postFunc.push(directive.label('p_check_array_bounds'))
+      this.postFunc.push(construct.pushPop(ARMOpcode.push, [this.lr]))
+      this.postFunc.push(construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)))
+      // TODO: FIND REAL INDEX BY RECURSION
+      // TODO: FIND REAL WORD LENGTH
+      this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.data.length - 3}`, ARMCondition.lessThan))
+      this.postFunc.push(construct.branch('p_throw_runtime_error', true, ARMCondition.lessThan))
+      this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r1}]`))
+      this.postFunc.push(construct.compareTest(ARMOpcode.compare, Register.r1, directive.immNum(1)))
+      this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.data.length - 2}`, ARMCondition.unsignedHigherSame))
+      this.postFunc.push(construct.branch('p_throw_runtime_error', true, ARMCondition.unsignedHigherSame))
+      this.postFunc.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
 }
