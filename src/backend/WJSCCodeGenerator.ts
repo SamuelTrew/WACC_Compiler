@@ -23,7 +23,7 @@ import {
   ARMAddress,
   ARMCondition,
   ARMOpcode,
-  ARMOperand,
+  ARMOperand, ARMShiftname,
   construct,
   directive,
   Register,
@@ -121,7 +121,7 @@ class WJSCCodeGenerator {
         construct.pushPop(ARMOpcode.push, [this.lr]),
         construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
         construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, directive.immNum(4)),
-        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
+        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount - 1}`), // TODO Check if -1 is correct
         construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, directive.immNum(4)),
         construct.branch(`printf`, true),
         construct.move(ARMOpcode.move, this.resultReg, directive.immNum(0)),
@@ -243,9 +243,10 @@ class WJSCCodeGenerator {
 
     switch (atx.operator.token) {
       case '*':
-        this.output.push(construct.multiply(head, next, head))
-        this.output.push(construct.compareTest(ARMOpcode.compare, next, head, undefined, `ASR #31`))
-        this.output.push(construct.branch(ARMOpcode.branchLink, false, ARMCondition.overflow))
+        this.output.push(construct.multiplyLong(true, head, next, head, next))
+        const operand: ARMOperand = [head, [ARMShiftname.arithmeticShiftRight, '#31']]
+        this.output.push(construct.compareTest(ARMOpcode.compare, next, operand))
+        this.checkOverflow()
         break
       case '/':
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
@@ -435,7 +436,6 @@ class WJSCCodeGenerator {
       directive.label('main'),
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
-    // this.checkDivByZero()
     // Generate code for the function body statements
     if (atx.body) {
       this.genStatBlock(atx.body, regList)
@@ -455,7 +455,7 @@ class WJSCCodeGenerator {
     this.postFuncCheck()
 
     if (this.msgCount > 0) {
-      result = this.data.concat(this.output)
+      result = this.data.concat('', this.output)
     }
 
     return result.concat(this.postFunc)
@@ -906,7 +906,7 @@ class WJSCCodeGenerator {
       this.stringDec(RuntimeError.intOverFlow)
     }
     // check in instruction body itself
-    this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, ARMCondition.overflow))
+    this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, ARMCondition.nequal))
     // appending function to postFunc
     if (!this.postFunc.includes(this.THROW_OVERFLOW_ERROR)) {
       this.postFunc = this.postFunc.concat(directive.label(this.THROW_OVERFLOW_ERROR),
