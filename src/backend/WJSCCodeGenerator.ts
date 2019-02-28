@@ -708,11 +708,12 @@ class WJSCCodeGenerator {
       case WJSCParserRules.PairElem:
         break
       case WJSCParserRules.FunctionCall:
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, [this.sp]),
-          construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-4)], undefined, undefined, undefined, undefined, true),
+        construct.singleDataTransfer(ARMOpcode.load, head, [this.sp])
+        // TODO: Get size from symbol table
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-4)], undefined, undefined, undefined, undefined, true),
           construct.branch(`f_${atx.ident}`, true),
-          construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(4)),
-          construct.move(ARMOpcode.move, head, Register.r0))
+          construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(4)))
+        this.move(this.getRegSize(Register.r0), ARMOpcode.move, head, Register.r0)
       default:
         break
     }
