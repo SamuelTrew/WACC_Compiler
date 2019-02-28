@@ -65,6 +65,8 @@ class WJSCCodeGenerator {
   private readonly PRINT_STRING = 'p_print_string'
   private readonly PRINT_INT = 'p_print_int'
   private readonly PRINT_NEW_LINE = 'p_print_ln'
+  private readonly PRINT_READ_INT = 'p_read_int'
+  private readonly PRINT_READ_CHAR = 'p_read_char'
 
   // Error functions
   private readonly THROW_RUNTIME_ERROR = 'p_throw_runtime_error'
@@ -81,6 +83,8 @@ class WJSCCodeGenerator {
   private printBoolCheck = false
   private printNewLnCheck = false
   private printBoolTemp = undefined
+  private printReadIntCheck = false
+  private printReadCharCheck = false
 
   /* owowowowowowowowowowowowowowowowowowowowowowowowo */
 
@@ -149,7 +153,28 @@ class WJSCCodeGenerator {
       construct.branch(`fflush`, true),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
     )
-    this.stringDec('%d\\0')
+  }
+
+  public printReadInt = () => {
+    this.postFunc.push(directive.label(this.PRINT_READ_INT),
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.move(ARMOpcode.move, Register.r1, this.resultReg),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`scanf`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
+  public printReadChar = () => {
+    this.postFunc.push(directive.label(this.PRINT_READ_CHAR),
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.move(ARMOpcode.move, Register.r1, this.resultReg),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`scanf`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
   }
   /* ------------------------------------------- */
 
@@ -210,9 +235,11 @@ class WJSCCodeGenerator {
     return typeSize
   }
 
-  public genBinOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
-    this.genExpr(atx.expr1, [head, next, ...tail])
+  public genBinOp = (atx: WJSCExpr, regList: Register[]) => {
+    const [head, next, ...tail] = regList
+    this.genExpr(atx.expr1, regList)
     this.genExpr(atx.expr2, [next, ...tail])
+
     switch (atx.operator.token) {
       case '*':
         this.output.push(construct.multiply(head, next, head))
@@ -288,7 +315,8 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genUnOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
+  public genUnOp = (atx: WJSCExpr, regList: Register[]) => {
+    const [head, next] = regList
     switch (atx.operator.token) {
       case '!':
         // code HI : this.output.push(construct.branch(`p_print_bool`, true))
@@ -307,7 +335,7 @@ class WJSCCodeGenerator {
       case 'chr':
         break
     }
-    this.genExpr(atx.expr1, [head, next, ...tail])
+    this.genExpr(atx.expr1, regList)
   }
 
   // For genArray Literal
@@ -331,7 +359,32 @@ class WJSCCodeGenerator {
       list.shift()
     }
     children.forEach((child, index) => {
-      this.genArrayElem(child, list, nextItem, index, itemUsed)
+      this.genExpr(child as WJSCExpr, list)
+      // Then we need to store the values
+      let params
+      switch (child.parserRule) {
+        case WJSCParserRules.IntLiteral:
+          params = `[${itemUsed}, ${directive.immNum(typeSize * (index + 1))}]`
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
+          break
+        case WJSCParserRules.BoolLiter:
+        case WJSCParserRules.CharLiter:
+          params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params, undefined, undefined, true))
+          break
+        case WJSCParserRules.StringLiter:
+          break
+        case WJSCParserRules.PairLiter:
+          break
+        case WJSCParserRules.Identifier:
+          break
+        case WJSCParserRules.Unop:
+          break
+        case WJSCParserRules.BinOp:
+          break
+        default:
+          // Should not happen
+      }
     })
     // Load argument size
     this.load(4, ARMOpcode.load, nextItem, `=${children.length}`)
@@ -415,11 +468,23 @@ class WJSCCodeGenerator {
     // Add .data section if it is not empty
     let result = this.output
     // Add error warning if there is potential for RE
+
+    if (this.msgCount > 0) {
+      result = this.data.concat(this.output)
+    }
+    // Add error warning if there is potential for RE
+    if (this.errorPresent) {
+      this.throwError()
+    }
+    this.postFuncCheck()
+
+    return result.concat(this.postFunc)
+  }
+
+  public postFuncCheck = () => {
+    // TODO: TURN THIS INTO AN ENUM SWITCH FOOL OR SMTH THAT ISN'T DISGUSTING
     if (this.printStringCheck) {
       this.printString()
-    }
-    if (this.printIntCheck) {
-      this.printInt()
     }
     if (this.printBoolCheck) {
       this.printBool()
@@ -431,13 +496,21 @@ class WJSCCodeGenerator {
       this.printLine()
       this.stringDec('\\0')
     }
+    if (this.printReadIntCheck) {
+      this.printReadInt()
+      this.stringDec('%d\\0')
+    }
+    if (this.printIntCheck) {
+      this.printInt()
+      this.stringDec('%d\\0')
+    }
+    if (this.printReadCharCheck) {
+      this.printReadChar()
+      this.stringDec(' %c\\0')
+    }
     if (this.errorPresent) {
       this.throwError()
     }
-    if (this.msgCount > 0) {
-      result = this.data.concat(this.output)
-    }
-    return result.concat(this.postFunc)
   }
 
   public genStatBlock = (statements: WJSCStatement, regList: Register[]) => {
@@ -521,11 +594,20 @@ class WJSCCodeGenerator {
         this.switchToParentTable()
         break
       case WJSCParserRules.Read:
+        this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, '#0'))
+        this.move(this.getRegSize(head), ARMOpcode.move, this.resultReg, head)
+        if (atx.readType === BaseType.Integer) {
+          this.output.push(construct.branch(this.PRINT_READ_INT, true))
+          this.printReadIntCheck = true
+        } else {
+          this.output.push(construct.branch(this.PRINT_READ_CHAR, true))
+          this.printReadCharCheck = true
+        }
         break
       case WJSCParserRules.Free:
         // Push result to r0 and call appropriate free
-        this.load(this.getRegSize(this.lr), ARMOpcode.load, Register.r4, `[${this.sp}]`)
-        this.move(this.getRegSize(head), ARMOpcode.move, Register.r0, head)
+        this.load(this.getRegSize(this.lr), ARMOpcode.load, head, `[${this.sp}]`)
+        this.move(this.getRegSize(head), ARMOpcode.move, this.resultReg, head)
         if (isArrayType(atx.children[1].type)) {
           this.checkFreeNullArray()
         } else if (isPairType(atx.children[1].type)) {
@@ -535,12 +617,11 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Return:
         this.genExpr(atx.stdlibExpr, reglist)
         this.output.push(construct.move(ARMOpcode.move, Register.r0, head))
-        this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
         break
     }
   }
 
-  public printBaseType = (atx: WJSCExpr, [head, ..._]: Register[]) => {
+  public printBaseType = (atx: WJSCExpr, [head]: Register[]) => {
     this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
     if (atx.parserRule === WJSCParserRules.Identifier) {
       this.printFromIdent(atx)
@@ -572,6 +653,7 @@ class WJSCCodeGenerator {
     switch (type) {
       case BaseType.Integer:
         this.output.push(construct.branch(this.PRINT_INT, true))
+        this.printIntCheck = true
         break
       case BaseType.String:
         this.output.push(construct.branch(this.PRINT_STRING, true))
@@ -588,8 +670,9 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genConditionalIf = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
-    this.genExpr(atx.condition, [head, ...tail])
+  public genConditionalIf = (atx: WJSCStatement, regList: Register[]) => {
+    const [head] = regList
+    this.genExpr(atx.condition, regList)
     this.output.push(construct.compareTest(ARMOpcode.compare, head, '#0'))
 
     const label1 = `L${this.getLabelNo()}`
@@ -598,26 +681,27 @@ class WJSCCodeGenerator {
     // Jump to label1 if false
     this.output.push(construct.branch(label1, false, ARMCondition.equal))
     // True body
-    this.genStatBlock(atx.trueBranch, [head, ...tail])
+    this.genStatBlock(atx.trueBranch, regList)
     this.output.push(construct.branch(label2, false))
     this.output.push(directive.label(label1))
     // False body
-    this.genStatBlock(atx.falseBranch, [head, ...tail])
+    this.genStatBlock(atx.falseBranch, regList)
     this.output.push(directive.label(label2))
   }
 
-  public genCondWhile = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
+  public genCondWhile = (atx: WJSCStatement, regList: Register[]) => {
+    const [head] = regList
     const label1 = `L${this.getLabelNo()}`
     const label2 = `L${this.getLabelNo()}`
 
     this.output.push(construct.branch(label1, false))
     this.output.push(directive.label(label2))
     // True branch
-    this.genStatBlock(atx.trueBranch, [head, ...tail])
+    this.genStatBlock(atx.trueBranch, regList)
     this.output.push(directive.label(label1))
 
     // Check condition
-    this.genExpr(atx.condition, [head, ...tail])
+    this.genExpr(atx.condition, regList)
     this.output.push(construct.compareTest(ARMOpcode.compare, head, '#1'))
     this.output.push(construct.branch(label2, false, ARMCondition.equal))
   }
@@ -626,19 +710,20 @@ class WJSCCodeGenerator {
     const stats = []
     let curr = atx
     while (curr.parserRule === WJSCParserRules.Sequential) {
-      stats.push(curr.nextStat)
+      stats.unshift(curr.nextStat)
       curr = curr.stat
     }
-    stats.push(curr)
-    return stats.reverse()
+    stats.unshift(curr)
+    return stats
   }
 
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
-    this.output.push(directive.label(`f_${atx.identifier}`))
-    this.output.push(construct.pushPop(ARMOpcode.push, [this.lr]))
+    this.output.push(directive.label(`f_${atx.identifier}`),
+      construct.pushPop(ARMOpcode.push, [this.lr]))
     // We now deal with the children
     this.genStatBlock(atx.body, regList)
-    this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
+    this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]),
+      construct.pushPop(ARMOpcode.pop, [this.pc]))
     if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || atx.body.parserRule === WJSCParserRules.ConditionalIf) {
       this.ltorgCheck = false
     } else {
@@ -646,9 +731,9 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]) => {
-    this.genAssignRhs(atx.rhs, [head, ...tail])
-    this.genAssignLhs(atx.lhs, [head, ...tail])
+  public genAssignment = (atx: WJSCAssignment, registers: Register[]) => {
+    this.genAssignRhs(atx.rhs, registers)
+    this.genAssignLhs(atx.lhs, registers)
   }
 
   public genAssignLhs = (atx: WJSCAst, [head, ...tail]: Register[]) => {
@@ -671,7 +756,8 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genDeclare = (atx: WJSCDeclare, [head, next, ...tail]: Register[]) => {
+  public genDeclare = (atx: WJSCDeclare, regList: Register[]) => {
+    const [head, tail] = regList
     const type = atx.type
     const rhs = atx.rhs
     const id = atx.identifier
@@ -682,7 +768,7 @@ class WJSCCodeGenerator {
     // TODO add cases for pairs and arrays
 
     // Load rhs expression into 'head' register
-    this.genAssignRhs(rhs, [head, next, ...tail])
+    this.genAssignRhs(rhs, regList)
     this.decStackSize -= typeSize
     this.symbolTable.setVarMemAddr(id, this.decStackSize)
     // Save content of 'head' to memory
@@ -693,13 +779,14 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
+  public genAssignRhs = (atx: WJSCAssignRhs, regList: Register[]) => {
+    const [head, next, ...tail] = regList
     switch (atx.parserRule) {
       case WJSCParserRules.Expression:
-        this.genExpr(atx.expr, [head, next, ...tail])
+        this.genExpr(atx.expr, regList)
         break
       case WJSCParserRules.ArrayLiteral:
-        this.genArray(atx.arrayLiter, [head, next, ...tail])
+        this.genArray(atx.arrayLiter, regList)
         break
       case WJSCParserRules.Newpair:
         const exprSize = getTypeSize(atx.expr.type)
@@ -723,14 +810,21 @@ class WJSCCodeGenerator {
           construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
         break
       case WJSCParserRules.PairElem:
+        break
       case WJSCParserRules.FunctionCall:
+        // TODO: Get size from symbol table
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, [this.sp]),
+          construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-4)], undefined, undefined, undefined, undefined, true),
+          construct.branch(`f_${atx.ident}`, true),
+          construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(4)))
+        this.move(this.getRegSize(Register.r0), ARMOpcode.move, head, Register.r0)
       default:
         break
     }
   }
 
-  public genExpr = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
-    // console.log(atx.parserRule)
+  public genExpr = (atx: WJSCExpr, regList: Register[]) => {
+    const [head, next] = regList
     let value = atx.value
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
@@ -741,7 +835,10 @@ class WJSCCodeGenerator {
         this.move(1, ARMOpcode.move, head, directive.immNum(value))
         break
       case WJSCParserRules.CharLiter:
-        this.output.push(construct.move(ARMOpcode.move, head, `#'${value}'`))
+        if (value.toString()[0] === '\\') {
+          value = value.toString()[1]
+        }
+        this.output.push(construct.move(ARMOpcode.move, head, `#${value}`))
         break
       case WJSCParserRules.StringLiter:
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + this.msgCount))
@@ -756,12 +853,22 @@ class WJSCCodeGenerator {
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
         const offsetString = spOffset ? `, #${spOffset}` : ''
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
+        if (typeof atx.value === 'boolean') {
+          // TODO: NOT CORRECT
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, 'SB', false))
+        } else {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
+        }
+        break
+      case WJSCParserRules.ArrayElem:
+        // this.genArrayElem(atx, regList)
+        this.checkArrayOutOfBounds()
         break
       case WJSCParserRules.BinOp:
-        this.genBinOp(atx, [head, next, ...tail])
+        this.genBinOp(atx, regList)
         break
       case WJSCParserRules.Unop:
-        this.genUnOp(atx, [head, next, ...tail])
+        this.genUnOp(atx, regList)
         break
     }
   }
