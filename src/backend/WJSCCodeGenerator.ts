@@ -496,7 +496,6 @@ class WJSCCodeGenerator {
   }
 
   public printBaseType = (atx: WJSCExpr, [head, ...tail]: Register[]) => {
-    console.log('called')
     this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
@@ -505,7 +504,6 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.StringLiter:
         this.output.push(construct.branch(this.PRINT_STRING, true))
-        console.log('val: ' + atx.value)
         this.printString(atx.value)
         break
       case WJSCParserRules.BoolLiter:
@@ -566,7 +564,7 @@ class WJSCCodeGenerator {
     this.output.push(directive.label(`f_${atx.identifier}`))
     this.output.push(construct.pushPop(ARMOpcode.push, [this.lr]))
     // We now deal with the children
-    this.traverseStat(atx.body, regList)
+    this.genStatBlock(atx.body, regList)
     if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || WJSCParserRules.ConditionalIf) {
       this.ltorgCheck = false
     } else {
