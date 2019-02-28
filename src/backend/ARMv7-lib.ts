@@ -86,11 +86,11 @@ enum Register {
 }
 
 enum RuntimeError {
-  divByZero = 'DivideByZeroError: divide or modulo by zero\n\0',
-  intOverFlow = 'OverflowError: the result is too small/large to store in a 4-byte signed-integer.\n',
-  negIndex = 'ArrayIndexOutOfBoundsError: negative index\n\0',
-  largeIndex = 'ArrayIndexOutOfBoundsError: index too large\n\0',
-  nullDeref = 'NullReferenceError: dereference a null reference\n\0',
+  divByZero = 'DivideByZeroError: divide or modulo by zero\\n\\0',
+  intOverFlow = 'OverflowError: the result is too small/large to store in a 4-byte signed-integer.\\n',
+  negIndex = 'ArrayIndexOutOfBoundsError: negative index\\n\\0',
+  largeIndex = 'ArrayIndexOutOfBoundsError: index too large\\n\\0',
+  nullDeref = 'NullReferenceError: dereference a null reference\\n\\0',
 }
 
 type ARMAddress = ARMExpression | ARMAddressPreIndex | ARMAddressPostIndex
@@ -243,10 +243,9 @@ const construct = {
 }
 
 // ------------------ UTILITY --------------------
-export let msgCount = 0
 
 const directive = {
-  ascii: (str: string): string => `.ascii "${str}"`,
+  ascii: (str: string): string => `.ascii${tabSpace}"${str}"`,
   bss: '.bss',
   data: '.data\n',
   global: (...symbol: string[]): string => `.global ${symbol.join(', ')}`,
@@ -256,6 +255,7 @@ const directive = {
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',
   malloc: (content: ARMOpcode): string => tabSpace + `${content} malloc`,
+  messageCharCount: (name: string): number => name.length,
   popSection: '.popsection',
   pushSection: (...args: any): string =>
     `.pushsection ${directive.section(args)}`,
@@ -279,8 +279,6 @@ const directive = {
     (linkage ? `${linkage} ` : '') +
     (linkOrderSymbol ? `${linkOrderSymbol} ` : '') +
     (unique && uniqueId ? `${unique} ${uniqueId}` : ''),
-  stringDec: (symbol: string): string => 'msg_' + msgCount++ + ':\n' + tabSpace + `.word ${(symbol || '').length}` +
-      '\n' + tabSpace + directive.ascii(symbol || ''),
   text: '.text\n',
   weak: (...symbol: string[]): string => `.weak ${symbol.join(', ')}`,
 }

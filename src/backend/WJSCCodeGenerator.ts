@@ -22,7 +22,6 @@ import {
   ARMOperand,
   construct,
   directive,
-  msgCount,
   Register,
   RuntimeError,
   tabSpace,
@@ -34,6 +33,7 @@ class WJSCCodeGenerator {
   public output: string[] = []
   public data: string[] = [directive.data]
   public postFunc: string[] = []
+  public errorPresent: boolean = false
 
   /* ------------- MEMORY MANAGEMENT --------------*/
   public memIndex: number = 0
@@ -51,6 +51,7 @@ class WJSCCodeGenerator {
   private readonly lr = Register.r14
   private readonly pc = Register.r15
   private readonly switchFault = 'No Matching Parser Rule'
+  private msgCount = 0
   private totalStackSize = 0
   private decStackSize = 0
   private ltorgCheck = true
@@ -71,14 +72,14 @@ class WJSCCodeGenerator {
   public printBool = (boolInput: boolean) => {
     const bool = boolInput ? `true\0` : `false\0`
     const notBool = boolInput ? `false\0` : `true\0`
-    directive.stringDec(bool)
+    this.stringDec(bool)
     this.postFunc.push(this.PRINT_BOOL,
       construct.pushPop(ARMOpcode.push, [this.lr]),
       construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`, ARMCondition.nequal),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.nequal),
     )
-    directive.stringDec(notBool)
-    this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`, ARMCondition.equal),
+    this.stringDec(notBool)
+    this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.equal),
       construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
       construct.branch(`printf`, true),
       construct.move(ARMOpcode.move, this.resultReg, `#0`),
@@ -88,12 +89,12 @@ class WJSCCodeGenerator {
   }
 
   public printString = (stringInput: string) => {
-    directive.stringDec(stringInput)
+    this.stringDec(stringInput)
     this.postFunc.push(this.PRINT_STRING,
       construct.pushPop(ARMOpcode.push, [this.lr]),
       construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
       construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, `#4`),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
       construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
       construct.branch(`printf`, true),
       construct.move(ARMOpcode.move, this.resultReg, `#0`),
@@ -103,10 +104,10 @@ class WJSCCodeGenerator {
   }
 
   public printLine = () => {
-    directive.stringDec(`\n`)
+    this.stringDec(`\n`)
     this.postFunc.push(this.PRINT_NEW_LINE,
       construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
       construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
       construct.branch(`puts`, true),
       construct.move(ARMOpcode.move, this.resultReg, `#0`),
@@ -116,12 +117,11 @@ class WJSCCodeGenerator {
   }
 
   public printInt = (intInput: number) => {
-    const int = `${intInput}`
-    directive.stringDec(int)
+    this.stringDec(intInput)
     this.postFunc.push(this.PRINT_INT,
       construct.pushPop(ARMOpcode.push, [this.lr]),
       construct.move(ARMOpcode.move, Register.r1, this.resultReg),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
       construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
       construct.branch(`puts`, true),
       construct.move(ARMOpcode.move, this.resultReg, `#0`),
@@ -246,7 +246,7 @@ class WJSCCodeGenerator {
         this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
           construct.move(ARMOpcode.move, head, `#1`, ARMCondition.equal),
           construct.move(ARMOpcode.move, head, `#0`, ARMCondition.nequal),
-          )
+        )
         break
       case '!=':
         this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
@@ -261,7 +261,7 @@ class WJSCCodeGenerator {
       case '||':
         this.output.push(construct.boolCalc(ARMOpcode.or, head, head, next),
           construct.boolCalc(ARMOpcode.exclusiveOr, head, head, undefined, `#1`),
-          )
+        )
         break
     }
     this.genExpr(atx.expr2, [head, next, ...tail])
@@ -339,7 +339,7 @@ class WJSCCodeGenerator {
       case (WJSCParserRules.CharLiter):
       case (WJSCParserRules.BoolLiter):
         const value = (atx.parserRule === WJSCParserRules.CharLiter ? `#${atx.token}` :
-            (atx.token === 'true' ? directive.immNum(1) : directive.immNum(0)))
+          (atx.token === 'true' ? directive.immNum(1) : directive.immNum(0)))
         this.move(typeSize, ARMOpcode.move, nextReg, value)
         if (!prevReg) {
           params = `[${nextReg}, ${directive.immNum(4 + typeSize * (index))}]`
@@ -400,7 +400,7 @@ class WJSCCodeGenerator {
       directive.label('main'),
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
-
+    // this.checkDivByZero()
     // Generate code for the function body statements
     if (atx.body) {
       const stats = this.flattenSequential(atx.body)
@@ -434,10 +434,13 @@ class WJSCCodeGenerator {
 
     // Add .data section if it is not empty
     let result = this.output
-    if (msgCount > 0) {
-      result = this.data.concat(this.output, this.postFunc)
+    if (this.msgCount > 0) {
+      // Add error warning if there is potential for RE
+      if (this.errorPresent) {
+        this.throwError()
+      }
+      result = this.data.concat('', this.output, this.postFunc)
     }
-
     return result
   }
 
@@ -489,12 +492,12 @@ class WJSCCodeGenerator {
         this.traverseStat(atx.stat, [head, ...tail])
         break
       case WJSCParserRules.Print:
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${msgCount}`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${this.msgCount}`))
         this.genExpr(atx.stdlibExpr, [head, ...tail])
         this.printBaseType(atx.stdlibExpr, [head, ...tail])
         break
       case WJSCParserRules.Println:
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${msgCount}`))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${this.msgCount}`))
         this.genExpr(atx.stdlibExpr, [head, ...tail])
         this.printBaseType(atx.stdlibExpr, [head, ...tail])
         this.printLine()
@@ -620,18 +623,18 @@ class WJSCCodeGenerator {
         this.genExpr(atx.expr, [next, ...tail])
         const sizeIsByte = exprSize === 1
         this.output.push(
-            construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${exprSize}`),
-            directive.malloc(ARMOpcode.branchLink),
-            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`, undefined, undefined, sizeIsByte),
-            construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
+          construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${exprSize}`),
+          directive.malloc(ARMOpcode.branchLink),
+          construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`, undefined, undefined, sizeIsByte),
+          construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
         this.genExpr(atx.expr2, [next, ...tail])
         const size2IsByte = expr2Size === 1
         this.output.push(
-            construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${expr2Size}`),
-            directive.malloc(ARMOpcode.branchLink),
-            // TODO check if is byte and use SERB
-            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`, undefined, undefined, size2IsByte),
-            construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
+          construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${expr2Size}`),
+          directive.malloc(ARMOpcode.branchLink),
+          // TODO check if is byte and use SERB
+          construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`, undefined, undefined, size2IsByte),
+          construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
         // code: if (this.totalStackSize > 4) {
         //   this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
         // } else {
@@ -660,8 +663,8 @@ class WJSCCodeGenerator {
         this.output.push(construct.move(ARMOpcode.move, head, `#'${value}'`))
         break
       case WJSCParserRules.StringLiter:
-        const msgNo = msgCount
-        this.data.push(directive.stringDec(atx.value))
+        const msgNo = this.msgCount
+        this.stringDec(atx.value)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=msg_` + msgNo))
         break
       case WJSCParserRules.PairLiter:
@@ -686,14 +689,137 @@ class WJSCCodeGenerator {
     }
   }
 
-  public throwArrayOutOfBounds = () => {
+  public checkArrayOutOfBounds = () => {
+    // Setting up the messages if not already set up
+    this.errorPresent = true
     if (!this.data.includes(RuntimeError.negIndex)) {
-      this.output.push(directive.stringDec(RuntimeError.negIndex))
+      this.stringDec(RuntimeError.negIndex)
     }
     if (!this.data.includes(RuntimeError.largeIndex)) {
-      this.output.push(directive.stringDec(RuntimeError.largeIndex))
+      this.stringDec(RuntimeError.largeIndex)
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch('p_check_array_bounds', true))
+    // appending function to postFunc, if not already set up
+    if (!this.postFunc.includes('p_check_array_bounds')) {
+      // TODO: FIND REAL WORD LENGTH
+      // TODO: Actually call these functions?
+      this.postFunc = this.postFunc.concat(directive.label('p_check_array_bounds'),
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.negIndex)}`, ARMCondition.lessThan),
+        construct.branch('p_throw_runtime_error', true, ARMCondition.lessThan),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r1}]`),
+        construct.compareTest(ARMOpcode.compare, Register.r0, Register.r1),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.largeIndex)}`, ARMCondition.unsignedHigherSame),
+        construct.branch('p_throw_runtime_error', true, ARMCondition.unsignedHigherSame),
+        construct.pushPop(ARMOpcode.pop, [this.pc]))
+
     }
   }
+
+  public checkDivByZero = () => {
+    this.errorPresent = true
+    // Setting up the message if not already set up
+    if (!this.data.includes(RuntimeError.divByZero)) {
+      this.stringDec(RuntimeError.divByZero)
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch('p_check_divide_by_zero', true))
+    this.output.push(construct.branch('__aeabi_idiv', true))
+    // appending function to postFunc, if not already set up
+    if (!this.postFunc.includes('p_check_divide_by_zero')) {
+      this.postFunc = this.postFunc.concat(directive.label('p_check_divide_by_zero'),
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.compareTest(ARMOpcode.compare, Register.r1, directive.immNum(0)),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.divByZero)}`, ARMCondition.equal),
+        construct.branch('p_throw_runtime_error', true, ARMCondition.equal),
+        construct.pushPop(ARMOpcode.pop, [this.pc]))
+    }
+  }
+
+  public checkOverflow = () => {
+    this.errorPresent = true
+    // Setting up the message if not already set up
+    if (!this.data.includes(RuntimeError.intOverFlow)) {
+      this.stringDec(RuntimeError.intOverFlow)
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch('p_throw_overflow_error', true, ARMCondition.overflow))
+    // appending function to postFunc
+    if (!this.postFunc.includes('p_throw_overflow_error')) {
+      this.postFunc = this.postFunc.concat(directive.label('p_throw_overflow_error'),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.intOverFlow)}`),
+        construct.branch('p_throw_runtime_error', true))
+    }
+  }
+
+  public checkNullPointer = () => {
+    this.errorPresent = true
+    // Setting up the message if not already set up
+    if (!this.data.includes(RuntimeError.nullDeref)) {
+      this.stringDec(RuntimeError.nullDeref)
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch('p_check_null_pointer', true))
+    // appending function to postFunc
+    if (!this.postFunc.includes('p_check_null_pointer')) {
+      this.postFunc = this.postFunc.concat(directive.label('p_check_null_pointer'),
+        construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+        construct.branch('p_throw_runtime_error', true, ARMCondition.equal),
+        construct.pushPop(ARMOpcode.pop, [this.pc]))
+    }
+  }
+
+  public checkFreeNull = (isPair: boolean) => {
+    // The alternative being an array
+  }
+
+  // Generate errors with appropriate message
+  public throwError = () => {
+    // Setting up the final message
+    this.stringDec('%.*s\\0')
+    // Setting up the error message
+    this.postFunc = this.postFunc.concat(directive.label('p_throw_runtime_error'),
+      construct.branch('p_print_string', true),
+      construct.move(ARMOpcode.move, Register.r0, directive.immNum(-1)),
+      construct.branch('exit', true),
+      directive.label('p_print_string'),
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r0}]`),
+      construct.arithmetic(ARMOpcode.add, Register.r2, Register.r0, directive.immNum(4)),
+      construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+        `=msg_${this.findTrueMessageIndex('%.*s\\0')}`),
+      construct.arithmetic(ARMOpcode.add, Register.r0, Register.r0, directive.immNum(4)),
+      construct.branch('printf', true),
+      construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
+      construct.branch('fflush', true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
+  // Helper function to get the position of a message in the data
+  public findTrueMessageIndex = (searchTerm: string): number => {
+    let foundIndex = 0
+    this.data.forEach((child, index) => {
+      if (child.includes(searchTerm)) {
+        foundIndex = index - 1 // <- Because .data is counted as an elem
+      }
+    })
+    return foundIndex
+  }
+
+  private stringDec = (symbol: string | number): number => this.data.push(
+    'msg_' + this.msgCount++ + ':\n' + tabSpace +
+    `.word ${directive.messageCharCount(symbol.toString() || '')}` +
+    '\n' + tabSpace + directive.ascii(symbol.toString() || ''),
+  )
 }
 
 export { WJSCCodeGenerator }
