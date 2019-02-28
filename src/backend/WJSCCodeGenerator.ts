@@ -13,7 +13,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import {BaseType, getTypeSize} from '../util/WJSCType'
+import { BaseType, getTypeSize } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -34,7 +34,7 @@ class WJSCCodeGenerator {
   public postFunc: string[] = []
   public errorPresent: boolean = false
 
-  /* ------------- MEMORY MANAGEMENT --------------*/
+  /* uwuwuwuwuwuwuwu MEMORY MANAGEMENT uwuwuwuwuwuwuwu */
   public memIndex: number = 0
   public registerContentSize = new Map([
     [Register.r0, 0], [Register.r1, 0], [Register.r2, 0],
@@ -65,7 +65,7 @@ class WJSCCodeGenerator {
   private printBoolCheck = true
   private printNewLnCheck = true
 
-  /* ----------------------------------------------*/
+  /* owowowowowowowowowowowowowowowowowowowowowowowowo */
 
   // TODO: Gen array elem for pair and arrays
   constructor(symbolTable: WJSCSymbolTable) {
@@ -462,7 +462,8 @@ class WJSCCodeGenerator {
     this.totalStackSize = prevStackSize
   }
 
-  public traverseStat = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
+  public traverseStat = (atx: WJSCStatement, reglist: Register[]) => {
+    const [head] = reglist
     // console.log(atx.parserRule)
     switch (atx.parserRule) {
       case WJSCParserRules.Skip:
@@ -470,37 +471,37 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.Exit:
         // Load exit code then call exit
-        this.genExpr(atx.stdlibExpr, [head, ...tail])
+        this.genExpr(atx.stdlibExpr, reglist)
         this.output.push(construct.move(ARMOpcode.move, this.resultReg, head),
           construct.branch('exit', true))
         break
       case WJSCParserRules.Declare:
-        this.genDeclare(atx.declaration, [head, ...tail])
+        this.genDeclare(atx.declaration, reglist)
         break
       case WJSCParserRules.Assignment:
-        this.genAssignment(atx.assignment, [head, ...tail])
+        this.genAssignment(atx.assignment, reglist)
         break
       case WJSCParserRules.Sequential:
-        this.traverseStat(atx.stat, [head, ...tail])
-        this.traverseStat(atx.nextStat, [head, ...tail])
+        this.traverseStat(atx.stat, reglist)
+        this.traverseStat(atx.nextStat, reglist)
         break
       case WJSCParserRules.ConditionalIf:
-        this.genConditionalIf(atx, [head, ...tail])
+        this.genConditionalIf(atx, reglist)
         break
       case WJSCParserRules.ConditionalWhile:
-        this.genCondWhile(atx, [head, ...tail])
+        this.genCondWhile(atx, reglist)
         break
       case WJSCParserRules.Print:
-        this.genExpr(atx.stdlibExpr, [head, ...tail])
-        this.printBaseType(atx.stdlibExpr, [head, ...tail])
+        this.genExpr(atx.stdlibExpr, reglist)
+        this.printBaseType(atx.stdlibExpr, reglist)
         if (this.printLnCheck) {
           this.stringDec('%.*s\\0')
           this.printLnCheck = false
         }
         break
       case WJSCParserRules.Println:
-        this.genExpr(atx.stdlibExpr, [head, ...tail])
-        this.printBaseType(atx.stdlibExpr, [head, ...tail])
+        this.genExpr(atx.stdlibExpr, reglist)
+        this.printBaseType(atx.stdlibExpr, reglist)
         this.output.push(construct.branch(this.PRINT_NEW_LINE, true))
         if (this.printLnCheck) {
           this.stringDec('%.*s\\0')
@@ -513,6 +514,11 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Read:
         break
       case WJSCParserRules.Free:
+        break
+      case WJSCParserRules.Return:
+        this.genExpr(atx.stdlibExpr, reglist)
+        this.output.push(construct.move(ARMOpcode.move, Register.r0, head))
+        this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
         break
     }
   }
@@ -612,10 +618,11 @@ class WJSCCodeGenerator {
     this.output.push(construct.pushPop(ARMOpcode.push, [this.lr]))
     // We now deal with the children
     this.genStatBlock(atx.body, regList)
-    if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || WJSCParserRules.ConditionalIf) {
+    this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
+    if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || atx.body.parserRule === WJSCParserRules.ConditionalIf) {
       this.ltorgCheck = false
     } else {
-      this.output.push(tabSpace + directive.ltorg + '\n')
+      this.output.push(tabSpace + directive.ltorg)
     }
   }
 
