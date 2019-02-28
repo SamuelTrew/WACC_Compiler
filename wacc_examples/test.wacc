@@ -1,4 +1,4 @@
 begin
-  pair(int, int) p = newpair(1, 1);
-  free p
+  int[] x = [1];
+  free x
 end

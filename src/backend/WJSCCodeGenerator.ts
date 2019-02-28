@@ -515,6 +515,7 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.Free:
         // Push result to r0 and call appropriate free
+        this.load(this.getRegSize(this.lr), ARMOpcode.load, Register.r4, `[${this.sp}]`)
         this.move(this.getRegSize(head), ARMOpcode.move, Register.r0, head)
         if (isArrayType(atx.children[1].type)) {
           this.checkFreeNullArray()
