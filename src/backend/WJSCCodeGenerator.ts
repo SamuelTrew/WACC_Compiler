@@ -324,12 +324,12 @@ class WJSCCodeGenerator {
       switch (child.parserRule) {
         case WJSCParserRules.IntLiteral:
           params = `[${itemUsed}, ${directive.immNum(typeSize * (index + 1))}]`
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed, params))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
           break
         case WJSCParserRules.BoolLiter:
         case WJSCParserRules.CharLiter:
           params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed, params, undefined, undefined, true))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params, undefined, undefined, true))
           break
         case WJSCParserRules.StringLiter:
           break
