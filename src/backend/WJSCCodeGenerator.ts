@@ -1,6 +1,6 @@
 import * as lodash from 'lodash'
-import { EOL } from 'os'
-import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
+import {EOL} from 'os'
+import {WJSCSymbolTable} from '../frontend/WJSCSymbolTable'
 import {
   WJSCArrayElem,
   WJSCAssignment,
@@ -12,18 +12,13 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import {
-  BaseType,
-  getTypeSize,
-  hasSameType,
-  isArrayType,
-  isPairType,
-} from '../util/WJSCType'
+import {BaseType, getTypeSize, hasSameType, isArrayType, isPairType,} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
   ARMOpcode,
-  ARMOperand, ARMShiftname,
+  ARMOperand,
+  ARMShiftname,
   construct,
   directive,
   Register,
@@ -218,20 +213,21 @@ class WJSCCodeGenerator {
 
   public sizeGen = (atx: WJSCAst, calledByArray: boolean): number => {
     let typeSize = 0
-    switch (atx.parserRule) {
-      case WJSCParserRules.BoolLiter:
-      case WJSCParserRules.CharLiter:
+    switch (atx.type) {
+      case BaseType.Boolean:
+      case BaseType.Character:
         typeSize = 1
         break
-      case WJSCParserRules.ArrayElem:
-      case WJSCParserRules.IntLiteral:
+      case BaseType.Integer:
+      case BaseType.String:
         typeSize = 4
         break
-      case WJSCParserRules.PairLiter:
-        typeSize = (calledByArray ? 4 : 8)
-        break
       default:
-        break
+        if (isPairType(atx.type)) {
+          typeSize = (calledByArray ? 4 : 8)
+        } else if (isArrayType(atx.type)) {
+          typeSize = 4
+        }
     }
     return typeSize
   }
@@ -381,6 +377,7 @@ class WJSCCodeGenerator {
         default:
           if (isArrayType(child.type)) {
             // Array type
+            this.output.push('STORE')
           } else if (isPairType(child.type)) {
             // Pair type
           }
