@@ -350,44 +350,41 @@ class WJSCCodeGenerator {
     this.load(4, ARMOpcode.load, Register.r0, `=${size}`) // <- 4 refers to size of int type (for size)
     this.output = this.output.concat([directive.malloc(ARMOpcode.branchLink),
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
+    let present: Register[] = []
     if (list.includes(itemUsed)) {
-      list.shift()
-    } else {
-      // We received a register whose contents have been put back on stack
+      const [head, ...tail] = list
+      present = tail
     }
     // loading in elements
-    const nextItem = this.nextRegister(list)
-    if (nextItem in Register) {
-      list.shift()
+    const nextItem = this.nextRegister(present)
+    let future: Register[] = []
+    if (present.includes(nextItem)) {
+      const [head, ...tail] = present
+      future = tail
     }
     children.forEach((child, index) => {
-      this.genExpr(child as WJSCExpr, list)
+      this.genExpr(child as WJSCExpr, present)
       // Then we need to store the values
       let params
-      switch (child.parserRule) {
-        case WJSCParserRules.IntLiteral:
+      switch (child.type) {
+        case BaseType.Integer:
           params = `[${itemUsed}, ${directive.immNum(typeSize * (index + 1))}]`
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
           break
-        case WJSCParserRules.BoolLiter:
-        case WJSCParserRules.CharLiter:
+        case BaseType.Boolean:
+        case BaseType.Character:
           params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params, undefined, undefined, true))
           break
-        case WJSCParserRules.StringLiter:
-          break
-        case WJSCParserRules.PairLiter:
-          break
-        case WJSCParserRules.Identifier:
-          break
-        case WJSCParserRules.ArrayElem:
-          break
-        case WJSCParserRules.Unop:
-          break
-        case WJSCParserRules.BinOp:
+        case BaseType.String:
           break
         default:
-          // Should not happen
+          if (isArrayType(child.type)) {
+            // Array type
+          } else if (isPairType(child.type)) {
+            // Pair type
+          }
+          break
       }
     })
     // Load argument size
@@ -397,21 +394,24 @@ class WJSCCodeGenerator {
   }
 
   public genArrayElem = (atx: WJSCAst , list: Register[]) => {
+    console.log(list)
     const size = this.sizeGen(atx, false)
     const dimensions = (atx.children[0] as WJSCArrayElem).specificInd
     const itemUsed = this.nextRegister(list)
+    let future: Register[] = []
     if (list.includes(itemUsed)) {
-      list.shift()
+      const [head, ...tail] = list
+      future = tail
     }
-    const nextItem = this.nextRegister(list)
+    const nextItem = this.nextRegister(future)
     /* :(
     if (list.includes(nextItem)) {
       list.shift()
     }*/
     dimensions.forEach((currDim, index) => {
       this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(size)))
-      this.genExpr(currDim, list)
-      this.load(this.getRegSize(Register.r0), ARMOpcode.load, itemUsed, `[${Register.r0}]`)
+      this.genExpr(currDim, future)
+      this.load(this.getRegSize(itemUsed), ARMOpcode.load, itemUsed, `[${itemUsed}]`)
       this.move(this.getRegSize(nextItem), ARMOpcode.move, Register.r0, nextItem)
       this.move(this.getRegSize(itemUsed), ARMOpcode.move, Register.r1, itemUsed)
     })
@@ -476,13 +476,17 @@ class WJSCCodeGenerator {
     if (this.printlnStringCheck) {
       this.stringDec('%.*s\\0')
     }
-    if (this.printNewLnCheck) {
-      this.printLine()
-      this.stringDec('\\0')
-    }
     if (this.printReadIntCheck) {
       this.printReadInt()
       this.stringDec('%d\\0')
+    }
+    if (this.printIntCheck) {
+      this.printInt()
+      this.stringDec('%d\\0')
+    }
+    if (this.printNewLnCheck) {
+      this.printLine()
+      this.stringDec('\\0')
     }
     if (this.printReadCharCheck) {
       this.printReadChar()
@@ -804,6 +808,7 @@ class WJSCCodeGenerator {
   }
 
   public genExpr = (atx: WJSCExpr, regList: Register[]) => {
+    console.log('Exp' + regList)
     const [head, next] = regList
     let value = atx.value
     switch (atx.parserRule) {
@@ -832,7 +837,13 @@ class WJSCCodeGenerator {
         const sizeIsByte = typeSize === 1
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
         const offsetString = spOffset ? `, #${spOffset}` : ''
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
+        const identType = this.symbolTable.lookup(atx.value)
+        if (identType === BaseType.Character) {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, 'SB', false))
+        } else {
+          // If boolean I think
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
+        }
         break
       case WJSCParserRules.ArrayElem:
         this.genArrayElem(atx, regList)
