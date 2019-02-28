@@ -392,7 +392,7 @@ class WJSCCodeGenerator {
       directive.label('main'),
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
-    this.checkArrayOutOfBounds()
+    //this.checkDivByZero()
     // Generate code for the function body statements
     if (atx.body) {
       const stats = this.flattenSequential(atx.body)
@@ -656,7 +656,7 @@ class WJSCCodeGenerator {
     if (!this.data.includes(RuntimeError.largeIndex)) {
       this.data.push(directive.stringDec(RuntimeError.largeIndex))
     }
-    // checks in instruction body itself
+    // check in instruction body itself
     this.output.push(construct.branch('p_check_array_bounds', true))
     // appending function to end of messages, if not already set up
     if (!this.postFunc.includes('p_check_array_bounds')) {
@@ -675,6 +675,26 @@ class WJSCCodeGenerator {
           construct.branch('p_throw_runtime_error', true, ARMCondition.unsignedHigherSame),
           construct.pushPop(ARMOpcode.pop, [this.pc]))
 
+    }
+  }
+
+  public checkDivByZero = () => {
+    // Setting up the message if not already set up
+    if (!this.data.includes(RuntimeError.divByZero)) {
+      this.data.push(directive.stringDec(RuntimeError.divByZero))
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch('p_check_divide_by_zero', true))
+    this.output.push(construct.branch('__aeabi_idiv', true))
+    // appending function to end of messages, if not already set up
+    if (!this.postFunc.includes('p_check_divide_by_zero')) {
+      this.postFunc = this.postFunc.concat(directive.label('p_check_divide_by_zero'),
+          construct.pushPop(ARMOpcode.push, [this.lr]),
+          construct.compareTest(ARMOpcode.compare, Register.r1, directive.immNum(0)),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+              `=msg_${this.data.length - 2}`, ARMCondition.equal),
+          construct.branch('p_throw_runtime_error', true, ARMCondition.equal),
+          construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
 }
