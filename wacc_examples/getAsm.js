@@ -42,10 +42,12 @@ rr(
       }
 
       console.log(newDir)
-      fs.writeFileSync(
-        newDir,
-        extractAsm(execSync(`ruby ${refCompile} ${file} ${flags}`).toString()),
-      )
+      if (!fs.existsSync(newDir)) {
+        fs.writeFileSync(
+          newDir,
+          extractAsm(execSync(`ruby ${refCompile} ${file} ${flags}`).toString()),
+        )
+      }
     })
   },
 )

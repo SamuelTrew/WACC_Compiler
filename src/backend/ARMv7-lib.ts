@@ -227,7 +227,7 @@ const construct = {
     condition?: ARMCondition,
     acc = false,
     set = false,
-  ) => `${tabSpace}${signed ? 'S' : 'U'}${acc ? 'MLA' : 'MUL'}${set ? 'S' : ''}${condition || ''} ${rdLo}, ${rdHi}, ${rm}, ${rs}`,
+  ) => `${tabSpace}${signed ? 'S' : 'U'}${acc ? 'MLA' : 'MULL'}${set ? 'S' : ''}${condition || ''} ${rdLo}, ${rdHi}, ${rm}, ${rs}`,
   pushPop: (
     opcode: ARMOpcode.push | ARMOpcode.pop,
     regList: Register[],
@@ -372,6 +372,7 @@ export {
   ARMCondition,
   ARMOpcode,
   ARMOperand,
+  ARMShiftname,
   construct,
   directive,
   Register,

@@ -1,0 +1,11 @@
+begin
+  int void() is return 0 end
+  int one(int x) is return x end
+  int two(int x, int y) is return x + y end
+  int three(int x, int y, int z) is return x + y * z end
+  int a = call void();
+  int b = call one(a);
+  int c = call two(a, b);
+  int d = call three(a, b, c);
+  exit 0
+end
