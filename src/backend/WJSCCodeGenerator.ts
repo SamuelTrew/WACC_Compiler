@@ -349,23 +349,23 @@ class WJSCCodeGenerator {
     this.load(4, ARMOpcode.load, Register.r0, `=${size}`) // <- 4 refers to size of int type (for size)
     this.output = this.output.concat([directive.malloc(ARMOpcode.branchLink),
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
+    let present: Register[] = []
     if (list.includes(itemUsed)) {
-      list.shift()
-    } else {
-      // We received a register whose contents have been put back on stack
+      const [head, ...tail] = list
+      present = tail
     }
     // loading in elements
-    const nextItem = this.nextRegister(list)
+    const nextItem = this.nextRegister(present)
     let future: Register[] = []
-    if (list.includes(nextItem)) {
-      const [head, ...tail] = list
+    if (present.includes(nextItem)) {
+      const [head, ...tail] = present
       future = tail
     }
     children.forEach((child, index) => {
-      this.genExpr(child as WJSCExpr, future)
+      this.genExpr(child as WJSCExpr, present)
       // Then we need to store the values
       let params
-      switch (child.type) {  // TODO: Change to based on child type!
+      switch (child.type) {
         case BaseType.Integer:
           params = `[${itemUsed}, ${directive.immNum(typeSize * (index + 1))}]`
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
@@ -402,7 +402,7 @@ class WJSCCodeGenerator {
       const [head, ...tail] = list
       future = tail
     }
-    const nextItem = this.nextRegister(list)
+    const nextItem = this.nextRegister(future)
     /* :(
     if (list.includes(nextItem)) {
       list.shift()
@@ -410,7 +410,7 @@ class WJSCCodeGenerator {
     dimensions.forEach((currDim, index) => {
       this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(size)))
       this.genExpr(currDim, future)
-      this.load(this.getRegSize(Register.r0), ARMOpcode.load, itemUsed, `[${Register.r0}]`)
+      this.load(this.getRegSize(itemUsed), ARMOpcode.load, itemUsed, `[${itemUsed}]`)
       this.move(this.getRegSize(nextItem), ARMOpcode.move, Register.r0, nextItem)
       this.move(this.getRegSize(itemUsed), ARMOpcode.move, Register.r1, itemUsed)
     })
