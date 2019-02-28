@@ -381,7 +381,8 @@ class WJSCCodeGenerator {
         default:
           if (isArrayType(child.type)) {
             // Array type
-            this.output.push('STORE')
+            params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params, undefined, undefined, true))
           } else if (isPairType(child.type)) {
             // Pair type
           }
