@@ -1,6 +1,6 @@
-import {EOL} from 'os'
+import { EOL } from 'os'
 
-import {WJSCSymbolTable} from '../frontend/WJSCSymbolTable'
+import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -13,9 +13,8 @@ import {
   WJSCParam,
   WJSCParserRules,
   WJSCStatement,
-  WJSCTerminal,
 } from '../util/WJSCAst'
-import {getTypeSize} from '../util/WJSCType'
+import { getTypeSize } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -374,11 +373,6 @@ class WJSCCodeGenerator {
                      Register.r7, Register.r8, Register.r9,
                      Register.r10, Register.r11, Register.r12]
 
-    // TODO: Change result to take strings before .text only when needed
-    // if (has string) {
-    //   let result = [directive.stringDec()].concat(directive.text, directive.global('main'))
-    // }
-
     this.output = this.output.concat(
       [directive.text],
       directive.global('main'),
@@ -396,26 +390,7 @@ class WJSCCodeGenerator {
     // this.checkDivByZero()
     // Generate code for the function body statements
     if (atx.body) {
-      const stats = this.flattenSequential(atx.body)
-
-      // Move sp for all declarations at once
-      stats.forEach((stat) => {
-        if (stat.parserRule === WJSCParserRules.Declare) {
-          this.totalStackSize += getTypeSize(stat.declaration.type)
-        }
-      })
-      this.decStackSize = this.totalStackSize
-      const operand = `#${this.totalStackSize}`
-      // Decrement sp
-      if (this.totalStackSize) {
-        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
-      }
-      // Traverse body
-      this.traverseStat(atx.body, regList)
-      // Increment sp
-      if (this.totalStackSize) {
-        this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
-      }
+      this.genStatBlock(atx.body, regList)
     }
     this.output.push(
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, '=0'),
@@ -437,17 +412,33 @@ class WJSCCodeGenerator {
     return result
   }
 
-  public genTerminal = (atx: WJSCTerminal, [head, ...tail]: Register[]) => {
-    const val = atx.value
-    if (head) {
-      switch (atx.terminalType) {
-        case 'bool':
-          this.output.push(construct.move(ARMOpcode.move, head, `=${val}`))
-          break
-        case 'stdlib':
-          break
+  public genStatBlock(statements: WJSCStatement, regList: Register[]) {
+    const stats = this.flattenSequential(statements)
+    // Save stack size from parent scope
+    const prevStackSize = this.totalStackSize
+    this.totalStackSize = 0
+
+    // Move sp for all declarations at once
+    stats.forEach((stat) => {
+      if (stat.parserRule === WJSCParserRules.Declare) {
+        this.totalStackSize += getTypeSize(stat.declaration.type)
       }
+    })
+    this.decStackSize = this.totalStackSize
+    const operand = `#${this.totalStackSize}`
+    // Decrement sp
+    if (this.totalStackSize) {
+      this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
     }
+    // Traverse body
+    this.traverseStat(statements, regList)
+    // Increment sp
+    if (this.totalStackSize) {
+      this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
+    }
+
+    // Restore parent stack size
+    this.totalStackSize = prevStackSize
   }
 
   public traverseStat = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
@@ -473,12 +464,7 @@ class WJSCCodeGenerator {
         this.traverseStat(atx.nextStat, [head, ...tail])
         break
       case WJSCParserRules.ConditionalIf:
-        this.output.push('HELLOOOOOOOO')
-        this.genExpr(atx.stdlibExpr, [head, ...tail])
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`),
-          construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}]`))
-        this.traverseStat(atx.stat, [head, ...tail])
-        this.traverseStat(atx.nextStat, [head, ...tail])
+        this.genConditionalIf(atx, [head, ...tail])
         break
       case WJSCParserRules.ConditionalWhile:
         this.genExpr(atx.stdlibExpr, [head, ...tail])
@@ -487,10 +473,24 @@ class WJSCCodeGenerator {
     }
   }
 
-  // public genConditionalIf = (atx: WJSCStatement, [head, next, ...tail]: Register[]) => {
-  //   // Literally no clue how to change things for conditional branches
-  //   this.output.push(construct.singleDataTransfer(ARMOpcode.load, next, atx))
-  // }
+  public genConditionalIf = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
+    this.genExpr(atx.condition, [head, ...tail])
+    this.output.push(construct.compareTest(ARMOpcode.compare, head, '#0'))
+
+    const linkCounter = 0
+    const label1 = `L${linkCounter}`
+    const label2 = `L${linkCounter + 1}`
+    // TODO change symbol table with scope
+    // Jump to label1 if false
+    this.output.push(construct.branch(label1, false, ARMCondition.equal))
+    // True body
+    this.genStatBlock(atx.trueBranch, [head, ...tail])
+    this.output.push(construct.branch(label2, false))
+    this.output.push(directive.label(label1))
+    // False body
+    this.genStatBlock(atx.falseBranch, [head, ...tail])
+    this.output.push(directive.label(label2))
+  }
 
   public flattenSequential = (atx: WJSCStatement): WJSCStatement[] => {
     const stats = []
@@ -513,12 +513,6 @@ class WJSCCodeGenerator {
     } else {
       this.output.push(tabSpace + directive.ltorg + '\n')
     }
-  }
-
-  public genExit = (exitCode: number, [head, ..._]: Register[]) => {
-    return [
-      construct.singleDataTransfer(ARMOpcode.load, head, `=${exitCode}`),
-    ].concat(construct.move(ARMOpcode.move, this.resultReg, head))
   }
 
   public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]) => {

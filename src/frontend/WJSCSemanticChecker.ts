@@ -458,7 +458,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   /** Find out if IF or WHILE block. Then visit children as necessary */
-  public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCAst => {
+  public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCStatement => {
     const ifB = ctx.IF()
     const whileB = ctx.WHILE()
     const childExp = ctx.expression()
@@ -470,7 +470,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         : whileB
         ? WJSCParserRules.ConditionalWhile
         : WJSCParserRules.Undefined,
-    )
+    ) as WJSCStatement
     if (ifB && childStat.length !== 2) {
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
     } else if (whileB && childStat.length !== 1) {
@@ -480,9 +480,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       if (!hasSameType(childExpVisited.type, BaseType.Boolean)) {
         this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
       }
+      result.condition = childExpVisited
       this.pushChild(result, childExpVisited)
       if (ifB) {
-        result.parserRule = WJSCParserRules.ConditionalIf
+        // If Condition
         const [trueBranch, falseBranch] = childStat
         /* Ensure that children[0] = true, children[1] = false */
         this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
@@ -497,8 +498,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
         this.pushChild(result, visitedTrueBranch, true)
         this.pushChild(result, visitedFalseBranch, true)
+        result.trueBranch = visitedTrueBranch
+        result.falseBranch = visitedFalseBranch
       } else if (whileB) {
-        result.parserRule = WJSCParserRules.ConditionalWhile
+        // While Condition
         this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
         const childStatType = this.visitStatement(childStat[0])
         this.symbolTable = this.symbolTable.exitScope()
@@ -898,7 +901,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
    * statements in semicolon
    */
   public visitStatement = (ctx: StatementContext): WJSCStatement => {
-    const result = this.initWJSCAst(ctx, WJSCParserRules.Statement) as WJSCStatement
+    let result = this.initWJSCAst(ctx, WJSCParserRules.Statement) as WJSCStatement
     const skip = ctx.WSKIP()
     const assignment = ctx.assignment()
     const declare = ctx.declare()
@@ -966,8 +969,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           result.stdlibExpr = visitedExpr
         }
       } else if (conditionals) {
-        result.parserRule = WJSCParserRules.Conditional
-        this.pushChild(result, this.visitConditionalBlocks(conditionals))
+        result = this.visitConditionalBlocks(conditionals)
       } else if (begin) {
         result.parserRule = WJSCParserRules.Scope
         const stat = ctx.statement()
