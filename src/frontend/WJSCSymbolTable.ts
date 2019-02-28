@@ -24,6 +24,8 @@ export class WJSCSymbolTable {
 
   public getParentTable = (): WJSCSymbolTable | undefined => this.parentLevel
 
+  public getChildrenTables = (): WJSCSymbolTable[] => this.childrenTables
+
   // Return if this table is inside a function declaration
   public inFunction = (): boolean => this.isInFunction
 

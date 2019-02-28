@@ -1,3 +1,4 @@
+import * as lodash from 'lodash'
 import { EOL } from 'os'
 import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
@@ -342,7 +343,32 @@ class WJSCCodeGenerator {
       list.shift()
     }
     children.forEach((child, index) => {
-      this.genArrayElem(child, list, nextItem, index, itemUsed)
+      this.genExpr(child as WJSCExpr, list)
+      // Then we need to store the values
+      let params
+      switch (child.parserRule) {
+        case WJSCParserRules.IntLiteral:
+          params = `[${itemUsed}, ${directive.immNum(typeSize * (index + 1))}]`
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
+          break
+        case WJSCParserRules.BoolLiter:
+        case WJSCParserRules.CharLiter:
+          params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params, undefined, undefined, true))
+          break
+        case WJSCParserRules.StringLiter:
+          break
+        case WJSCParserRules.PairLiter:
+          break
+        case WJSCParserRules.Identifier:
+          break
+        case WJSCParserRules.Unop:
+          break
+        case WJSCParserRules.BinOp:
+          break
+        default:
+          // Should not happen
+      }
     })
     // Load argument size
     this.load(4, ARMOpcode.load, nextItem, `=${children.length}`)
@@ -389,18 +415,6 @@ class WJSCCodeGenerator {
         this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params))
         break
     }
-  }
-
-  public genIdent = (atx: WJSCIdentifier, [head, ...tail]: Register[]): string[] => {
-    return []
-  }
-
-  public genOperator = (atx: WJSCOperators, [head, ...tail]: Register[]): string[] => {
-    return []
-  }
-
-  public genParam = (atx: WJSCParam, [head, ...tail]: Register[]): string[] => {
-    return []
   }
 
   public genProgram = (atx: WJSCAst): string[] => {
@@ -549,6 +563,9 @@ class WJSCCodeGenerator {
         this.printNewLnCheck = true
         break
       case WJSCParserRules.Scope:
+        this.switchToChildTable(atx.tableNumber)
+        this.traverseStat(atx.stat, reglist)
+        this.switchToParentTable()
         break
       case WJSCParserRules.Read:
         this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, '#0'))
@@ -574,7 +591,6 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Return:
         this.genExpr(atx.stdlibExpr, reglist)
         this.output.push(construct.move(ARMOpcode.move, Register.r0, head))
-        this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
         break
     }
   }
@@ -673,11 +689,12 @@ class WJSCCodeGenerator {
   }
 
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
-    this.output.push(directive.label(`f_${atx.identifier}`))
-    this.output.push(construct.pushPop(ARMOpcode.push, [this.lr]))
+    this.output.push(directive.label(`f_${atx.identifier}`),
+      construct.pushPop(ARMOpcode.push, [this.lr]))
     // We now deal with the children
     this.genStatBlock(atx.body, regList)
-    this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
+    this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]),
+      construct.pushPop(ARMOpcode.pop, [this.pc]))
     if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || atx.body.parserRule === WJSCParserRules.ConditionalIf) {
       this.ltorgCheck = false
     } else {
@@ -685,9 +702,9 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genAssignment = (atx: WJSCAssignment, [head, ...tail]: Register[]) => {
-    this.genAssignRhs(atx.rhs, [head, ...tail])
-    this.genAssignLhs(atx.lhs, [head, ...tail])
+  public genAssignment = (atx: WJSCAssignment, registers: Register[]) => {
+    this.genAssignRhs(atx.rhs, registers)
+    this.genAssignLhs(atx.lhs, registers)
   }
 
   public genAssignLhs = (atx: WJSCAst, [head, ...tail]: Register[]) => {
@@ -762,7 +779,13 @@ class WJSCCodeGenerator {
           construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
         break
       case WJSCParserRules.PairElem:
+        break
       case WJSCParserRules.FunctionCall:
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, [this.sp]),
+          construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-4)], undefined, undefined, undefined, undefined, true),
+          construct.branch(`f_${atx.ident}`, true),
+          construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(4)),
+          construct.move(ARMOpcode.move, head, Register.r0))
       default:
         break
     }
@@ -805,6 +828,10 @@ class WJSCCodeGenerator {
         } else {
           this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
         }
+        break
+      case WJSCParserRules.ArrayElem:
+        // this.genArrayElem(atx, [head, next, ...tail])
+        this.checkArrayOutOfBounds()
         break
       case WJSCParserRules.BinOp:
         this.genBinOp(atx, [head, next, ...tail])
@@ -943,13 +970,13 @@ class WJSCCodeGenerator {
     // appending function to postFunc
     if (!this.postFunc.includes('p_free')) {
       this.postFunc = this.postFunc.concat(directive.label('p_free_array'),
-          construct.pushPop(ARMOpcode.push, [this.lr]),
-          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-              `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-          construct.branch('p_throw_runtime_error', false, ARMCondition.equal),
-          construct.branch('free', true),
-          construct.pushPop(ARMOpcode.pop, [this.pc]))
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+        construct.branch('p_throw_runtime_error', false, ARMCondition.equal),
+        construct.branch('free', true),
+        construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
 
@@ -995,8 +1022,20 @@ class WJSCCodeGenerator {
     '\n' + tabSpace + directive.ascii(symbol.toString() || ''),
   )
 
-  private getLabelNo = (): number => {
-    return this.labelCount++
+  private getLabelNo = (): number => this.labelCount++
+
+  // Find child table with the given table number
+  private switchToChildTable = (tableNumber: number) => {
+    const childTable = lodash.find(this.symbolTable.getChildrenTables(), (child) => child.getTableNumber() === tableNumber)
+    if (childTable) {
+      this.symbolTable = childTable
+    } else {
+      console.log(`Can't enter symbol table`)
+    }
+  }
+
+  private switchToParentTable = () => {
+    this.symbolTable = this.symbolTable.exitScope()
   }
 }
 

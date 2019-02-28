@@ -316,6 +316,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       result.children.push(this.visitTerminal(call))
       const ident = ctx.IDENTIFIER()
       const argList = ctx.argList()
+      _.assign(result, { ident, argList })
       if (!ident) {
         this.errorLog.semErr(result, SemError.Undefined)
       } else {
@@ -980,9 +981,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         } else {
           this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
           result.tableNumber = this.tableCounter
-          this.pushChild(result, this.visitStatement(stat[0]))
+          const visitedStatement = this.visitStatement(stat[0])
+          this.pushChild(result, visitedStatement)
           this.symbolTable = this.symbolTable.exitScope()
-          result.children.push(this.visitTerminal(end))
+          result.stat = visitedStatement
         }
       } else if (semicolon) {
         // Sequential statement
