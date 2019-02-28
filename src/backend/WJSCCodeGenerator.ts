@@ -1,5 +1,5 @@
-import { EOL } from 'os'
-import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
+import {EOL} from 'os'
+import {WJSCSymbolTable} from '../frontend/WJSCSymbolTable'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -13,7 +13,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize } from '../util/WJSCType'
+import {BaseType, getTypeSize, isArrayType, isPairType} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -514,6 +514,13 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Read:
         break
       case WJSCParserRules.Free:
+        // Push result to r0 and call appropriate free
+        this.move(this.getRegSize(head), ARMOpcode.move, Register.r0, head)
+        if (isArrayType(atx.children[1].type)) {
+          this.checkFreeNullArray()
+        } else if (isPairType(atx.children[1].type)) {
+          this.checkFreeNullPair()
+        }
         break
       case WJSCParserRules.Return:
         this.genExpr(atx.stdlibExpr, reglist)
@@ -750,6 +757,8 @@ class WJSCCodeGenerator {
     }
   }
 
+  /* ------------- ERROR MANAGEMENT --------------*/
+
   public checkArrayOutOfBounds = () => {
     // Setting up the messages if not already set up
     this.errorPresent = true
@@ -763,8 +772,6 @@ class WJSCCodeGenerator {
     this.output.push(construct.branch('p_check_array_bounds', true))
     // appending function to postFunc, if not already set up
     if (!this.postFunc.includes('p_check_array_bounds')) {
-      // TODO: Actually call these functions?
-      // TODO: Free pair and Free Array
       this.postFunc = this.postFunc.concat(directive.label('p_check_array_bounds'),
         construct.pushPop(ARMOpcode.push, [this.lr]),
         construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
@@ -849,14 +856,15 @@ class WJSCCodeGenerator {
     // appending function to postFunc
     if (!this.postFunc.includes('p_free_pair')) {
       this.postFunc = this.postFunc.concat(directive.label('p_free_pair'),
+          construct.pushPop(ARMOpcode.push, [this.lr]),
           construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
           construct.singleDataTransfer(ARMOpcode.load, Register.r0,
               `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
           construct.branch('p_throw_runtime_error', false, ARMCondition.equal),
           construct.pushPop(ARMOpcode.push, [Register.r0]),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0, [Register.r0]),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0, `[${Register.r0}]`),
           construct.branch('free', true),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0, [this.sp]),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0, `[${this.sp}]`),
           construct.singleDataTransfer(ARMOpcode.load, Register.r0,
               `[${Register.r0}, ${directive.immNum(4)}]`),
           construct.branch('free', true),
@@ -909,6 +917,8 @@ class WJSCCodeGenerator {
       construct.pushPop(ARMOpcode.pop, [this.pc]),
     )
   }
+
+  /* -----------------------------------------*/
 
   // Helper function to get the position of a message in the data
   public findTrueMessageIndex = (searchTerm: string): number => {
