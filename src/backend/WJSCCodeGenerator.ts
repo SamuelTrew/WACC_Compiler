@@ -394,7 +394,6 @@ class WJSCCodeGenerator {
   }
 
   public genArrayElem = (atx: WJSCAst , list: Register[]) => {
-    console.log(list)
     const size = this.sizeGen(atx, false)
     const dimensions = (atx.children[0] as WJSCArrayElem).specificInd
     const itemUsed = this.nextRegister(list)
@@ -528,7 +527,6 @@ class WJSCCodeGenerator {
   }
 
   public traverseStat = (atx: WJSCStatement, reglist: Register[]) => {
-    console.log(atx.parserRule)
     const [head] = reglist
     switch (atx.parserRule) {
       case WJSCParserRules.Skip:
@@ -808,7 +806,6 @@ class WJSCCodeGenerator {
   }
 
   public genExpr = (atx: WJSCExpr, regList: Register[]) => {
-    console.log('Exp' + regList)
     const [head, next] = regList
     let value = atx.value
     switch (atx.parserRule) {
