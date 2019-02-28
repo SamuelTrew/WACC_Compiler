@@ -492,6 +492,12 @@ class WJSCCodeGenerator {
         }
         this.printLine()
         break
+      case WJSCParserRules.Scope:
+        break
+      case WJSCParserRules.Read:
+        break
+      case WJSCParserRules.Free:
+        break
     }
   }
 
@@ -648,14 +654,8 @@ class WJSCCodeGenerator {
         this.output.push(
           construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${expr2Size}`),
           directive.malloc(ARMOpcode.branchLink),
-          // TODO check if is byte and use SERB
           construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`, undefined, undefined, size2IsByte),
           construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
-        // code: if (this.totalStackSize > 4) {
-        //   this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
-        // } else {
-        //   this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
-        // }
         break
       case WJSCParserRules.PairElem:
       case WJSCParserRules.FunctionCall:
