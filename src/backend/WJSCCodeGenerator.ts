@@ -479,10 +479,6 @@ class WJSCCodeGenerator {
       this.printReadInt()
       this.stringDec('%d\\0')
     }
-    if (this.printIntCheck) {
-      this.printInt()
-      this.stringDec('%d\\0')
-    }
     if (this.printNewLnCheck) {
       this.printLine()
       this.stringDec('\\0')
