@@ -267,8 +267,11 @@ class WJSCCodeGenerator {
         this.printLine()
         break
       case '-':
+        this.output.push(construct.arithmetic(ARMOpcode.reverseSubtract, head, head, `#0`))
         break
       case 'len':
+        this.symbolTable.lookup(atx.value)
+        // TODO: divide the pointer count by 4
         break
       case 'ord':
         break
@@ -554,7 +557,7 @@ class WJSCCodeGenerator {
     this.decStackSize -= typeSize
     this.symbolTable.setVarMemAddr(id, this.decStackSize)
     // Save content of 'head' to memory
-    if (this.decStackSize > 4) {
+    if (this.decStackSize > 0) {
       this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, ${directive.immNum(this.decStackSize)}]`, undefined, undefined, sizeIsByte))
     } else {
       this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
@@ -571,24 +574,25 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.Newpair:
         const typeSize = getTypeSize(atx.type)
-        const sizeIsByte = typeSize === 1
         const exprSize = getTypeSize(atx.expr.type)
         const expr2Size = getTypeSize(atx.expr2.type)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=8`),
           directive.malloc(ARMOpcode.branchLink),
           construct.move(ARMOpcode.move, head, this.resultReg))
         this.genExpr(atx.expr, [next, ...tail])
+        const sizeIsByte = exprSize === 1
         this.output.push(
             construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${exprSize}`),
             directive.malloc(ARMOpcode.branchLink),
-            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`),
+            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`, undefined, undefined, sizeIsByte),
             construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}]`))
         this.genExpr(atx.expr2, [next, ...tail])
+        const size2IsByte = expr2Size === 1
         this.output.push(
             construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=${expr2Size}`),
             directive.malloc(ARMOpcode.branchLink),
             // TODO check if is byte and use SERB
-            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`),
+            construct.singleDataTransfer(ARMOpcode.store, next, `[${this.resultReg}]`, undefined, undefined, size2IsByte),
             construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
         // code: if (this.totalStackSize > 4) {
         //   this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, #${this.decStackSize}]`, undefined, undefined, sizeIsByte))
@@ -634,6 +638,12 @@ class WJSCCodeGenerator {
         const offsetString = spOffset ? `, #${spOffset}` : ''
 
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
+        break
+      case WJSCParserRules.BinOp:
+        this.genBinOp(atx, [head, next, ...tail])
+        break
+      case WJSCParserRules.Unop:
+        this.genUnOp(atx, [head, next, ...tail])
         break
     }
   }
