@@ -35,6 +35,7 @@ class WJSCCodeGenerator {
   public output: string[] = []
   public data: string[] = [directive.data]
   public postFunc: string[] = []
+  public errorPresent: boolean = false
 
   /* ------------- MEMORY MANAGEMENT --------------*/
   public memIndex: number = 0
@@ -392,7 +393,7 @@ class WJSCCodeGenerator {
       directive.label('main'),
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
-    // this.checkArrayOutOfBounds()
+    // this.checkDivByZero()
     // Generate code for the function body statements
     if (atx.body) {
       const stats = this.flattenSequential(atx.body)
@@ -427,9 +428,12 @@ class WJSCCodeGenerator {
     // Add .data section if it is not empty
     let result = this.output
     if (msgCount > 0) {
+      // Add error warning if there is potential for RE
+      if (this.errorPresent) {
+        this.throwError()
+      }
       result = this.data.concat(this.output, this.postFunc)
     }
-
     return result
   }
 
@@ -650,6 +654,7 @@ class WJSCCodeGenerator {
 
   public checkArrayOutOfBounds = () => {
     // Setting up the messages if not already set up
+    this.errorPresent = true
     if (!this.data.includes(RuntimeError.negIndex)) {
       this.data.push(directive.stringDec(RuntimeError.negIndex))
     }
@@ -678,6 +683,7 @@ class WJSCCodeGenerator {
   }
 
   public checkDivByZero = () => {
+    this.errorPresent = true
     // Setting up the message if not already set up
     if (!this.data.includes(RuntimeError.divByZero)) {
       this.data.push(directive.stringDec(RuntimeError.divByZero))
@@ -696,6 +702,30 @@ class WJSCCodeGenerator {
           construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
+
+  // Generate errors with appropriate message
+  public throwError = () => {
+    // Setting up the final message
+    this.data.push(directive.stringDec('%.*s\\0'))
+    // Setting up the error message
+    this.postFunc = this.postFunc.concat(directive.label('p_throw_runtime_error'),
+        construct.branch('p_print_string', true),
+        construct.move(ARMOpcode.move, Register.r0, directive.immNum(-1)),
+        construct.branch('exit', true),
+        directive.label('p_print_string'),
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r0}]`),
+        construct.arithmetic(ARMOpcode.add, Register.r2, Register.r0, directive.immNum(4)),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+            `=msg_${this.findTrueMessageIndex('%.*s\\0')}`),
+        construct.arithmetic(ARMOpcode.add, Register.r0, Register.r0, directive.immNum(4)),
+        construct.branch('printf', true),
+        construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
+        construct.branch('fflush', true),
+        construct.pushPop(ARMOpcode.pop, [this.pc]),
+        )
+  }
+
   // Helper function to get the position of a message in the data
   public findTrueMessageIndex = (searchTerm: string): number => {
     let foundIndex = 0
