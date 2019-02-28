@@ -95,11 +95,11 @@ enum RuntimeError {
 
 type ARMAddress = ARMExpression | ARMAddressPreIndex | ARMAddressPostIndex
 type ARMAddressPreIndex =
-  | [Register]
+  |[Register]
   | ['pre', Register, ARMExpression]
   | ['pre', Register, ARMShiftType, Register, ARMShift]
 type ARMAddressPostIndex =
-  | ['post', Register, ARMExpression]
+  |['post', Register, ARMExpression]
   | ['post', Register, ARMShiftType, Register, ARMShift]
 type ARMExpression = string
 type ARMOperand = [Register, ARMShift] | ARMExpression | Register | string
@@ -117,6 +117,8 @@ type ARMBDTAddressingModes =
 
 export const tabSpace = '\t'
 
+const escapedChars = ['b', 'f', 'n', 'r', 't', '"', '\'', '\\', '0']
+
 const construct = {
   arithmetic: (
     opcode: ARMOpcode,
@@ -128,7 +130,7 @@ const construct = {
   ) =>
     tabSpace +
     `${opcode}${condition || ''}${
-      set ? 'S' : ''
+    set ? 'S' : ''
     } ${rd}, ${rn}, ${stringify.operand(operand)}`,
   blockDataTransfer: (
     opcode: ARMOpcode.loadMultiple | ARMOpcode.storeMultiple,
@@ -140,7 +142,7 @@ const construct = {
     sbit = false,
   ): string =>
     `${opcode}${condition || ''}${addrMode} ${rn}${
-      writeBack ? '!' : ''
+    writeBack ? '!' : ''
     } {${rlist.join(', ')}}${sbit ? '^' : ''}`,
   boolCalc: (
     opcode: ARMOpcode.and | ARMOpcode.or | ARMOpcode.exclusiveOr,
@@ -152,8 +154,8 @@ const construct = {
   ) =>
     tabSpace +
     `${opcode}${
-      set ? 'S' : ''
-      } ${rd}, ${rd2}, ${rn}, ${num}`,
+    set ? 'S' : ''
+    } ${rd}, ${rd2}, ${rn}, ${num}`,
   branch: (
     expression: ARMExpression,
     link = false,
@@ -191,9 +193,9 @@ const construct = {
   ): string =>
     tabSpace +
     `${opcode}${condition || ''} ${
-      opcode === ARMOpcode.moveFlagsRegister
-        ? `${operand}, ${psr}`
-        : `${psr}${option ? '_' + option : ''}, ${operand}`
+    opcode === ARMOpcode.moveFlagsRegister
+      ? `${operand}, ${psr}`
+      : `${psr}${option ? '_' + option : ''}, ${operand}`
     }`,
   multiply: (
     rd: Register,
@@ -206,7 +208,7 @@ const construct = {
   ): string =>
     tabSpace +
     `${acc ? 'MLA' : 'MUL'}${condition || ''}${
-      set ? 'S' : ''
+    set ? 'S' : ''
     } ${rd}, ${rm}, ${rs}` +
     (acc ? `, ${rn}` : ''),
   multiplyLong: (
@@ -236,7 +238,7 @@ const construct = {
   ): string =>
     tabSpace +
     `${opcode}${condition || ''}${byte ? 'B' : ''}${
-      post ? 'T' : ''
+    post ? 'T' : ''
     }${modifier || ''} ${rd}, ${stringify.address(address)}`,
   softwareInterrupt: (comment: string, condition?: string) =>
     tabSpace + `SWI${condition || ''} ${comment}`,
@@ -255,7 +257,15 @@ const directive = {
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',
   malloc: (content: ARMOpcode): string => tabSpace + `${content} malloc`,
-  messageCharCount: (name: string): number => name.length,
+  messageCharCount: (name: string): number => {
+    const strArray = [...name]
+    let count = 0
+    for (let i = 0; i < name.length; i++) {
+      if (strArray[i] === '\\' && (i < name.length - 1 && escapedChars.includes(strArray[i + 1]))) { i++ }
+      count++
+    }
+    return count
+  },
   popSection: '.popsection',
   pushSection: (...args: any): string =>
     `.pushsection ${directive.section(args)}`,
