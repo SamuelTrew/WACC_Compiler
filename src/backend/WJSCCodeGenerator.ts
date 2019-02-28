@@ -461,6 +461,9 @@ class WJSCCodeGenerator {
     // Add error warning if there is potential for RE
 
     this.postFuncEnumCheck()
+    if (this.errorPresent) {
+      this.throwError()
+    }
 
     if (this.msgCount > 0) {
       result = this.data.concat('', this.output)
