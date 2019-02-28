@@ -418,8 +418,8 @@ class WJSCCodeGenerator {
 
   public genProgram = (atx: WJSCAst): string[] => {
     const regList = [Register.r4, Register.r5, Register.r6,
-                     Register.r7, Register.r8, Register.r9,
-                     Register.r10, Register.r11, Register.r12]
+    Register.r7, Register.r8, Register.r9,
+    Register.r10, Register.r11, Register.r12]
 
     this.output = this.output.concat(
       [directive.text],
@@ -790,11 +790,18 @@ class WJSCCodeGenerator {
       case WJSCParserRules.PairElem:
         break
       case WJSCParserRules.FunctionCall:
-        // TODO: Get size from symbol table
-        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, [this.sp]),
-          construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-4)], undefined, undefined, undefined, undefined, true),
-          construct.branch(`f_${atx.ident}`, true),
-          construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(4)))
+        /* Determine the number of arguments required for the function call */
+        const argv = (atx.argList || [])
+        const argc = argv.length
+        /* Setup the stack */
+        argv.reverse().forEach((arg: WJSCExpr) => {
+          this.genExpr(arg, regList)
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-4)], undefined, undefined, undefined, undefined, true))
+        })
+        this.output.push(construct.branch(`f_${atx.ident}`, true))
+        if (argc > 0) {
+          this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(argc * 4)))
+        }
         this.move(this.getRegSize(Register.r0), ARMOpcode.move, head, Register.r0)
       default:
         break

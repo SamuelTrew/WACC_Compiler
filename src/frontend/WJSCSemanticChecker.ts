@@ -319,13 +319,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       result.children.push(this.visitTerminal(call))
       const ident = ctx.IDENTIFIER()
       const argList = ctx.argList()
-      _.assign(result, { ident, argList })
       if (!ident) {
         this.errorLog.semErr(result, SemError.Undefined)
       } else {
         const visitedIdent = this.visitTerminal(ident)
         visitedIdent.type = this.symbolTable.lookup(visitedIdent.value)
         this.pushChild(result, visitedIdent)
+        result.ident = visitedIdent.token
         if (argList) {
           const visitedArgList = this.visitArgList(argList)
           result.children.push(visitedArgList)
@@ -350,6 +350,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
                   }
                 })
               }
+              result.argList = args as WJSCExpr[]
             } else {
               /* This should NEVER happen, implies function not set properly */
               this.errorLog.semErr(result, SemError.Undefined)
