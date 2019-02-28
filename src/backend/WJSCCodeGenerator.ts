@@ -392,7 +392,7 @@ class WJSCCodeGenerator {
       directive.label('main'),
       construct.pushPop(ARMOpcode.push, [this.lr]),
     )
-    //this.checkDivByZero()
+    // this.checkArrayOutOfBounds()
     // Generate code for the function body statements
     if (atx.body) {
       const stats = this.flattenSequential(atx.body)
@@ -660,18 +660,17 @@ class WJSCCodeGenerator {
     this.output.push(construct.branch('p_check_array_bounds', true))
     // appending function to end of messages, if not already set up
     if (!this.postFunc.includes('p_check_array_bounds')) {
-      // TODO: FIND REAL INDEX BY RECURSION
       // TODO: FIND REAL WORD LENGTH
       this.postFunc = this.postFunc.concat(directive.label('p_check_array_bounds'),
           construct.pushPop(ARMOpcode.push, [this.lr]),
           construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
           construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-              `=msg_${this.data.length - 3}`, ARMCondition.lessThan),
+              `=msg_${this.findTrueMessageIndex(RuntimeError.negIndex)}`, ARMCondition.lessThan),
           construct.branch('p_throw_runtime_error', true, ARMCondition.lessThan),
           construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r1}]`),
           construct.compareTest(ARMOpcode.compare, Register.r0, Register.r1),
           construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-              `=msg_${this.data.length - 2}`, ARMCondition.unsignedHigherSame),
+              `=msg_${this.findTrueMessageIndex(RuntimeError.largeIndex)}`, ARMCondition.unsignedHigherSame),
           construct.branch('p_throw_runtime_error', true, ARMCondition.unsignedHigherSame),
           construct.pushPop(ARMOpcode.pop, [this.pc]))
 
@@ -692,10 +691,20 @@ class WJSCCodeGenerator {
           construct.pushPop(ARMOpcode.push, [this.lr]),
           construct.compareTest(ARMOpcode.compare, Register.r1, directive.immNum(0)),
           construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-              `=msg_${this.data.length - 2}`, ARMCondition.equal),
+              `=msg_${this.findTrueMessageIndex(RuntimeError.divByZero)}`, ARMCondition.equal),
           construct.branch('p_throw_runtime_error', true, ARMCondition.equal),
           construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
+  }
+  // Helper function to get the position of a message in the data
+  public findTrueMessageIndex = (searchTerm: string): number => {
+    let foundIndex = 0
+    this.data.forEach((child, index) => {
+      if (child.includes(searchTerm)) {
+        foundIndex = index - 1 // <- Because .data is counted as an elem
+      }
+    })
+    return foundIndex
   }
 }
 
