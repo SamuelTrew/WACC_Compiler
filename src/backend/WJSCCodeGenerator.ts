@@ -1,5 +1,5 @@
-import { EOL } from 'os'
-import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
+import {EOL} from 'os'
+import {WJSCSymbolTable} from '../frontend/WJSCSymbolTable'
 import {
   WJSCAssignment,
   WJSCAssignRhs,
@@ -757,8 +757,8 @@ class WJSCCodeGenerator {
     this.output.push(construct.branch('p_check_array_bounds', true))
     // appending function to postFunc, if not already set up
     if (!this.postFunc.includes('p_check_array_bounds')) {
-      // TODO: FIND REAL WORD LENGTH
       // TODO: Actually call these functions?
+      // TODO: Free pair and Free Array
       this.postFunc = this.postFunc.concat(directive.label('p_check_array_bounds'),
         construct.pushPop(ARMOpcode.push, [this.lr]),
         construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
@@ -831,9 +831,34 @@ class WJSCCodeGenerator {
         construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
-
-  public checkFreeNull = (isPair: boolean) => {
+  // Remember to have put the pair/ array into r0!
+  public checkFreeNullPair = () => {
     // The alternative being an array
+    this.errorPresent = true
+    // Setting up the message if not already set up
+    if (!this.data.includes(RuntimeError.nullDeref)) {
+      this.stringDec(RuntimeError.nullDeref)
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch('p_free_pair', true))
+    // appending function to postFunc
+    if (!this.postFunc.includes('p_free_pair')) {
+      this.postFunc = this.postFunc.concat(directive.label('p_free_pair'),
+          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+              `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+          construct.branch('p_throw_runtime_error', false, ARMCondition.equal),
+          construct.pushPop(ARMOpcode.push, [Register.r0]),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0, [Register.r0]),
+          construct.branch('free', true),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0, [this.sp]),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+              `[${Register.r0}, ${directive.immNum(4)}]`),
+          construct.branch('free', true),
+          construct.pushPop(ARMOpcode.pop, [Register.r0]),
+          construct.branch('free', true),
+          construct.pushPop(ARMOpcode.pop, [this.pc]))
+    }
   }
 
   // Generate errors with appropriate message
