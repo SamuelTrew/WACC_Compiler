@@ -318,7 +318,32 @@ class WJSCCodeGenerator {
       list.shift()
     }
     children.forEach((child, index) => {
-      this.genArrayElem(child, list, nextItem, index, itemUsed)
+      this.genExpr(child as WJSCExpr, list)
+      // Then we need to store the values
+      let params
+      switch (child.parserRule) {
+        case WJSCParserRules.IntLiteral:
+          params = `[${itemUsed}, ${directive.immNum(typeSize * (index + 1))}]`
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed, params))
+          break
+        case WJSCParserRules.BoolLiter:
+        case WJSCParserRules.CharLiter:
+          params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed, params, undefined, undefined, true))
+          break
+        case WJSCParserRules.StringLiter:
+          break
+        case WJSCParserRules.PairLiter:
+          break
+        case WJSCParserRules.Identifier:
+          break
+        case WJSCParserRules.Unop:
+          break
+        case WJSCParserRules.BinOp:
+          break
+        default:
+          // Should not happen
+      }
     })
     // Load argument size
     this.load(4, ARMOpcode.load, nextItem, `=${children.length}`)
@@ -748,6 +773,10 @@ class WJSCCodeGenerator {
         const offsetString = spOffset ? `, #${spOffset}` : ''
 
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
+        break
+      case WJSCParserRules.ArrayElem:
+        // this.genArrayElem(atx, [head, next, ...tail])
+        this.checkArrayOutOfBounds()
         break
       case WJSCParserRules.BinOp:
         this.genBinOp(atx, [head, next, ...tail])
