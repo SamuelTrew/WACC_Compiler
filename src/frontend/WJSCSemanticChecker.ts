@@ -950,6 +950,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           ) {
             this.errorLog.semErr(result, SemError.Mismatch)
           }
+          result.readType = visitLhs.type
           result.children.push(this.visitTerminal(read))
           this.pushChild(result, this.visitAssignLhs(lhs))
         }

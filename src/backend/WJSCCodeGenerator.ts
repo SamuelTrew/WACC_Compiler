@@ -8,9 +8,6 @@ import {
   WJSCDeclare,
   WJSCExpr,
   WJSCFunction,
-  WJSCIdentifier,
-  WJSCOperators,
-  WJSCParam,
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
@@ -473,10 +470,6 @@ class WJSCCodeGenerator {
     if (this.printLnCheck) {
       this.stringDec('%.*s\\0')
     }
-    if (this.printNewLnCheck) {
-      this.printLine()
-      this.stringDec('\\0')
-    }
     if (this.printReadIntCheck) {
       this.printReadInt()
       this.stringDec('%d\\0')
@@ -484,6 +477,10 @@ class WJSCCodeGenerator {
     if (this.printIntCheck) {
       this.printInt()
       this.stringDec('%d\\0')
+    }
+    if (this.printNewLnCheck) {
+      this.printLine()
+      this.stringDec('\\0')
     }
     if (this.printReadCharCheck) {
       this.printReadChar()
@@ -822,10 +819,11 @@ class WJSCCodeGenerator {
         const sizeIsByte = typeSize === 1
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
         const offsetString = spOffset ? `, #${spOffset}` : ''
-        if (typeof atx.value === 'boolean') {
-          // TODO: NOT CORRECT
+        const identType = this.symbolTable.lookup(atx.value)
+        if (identType === BaseType.Character) {
           this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, 'SB', false))
         } else {
+          // If boolean I think
           this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
         }
         break
