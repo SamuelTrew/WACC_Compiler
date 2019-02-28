@@ -666,6 +666,7 @@ class WJSCCodeGenerator {
     // appending function to postFunc, if not already set up
     if (!this.postFunc.includes('p_check_array_bounds')) {
       // TODO: FIND REAL WORD LENGTH
+      // TODO: Actually call these functions?
       this.postFunc = this.postFunc.concat(directive.label('p_check_array_bounds'),
           construct.pushPop(ARMOpcode.push, [this.lr]),
           construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
@@ -718,6 +719,29 @@ class WJSCCodeGenerator {
               `=msg_${this.findTrueMessageIndex(RuntimeError.intOverFlow)}`),
           construct.branch('p_throw_runtime_error', true))
     }
+  }
+
+  public checkNullPointer = () => {
+    this.errorPresent = true
+    // Setting up the message if not already set up
+    if (!this.data.includes(RuntimeError.nullDeref)) {
+      this.data.push(directive.stringDec(RuntimeError.nullDeref))
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch('p_check_null_pointer', true))
+    // appending function to postFunc
+    if (!this.postFunc.includes('p_check_null_pointer')) {
+      this.postFunc = this.postFunc.concat(directive.label('p_check_null_pointer'),
+          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+              `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+          construct.branch('p_throw_runtime_error', true, ARMCondition.equal),
+          construct.pushPop(ARMOpcode.pop, [this.pc]))
+    }
+  }
+
+  public checkFreeNull = (isPair: boolean) => {
+    // The alternative being an array
   }
 
   // Generate errors with appropriate message
