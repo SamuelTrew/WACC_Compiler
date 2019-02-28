@@ -644,6 +644,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               const exp1 = this.visitExpression(expressions[0])
               result.children.push(exp1)
               result.type = this.checkOperator(visitedOp, exp1)
+              result.parserRule = WJSCParserRules.Unop
             }
           } else if (operators !== undefined) {
             if (expressions.length !== 2) {
@@ -671,6 +672,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               result.children.push(exp1)
               result.children.push(exp2)
               result.type = this.checkOperator(visitedOp, exp1, exp2)
+              result.parserRule = WJSCParserRules.BinOp
             }
           }
         }

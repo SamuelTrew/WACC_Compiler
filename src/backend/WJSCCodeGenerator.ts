@@ -8,13 +8,16 @@ import {
   WJSCDeclare,
   WJSCExpr,
   WJSCFunction,
-  WJSCIdentifier,
-  WJSCOperators,
-  WJSCParam,
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize, isArrayType, isPairType } from '../util/WJSCType'
+import {
+  BaseType,
+  getTypeSize,
+  hasSameType,
+  isArrayType,
+  isPairType,
+} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -56,11 +59,23 @@ class WJSCCodeGenerator {
   private totalStackSize = 0
   private decStackSize = 0
   private ltorgCheck = true
+
+  // Print functions
   private readonly PRINT_BOOL = 'p_print_bool'
   private readonly PRINT_STRING = 'p_print_string'
   private readonly PRINT_INT = 'p_print_int'
   private readonly PRINT_NEW_LINE = 'p_print_ln'
-  private printLnCheck = false
+
+  // Error functions
+  private readonly THROW_RUNTIME_ERROR = 'p_throw_runtime_error'
+  private readonly CHECK_DIVIDE_BY_ZERO = 'p_check_divide_by_zero'
+  private readonly THROW_OVERFLOW_ERROR = 'p_throw_overflow_error'
+  private readonly CHECK_NULL_POINTER = 'p_check_null_pointer'
+  private readonly CHECK_FREE_NULL_PAIR = 'p_free_pair'
+  private readonly CHECK_FREE_NULL_ARRAY = 'p_free_array'
+
+  // Print flags
+  private printlnStringCheck = false
   private printIntCheck = false
   private printStringCheck = false
   private printBoolCheck = false
@@ -77,8 +92,8 @@ class WJSCCodeGenerator {
   /* ------------- Print Management ---------------*/
 
   public printBool = () => {
-    const bool = this.printBoolTemp ? `true\0` : `false\0`
-    const notBool = this.printBoolTemp ? `false\0` : `true\0`
+    const bool = this.printBoolTemp ? 'true\\0' : 'false\\0'
+    const notBool = this.printBoolTemp ? 'false\\0' : 'true\\0'
     this.postFunc.push(this.PRINT_BOOL + ':',
       construct.pushPop(ARMOpcode.push, [this.lr]),
       construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
@@ -97,18 +112,17 @@ class WJSCCodeGenerator {
 
   public printString = () => {
     if (this.printStringCheck) {
-      this.postFunc.push(this.PRINT_STRING + ':',
+      this.postFunc.push(directive.label(this.PRINT_STRING),
         construct.pushPop(ARMOpcode.push, [this.lr]),
         construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
-        construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, `#4`),
+        construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, directive.immNum(4)),
         construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
-        construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+        construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, directive.immNum(4)),
         construct.branch(`printf`, true),
-        construct.move(ARMOpcode.move, this.resultReg, `#0`),
+        construct.move(ARMOpcode.move, this.resultReg, directive.immNum(0)),
         construct.branch(`fflush`, true),
         construct.pushPop(ARMOpcode.pop, [this.pc]),
       )
-      this.printStringCheck = false
     }
   }
 
@@ -198,6 +212,7 @@ class WJSCCodeGenerator {
 
   public genBinOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
     this.genExpr(atx.expr1, [head, next, ...tail])
+    this.genExpr(atx.expr2, [next, ...tail])
     switch (atx.operator.token) {
       case '*':
         this.output.push(construct.multiply(head, next, head))
@@ -207,9 +222,8 @@ class WJSCCodeGenerator {
       case '/':
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         this.move(getTypeSize(atx.type), ARMOpcode.move, Register.r1, next)
-        this.output.push(construct.branch(`__aeabi_idiv`, true))
+        this.checkDivByZero()
         this.move(getTypeSize(atx.type), ARMOpcode.move, head, this.resultReg)
-        this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         break
       case '%':
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
@@ -263,16 +277,15 @@ class WJSCCodeGenerator {
         )
         break
       case '&&':
-        this.output.push(construct.boolCalc(ARMOpcode.and, head, head, next))
+        this.output.push(construct.logical(ARMOpcode.and, head, head, next))
         // TODO: the subsequent STR and LDR should be STRB and LDRB in this case
         break
       case '||':
-        this.output.push(construct.boolCalc(ARMOpcode.or, head, head, next),
-          construct.boolCalc(ARMOpcode.exclusiveOr, head, head, undefined, `#1`),
+        this.output.push(construct.logical(ARMOpcode.or, head, head, next),
+          construct.logical(ARMOpcode.exclusiveOr, head, head, `#1`),
         )
         break
     }
-    this.genExpr(atx.expr2, [head, next, ...tail])
   }
 
   public genUnOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
@@ -401,34 +414,33 @@ class WJSCCodeGenerator {
 
     // Add .data section if it is not empty
     let result = this.output
-    if (this.msgCount > 0) {
-      // Add error warning if there is potential for RE
-      if (this.errorPresent) {
-        this.throwError()
-      }
-
-      if (this.printStringCheck) {
-        this.printString()
-      }
-      if (this.printIntCheck) {
-        this.printInt()
-      }
-      if (this.printBoolCheck) {
-        this.printBool()
-      }
-      if (this.printLnCheck) {
-        this.stringDec('%.*s\\0')
-      }
-      if (this.printNewLnCheck) {
-        this.printLine()
-        this.stringDec('\\0')
-      }
-      result = this.data.concat('', this.output, this.postFunc)
+    // Add error warning if there is potential for RE
+    if (this.printStringCheck) {
+      this.printString()
     }
-    return result
+    if (this.printIntCheck) {
+      this.printInt()
+    }
+    if (this.printBoolCheck) {
+      this.printBool()
+    }
+    if (this.printlnStringCheck) {
+      this.stringDec('%.*s\\0')
+    }
+    if (this.printNewLnCheck) {
+      this.printLine()
+      this.stringDec('\\0')
+    }
+    if (this.errorPresent) {
+      this.throwError()
+    }
+    if (this.msgCount > 0) {
+      result = this.data.concat(this.output)
+    }
+    return result.concat(this.postFunc)
   }
 
-  public genStatBlock(statements: WJSCStatement, regList: Register[]) {
+  public genStatBlock = (statements: WJSCStatement, regList: Register[]) => {
     const stats = this.flattenSequential(statements)
     // Save stack size from parent scope
     const prevStackSize = this.totalStackSize
@@ -459,8 +471,8 @@ class WJSCCodeGenerator {
   }
 
   public traverseStat = (atx: WJSCStatement, reglist: Register[]) => {
+    console.log(atx.parserRule)
     const [head] = reglist
-    // console.log(atx.parserRule)
     switch (atx.parserRule) {
       case WJSCParserRules.Skip:
         // Skip does nothing
@@ -490,13 +502,17 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Print:
         this.genExpr(atx.stdlibExpr, reglist)
         this.printBaseType(atx.stdlibExpr, reglist)
-        this.printLnCheck = true
+        if (hasSameType(atx.stdlibExpr.type, BaseType.String)) {
+          this.printlnStringCheck = true
+        }
         break
       case WJSCParserRules.Println:
         this.genExpr(atx.stdlibExpr, reglist)
         this.printBaseType(atx.stdlibExpr, reglist)
         this.output.push(construct.branch(this.PRINT_NEW_LINE, true))
-        this.printLnCheck = true
+        if (hasSameType(atx.stdlibExpr.type, BaseType.String)) {
+          this.printlnStringCheck = true
+        }
         this.printNewLnCheck = true
         break
       case WJSCParserRules.Scope:
@@ -526,28 +542,29 @@ class WJSCCodeGenerator {
 
   public printBaseType = (atx: WJSCExpr, [head, ..._]: Register[]) => {
     this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
-    switch (atx.parserRule) {
-      case WJSCParserRules.IntLiteral:
-        this.output.push(construct.branch(this.PRINT_INT, true))
-        this.printIntCheck = true
-        break
-      case WJSCParserRules.StringLiter:
-        this.output.push(construct.branch(this.PRINT_STRING, true))
-        this.printStringCheck = true
-        break
-      case WJSCParserRules.BoolLiter:
-        this.output.push(construct.branch(this.PRINT_BOOL, true))
-        this.printBoolCheck = true
-        this.printBoolCheck = atx.value
-        this.printBool()
-        break
-      case WJSCParserRules.CharLiter:
-        this.output.push(construct.branch(`putchar`, true))
-        break
-      case WJSCParserRules.Identifier:
-        this.printFromIdent(atx)
-        break
+    if (atx.parserRule === WJSCParserRules.Identifier) {
+      this.printFromIdent(atx)
+    } else {
+      switch (atx.type) {
+        case BaseType.Integer:
+          this.output.push(construct.branch(this.PRINT_INT, true))
+          this.printIntCheck = true
+          break
+        case BaseType.String:
+          this.output.push(construct.branch(this.PRINT_STRING, true))
+          this.printStringCheck = true
+          break
+        case BaseType.Boolean:
+          this.output.push(construct.branch(this.PRINT_BOOL, true))
+          this.printBoolCheck = true
+          this.printBoolTemp = atx.value
+          break
+        case BaseType.Character:
+          this.output.push(construct.branch(`putchar`, true))
+          break
+      }
     }
+    // TODO printing of array and pairs
   }
 
   public printFromIdent = (atx: WJSCExpr) => {
@@ -713,11 +730,11 @@ class WJSCCodeGenerator {
   }
 
   public genExpr = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
+    // console.log(atx.parserRule)
     let value = atx.value
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${value}`))
-        // this.output.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=4`))
         break
       case WJSCParserRules.BoolLiter:
         value = atx.value ? 1 : 0
@@ -733,14 +750,11 @@ class WJSCCodeGenerator {
       case WJSCParserRules.PairLiter:
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=0`))
         break
-      // TODO: Check if this is allowed
-      // This is to catch the case when assigning a new pair to an existing one (createRefPair.wacc)
       case WJSCParserRules.Identifier:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
         const offsetString = spOffset ? `, #${spOffset}` : ''
-
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
         break
       case WJSCParserRules.BinOp:
@@ -772,12 +786,12 @@ class WJSCCodeGenerator {
         construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
         construct.singleDataTransfer(ARMOpcode.load, Register.r0,
           `=msg_${this.findTrueMessageIndex(RuntimeError.negIndex)}`, ARMCondition.lessThan),
-        construct.branch('p_throw_runtime_error', true, ARMCondition.lessThan),
+        construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.lessThan),
         construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r1}]`),
         construct.compareTest(ARMOpcode.compare, Register.r0, Register.r1),
         construct.singleDataTransfer(ARMOpcode.load, Register.r0,
           `=msg_${this.findTrueMessageIndex(RuntimeError.largeIndex)}`, ARMCondition.unsignedHigherSame),
-        construct.branch('p_throw_runtime_error', true, ARMCondition.unsignedHigherSame),
+        construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.unsignedHigherSame),
         construct.pushPop(ARMOpcode.pop, [this.pc]))
 
     }
@@ -790,16 +804,16 @@ class WJSCCodeGenerator {
       this.stringDec(RuntimeError.divByZero)
     }
     // check in instruction body itself
-    this.output.push(construct.branch('p_check_divide_by_zero', true))
+    this.output.push(construct.branch(this.CHECK_DIVIDE_BY_ZERO, true))
     this.output.push(construct.branch('__aeabi_idiv', true))
     // appending function to postFunc, if not already set up
-    if (!this.postFunc.includes('p_check_divide_by_zero')) {
-      this.postFunc = this.postFunc.concat(directive.label('p_check_divide_by_zero'),
+    if (!this.postFunc.includes(this.CHECK_DIVIDE_BY_ZERO)) {
+      this.postFunc = this.postFunc.concat(directive.label(this.CHECK_DIVIDE_BY_ZERO),
         construct.pushPop(ARMOpcode.push, [this.lr]),
         construct.compareTest(ARMOpcode.compare, Register.r1, directive.immNum(0)),
         construct.singleDataTransfer(ARMOpcode.load, Register.r0,
           `=msg_${this.findTrueMessageIndex(RuntimeError.divByZero)}`, ARMCondition.equal),
-        construct.branch('p_throw_runtime_error', true, ARMCondition.equal),
+        construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
         construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
@@ -811,13 +825,13 @@ class WJSCCodeGenerator {
       this.stringDec(RuntimeError.intOverFlow)
     }
     // check in instruction body itself
-    this.output.push(construct.branch('p_throw_overflow_error', true, ARMCondition.overflow))
+    this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, ARMCondition.overflow))
     // appending function to postFunc
-    if (!this.postFunc.includes('p_throw_overflow_error')) {
-      this.postFunc = this.postFunc.concat(directive.label('p_throw_overflow_error'),
+    if (!this.postFunc.includes(this.THROW_OVERFLOW_ERROR)) {
+      this.postFunc = this.postFunc.concat(directive.label(this.THROW_OVERFLOW_ERROR),
         construct.singleDataTransfer(ARMOpcode.load, Register.r0,
           `=msg_${this.findTrueMessageIndex(RuntimeError.intOverFlow)}`),
-        construct.branch('p_throw_runtime_error', true))
+        construct.branch(this.THROW_RUNTIME_ERROR, true))
     }
   }
 
@@ -828,14 +842,14 @@ class WJSCCodeGenerator {
       this.stringDec(RuntimeError.nullDeref)
     }
     // check in instruction body itself
-    this.output.push(construct.branch('p_check_null_pointer', true))
+    this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
     // appending function to postFunc
-    if (!this.postFunc.includes('p_check_null_pointer')) {
-      this.postFunc = this.postFunc.concat(directive.label('p_check_null_pointer'),
+    if (!this.postFunc.includes(this.CHECK_NULL_POINTER)) {
+      this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
         construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
         construct.singleDataTransfer(ARMOpcode.load, Register.r0,
           `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-        construct.branch('p_throw_runtime_error', true, ARMCondition.equal),
+        construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
         construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
@@ -847,15 +861,15 @@ class WJSCCodeGenerator {
       this.stringDec(RuntimeError.nullDeref)
     }
     // check in instruction body itself
-    this.output.push(construct.branch('p_free_pair', true))
+    this.output.push(construct.branch(this.CHECK_FREE_NULL_PAIR, true))
     // appending function to postFunc
-    if (!this.postFunc.includes('p_free_pair')) {
-      this.postFunc = this.postFunc.concat(directive.label('p_free_pair'),
+    if (!this.postFunc.includes(this.CHECK_FREE_NULL_PAIR)) {
+      this.postFunc = this.postFunc.concat(directive.label(this.CHECK_FREE_NULL_PAIR),
           construct.pushPop(ARMOpcode.push, [this.lr]),
           construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
           construct.singleDataTransfer(ARMOpcode.load, Register.r0,
               `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-          construct.branch('p_throw_runtime_error', false, ARMCondition.equal),
+          construct.branch(this.THROW_RUNTIME_ERROR, false, ARMCondition.equal),
           construct.pushPop(ARMOpcode.push, [Register.r0]),
           construct.singleDataTransfer(ARMOpcode.load, Register.r0, `[${Register.r0}]`),
           construct.branch('free', true),
@@ -876,15 +890,15 @@ class WJSCCodeGenerator {
       this.stringDec(RuntimeError.nullDeref)
     }
     // check in instruction body itself
-    this.output.push(construct.branch('p_free_array', true))
+    this.output.push(construct.branch(this.CHECK_FREE_NULL_ARRAY, true))
     // appending function to postFunc
-    if (!this.postFunc.includes('p_free')) {
-      this.postFunc = this.postFunc.concat(directive.label('p_free_array'),
+    if (!this.postFunc.includes(this.CHECK_FREE_NULL_ARRAY)) {
+      this.postFunc = this.postFunc.concat(directive.label(this.CHECK_FREE_NULL_ARRAY),
           construct.pushPop(ARMOpcode.push, [this.lr]),
           construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
           construct.singleDataTransfer(ARMOpcode.load, Register.r0,
               `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-          construct.branch('p_throw_runtime_error', false, ARMCondition.equal),
+          construct.branch(this.THROW_RUNTIME_ERROR, false, ARMCondition.equal),
           construct.branch('free', true),
           construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
@@ -895,22 +909,26 @@ class WJSCCodeGenerator {
     // Setting up the final message
     this.stringDec('%.*s\\0')
     // Setting up the error message
-    this.postFunc = this.postFunc.concat(directive.label('p_throw_runtime_error'),
+    this.postFunc = this.postFunc.concat(directive.label(this.THROW_RUNTIME_ERROR),
       construct.branch('p_print_string', true),
       construct.move(ARMOpcode.move, Register.r0, directive.immNum(-1)),
       construct.branch('exit', true),
-      directive.label('p_print_string'),
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r0}]`),
-      construct.arithmetic(ARMOpcode.add, Register.r2, Register.r0, directive.immNum(4)),
-      construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-        `=msg_${this.findTrueMessageIndex('%.*s\\0')}`),
-      construct.arithmetic(ARMOpcode.add, Register.r0, Register.r0, directive.immNum(4)),
-      construct.branch('printf', true),
-      construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
-      construct.branch('fflush', true),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
+      // directive.label('p_print_string'),
+      // construct.pushPop(ARMOpcode.push, [this.lr]),
+      // construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r0}]`),
+      // construct.arithmetic(ARMOpcode.add, Register.r2, Register.r0, directive.immNum(4)),
+      // construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+      //   `=msg_${this.findTrueMessageIndex('%.*s\\0')}`),
+      // construct.arithmetic(ARMOpcode.add, Register.r0, Register.r0, directive.immNum(4)),
+      // construct.branch('printf', true),
+      // construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
+      // construct.branch('fflush', true),
+      // construct.pushPop(ARMOpcode.pop, [this.pc]),
     )
+    if (!this.printStringCheck) {
+      this.printStringCheck = true
+      this.printString()
+    }
   }
 
   /* -----------------------------------------*/
