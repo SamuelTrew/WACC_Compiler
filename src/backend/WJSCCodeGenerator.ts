@@ -221,8 +221,9 @@ class WJSCCodeGenerator {
     return typeSize
   }
 
-  public genBinOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
-    this.genExpr(atx.expr1, [head, next, ...tail])
+  public genBinOp = (atx: WJSCExpr, regList: Register[]) => {
+    const [head, next] = regList
+    this.genExpr(atx.expr1, regList)
     switch (atx.operator.token) {
       case '*':
         this.output.push(construct.multiply(head, next, head))
@@ -297,10 +298,11 @@ class WJSCCodeGenerator {
         )
         break
     }
-    this.genExpr(atx.expr2, [head, next, ...tail])
+    this.genExpr(atx.expr2, regList)
   }
 
-  public genUnOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
+  public genUnOp = (atx: WJSCExpr, regList: Register[]) => {
+    const [head, next] = regList
     switch (atx.operator.token) {
       case '!':
         // code HI : this.output.push(construct.branch(`p_print_bool`, true))
@@ -319,7 +321,7 @@ class WJSCCodeGenerator {
       case 'chr':
         break
     }
-    this.genExpr(atx.expr1, [head, next, ...tail])
+    this.genExpr(atx.expr1, regList)
   }
 
   // For genArray Literal
@@ -491,7 +493,7 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genStatBlock(statements: WJSCStatement, regList: Register[]) {
+  public genStatBlock = (statements: WJSCStatement, regList: Register[]) => {
     const stats = this.flattenSequential(statements)
     // Save stack size from parent scope
     const prevStackSize = this.totalStackSize
@@ -595,7 +597,7 @@ class WJSCCodeGenerator {
     }
   }
 
-  public printBaseType = (atx: WJSCExpr, [head, ..._]: Register[]) => {
+  public printBaseType = (atx: WJSCExpr, [head]: Register[]) => {
     this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
@@ -643,8 +645,9 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genConditionalIf = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
-    this.genExpr(atx.condition, [head, ...tail])
+  public genConditionalIf = (atx: WJSCStatement, regList: Register[]) => {
+    const [head] = regList
+    this.genExpr(atx.condition, regList)
     this.output.push(construct.compareTest(ARMOpcode.compare, head, '#0'))
 
     const label1 = `L${this.getLabelNo()}`
@@ -653,26 +656,27 @@ class WJSCCodeGenerator {
     // Jump to label1 if false
     this.output.push(construct.branch(label1, false, ARMCondition.equal))
     // True body
-    this.genStatBlock(atx.trueBranch, [head, ...tail])
+    this.genStatBlock(atx.trueBranch, regList)
     this.output.push(construct.branch(label2, false))
     this.output.push(directive.label(label1))
     // False body
-    this.genStatBlock(atx.falseBranch, [head, ...tail])
+    this.genStatBlock(atx.falseBranch, regList)
     this.output.push(directive.label(label2))
   }
 
-  public genCondWhile = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
+  public genCondWhile = (atx: WJSCStatement, regList: Register[]) => {
+    const [head] = regList
     const label1 = `L${this.getLabelNo()}`
     const label2 = `L${this.getLabelNo()}`
 
     this.output.push(construct.branch(label1, false))
     this.output.push(directive.label(label2))
     // True branch
-    this.genStatBlock(atx.trueBranch, [head, ...tail])
+    this.genStatBlock(atx.trueBranch, regList)
     this.output.push(directive.label(label1))
 
     // Check condition
-    this.genExpr(atx.condition, [head, ...tail])
+    this.genExpr(atx.condition, regList)
     this.output.push(construct.compareTest(ARMOpcode.compare, head, '#1'))
     this.output.push(construct.branch(label2, false, ARMCondition.equal))
   }
@@ -681,11 +685,11 @@ class WJSCCodeGenerator {
     const stats = []
     let curr = atx
     while (curr.parserRule === WJSCParserRules.Sequential) {
-      stats.push(curr.nextStat)
+      stats.unshift(curr.nextStat)
       curr = curr.stat
     }
-    stats.push(curr)
-    return stats.reverse()
+    stats.unshift(curr)
+    return stats
   }
 
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
@@ -727,7 +731,8 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genDeclare = (atx: WJSCDeclare, [head, next, ...tail]: Register[]) => {
+  public genDeclare = (atx: WJSCDeclare, regList: Register[]) => {
+    const [head, tail] = regList
     const type = atx.type
     const rhs = atx.rhs
     const id = atx.identifier
@@ -738,7 +743,7 @@ class WJSCCodeGenerator {
     // TODO add cases for pairs and arrays
 
     // Load rhs expression into 'head' register
-    this.genAssignRhs(rhs, [head, next, ...tail])
+    this.genAssignRhs(rhs, regList)
     this.decStackSize -= typeSize
     this.symbolTable.setVarMemAddr(id, this.decStackSize)
     // Save content of 'head' to memory
@@ -749,13 +754,14 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genAssignRhs = (atx: WJSCAssignRhs, [head, next, ...tail]: Register[]) => {
+  public genAssignRhs = (atx: WJSCAssignRhs, regList: Register[]) => {
+    const [head, next, ...tail] = regList
     switch (atx.parserRule) {
       case WJSCParserRules.Expression:
-        this.genExpr(atx.expr, [head, next, ...tail])
+        this.genExpr(atx.expr, regList)
         break
       case WJSCParserRules.ArrayLiteral:
-        this.genArray(atx.arrayLiter, [head, next, ...tail])
+        this.genArray(atx.arrayLiter, regList)
         break
       case WJSCParserRules.Newpair:
         const exprSize = getTypeSize(atx.expr.type)
@@ -781,9 +787,9 @@ class WJSCCodeGenerator {
       case WJSCParserRules.PairElem:
         break
       case WJSCParserRules.FunctionCall:
-        construct.singleDataTransfer(ARMOpcode.load, head, [this.sp])
         // TODO: Get size from symbol table
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-4)], undefined, undefined, undefined, undefined, true),
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, [this.sp]),
+          construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-4)], undefined, undefined, undefined, undefined, true),
           construct.branch(`f_${atx.ident}`, true),
           construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(4)))
         this.move(this.getRegSize(Register.r0), ARMOpcode.move, head, Register.r0)
@@ -792,7 +798,8 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genExpr = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
+  public genExpr = (atx: WJSCExpr, regList: Register[]) => {
+    const [head, next] = regList
     let value = atx.value
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
@@ -831,14 +838,14 @@ class WJSCCodeGenerator {
         }
         break
       case WJSCParserRules.ArrayElem:
-        // this.genArrayElem(atx, [head, next, ...tail])
+        // this.genArrayElem(atx, regList)
         this.checkArrayOutOfBounds()
         break
       case WJSCParserRules.BinOp:
-        this.genBinOp(atx, [head, next, ...tail])
+        this.genBinOp(atx, regList)
         break
       case WJSCParserRules.Unop:
-        this.genUnOp(atx, [head, next, ...tail])
+        this.genUnOp(atx, regList)
         break
     }
   }
