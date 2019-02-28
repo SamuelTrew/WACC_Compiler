@@ -660,20 +660,21 @@ class WJSCCodeGenerator {
     this.output.push(construct.branch('p_check_array_bounds', true))
     // appending function to end of messages, if not already set up
     if (!this.postFunc.includes('p_check_array_bounds')) {
-      this.postFunc.push(directive.label('p_check_array_bounds'))
-      this.postFunc.push(construct.pushPop(ARMOpcode.push, [this.lr]))
-      this.postFunc.push(construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)))
       // TODO: FIND REAL INDEX BY RECURSION
       // TODO: FIND REAL WORD LENGTH
-      this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-          `=msg_${this.data.length - 3}`, ARMCondition.lessThan))
-      this.postFunc.push(construct.branch('p_throw_runtime_error', true, ARMCondition.lessThan))
-      this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r1}]`))
-      this.postFunc.push(construct.compareTest(ARMOpcode.compare, Register.r1, directive.immNum(1)))
-      this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-          `=msg_${this.data.length - 2}`, ARMCondition.unsignedHigherSame))
-      this.postFunc.push(construct.branch('p_throw_runtime_error', true, ARMCondition.unsignedHigherSame))
-      this.postFunc.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
+      this.postFunc = this.postFunc.concat(directive.label('p_check_array_bounds'),
+          construct.pushPop(ARMOpcode.push, [this.lr]),
+          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+              `=msg_${this.data.length - 3}`, ARMCondition.lessThan),
+          construct.branch('p_throw_runtime_error', true, ARMCondition.lessThan),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${Register.r1}]`),
+          construct.compareTest(ARMOpcode.compare, Register.r0, Register.r1),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+              `=msg_${this.data.length - 2}`, ARMCondition.unsignedHigherSame),
+          construct.branch('p_throw_runtime_error', true, ARMCondition.unsignedHigherSame),
+          construct.pushPop(ARMOpcode.pop, [this.pc]))
+
     }
   }
 }
