@@ -237,6 +237,7 @@ class WJSCCodeGenerator {
 
   public genBinOp = (atx: WJSCExpr, regList: Register[]) => {
     const [head, next, ...tail] = regList
+    // TODO check for running out of registers for expr 2
     this.genExpr(atx.expr1, regList)
     this.genExpr(atx.expr2, [next, ...tail])
 
@@ -245,28 +246,27 @@ class WJSCCodeGenerator {
         this.output.push(construct.multiplyLong(true, head, next, head, next))
         const operand: ARMOperand = [head, [ARMShiftname.arithmeticShiftRight, '#31']]
         this.output.push(construct.compareTest(ARMOpcode.compare, next, operand))
-        this.checkOverflow()
+        this.checkOverflow(ARMCondition.nequal)
         break
       case '/':
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         this.move(getTypeSize(atx.type), ARMOpcode.move, Register.r1, next)
-        this.checkDivByZero()
+        this.checkDivByZero(false)
         this.move(getTypeSize(atx.type), ARMOpcode.move, head, this.resultReg)
         break
       case '%':
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         this.move(getTypeSize(atx.type), ARMOpcode.move, Register.r1, next)
-        this.output.push(construct.branch(`__aeabi_idivmod`, true))
+        this.checkDivByZero(true)
         this.move(getTypeSize(atx.type), ARMOpcode.move, head, Register.r1)
-        this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         break
       case '+':
         this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, true))
-        this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, ARMCondition.overflow))
+        this.checkOverflow(ARMCondition.overflow)
         break
       case '-':
-        this.output.push(construct.arithmetic(ARMOpcode.subtract, head, head, next))
-        this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, ARMCondition.overflow))
+        this.output.push(construct.arithmetic(ARMOpcode.subtract, head, head, next, undefined, true))
+        this.checkOverflow(ARMCondition.overflow)
         break
       case '>':
         this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
@@ -451,6 +451,9 @@ class WJSCCodeGenerator {
     // Add error warning if there is potential for RE
 
     this.postFuncEnumCheck()
+    if (this.errorPresent) {
+      this.throwError()
+    }
 
     if (this.msgCount > 0) {
       result = this.data.concat('', this.output)
@@ -892,7 +895,7 @@ class WJSCCodeGenerator {
     }
   }
 
-  public checkDivByZero = () => {
+  public checkDivByZero = (mod: boolean) => {
     this.errorPresent = true
     // Setting up the message if not already set up
     if (!this.data.includes(RuntimeError.divByZero)) {
@@ -900,7 +903,8 @@ class WJSCCodeGenerator {
     }
     // check in instruction body itself
     this.output.push(construct.branch(this.CHECK_DIVIDE_BY_ZERO, true))
-    this.output.push(construct.branch('__aeabi_idiv', true))
+    const divCheck = mod ? '__aeabi_idivmod' : '__aeabi_idiv'
+    this.output.push(construct.branch(divCheck, true))
     // appending function to postFunc, if not already set up
     if (!this.postFunc.includes(this.CHECK_DIVIDE_BY_ZERO)) {
       this.postFunc = this.postFunc.concat(directive.label(this.CHECK_DIVIDE_BY_ZERO),
@@ -913,14 +917,14 @@ class WJSCCodeGenerator {
     }
   }
 
-  public checkOverflow = () => {
+  public checkOverflow = (condition: ARMCondition) => {
     this.errorPresent = true
     // Setting up the message if not already set up
     if (!this.data.includes(RuntimeError.intOverFlow)) {
       this.stringDec(RuntimeError.intOverFlow)
     }
     // check in instruction body itself
-    this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, ARMCondition.nequal))
+    this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, condition))
     // appending function to postFunc
     if (!this.postFunc.includes(this.THROW_OVERFLOW_ERROR)) {
       this.postFunc.push(directive.label(this.THROW_OVERFLOW_ERROR),
