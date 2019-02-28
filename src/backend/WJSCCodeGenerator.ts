@@ -78,16 +78,8 @@ class WJSCCodeGenerator {
   private readonly CHECK_FREE_NULL_PAIR = 'p_free_pair'
   private readonly CHECK_FREE_NULL_ARRAY = 'p_free_array'
 
-  // Print flags
-  private printlnStringCheck = false
-  private printIntCheck = false
-  private printStringCheck = false
-  private printBoolCheck = false
-  private printNewLnCheck = false
+  // Print info
   private printBoolTemp = undefined
-  private printReadIntCheck = false
-  private printReadCharCheck = false
-
   private checkingArray: number[] = []
 
   /* owowowowowowowowowowowowowowowowowowowowowowowowo */
@@ -99,7 +91,7 @@ class WJSCCodeGenerator {
 
   /* ------------- Print Management ---------------*/
 
-  public pushCheck = (input: Check, check: boolean) => {
+  public pushCheck = (input: Check) => {
     if (!this.checkingArray.includes(input)) {
       this.checkingArray.push(input)
     }
@@ -125,19 +117,17 @@ class WJSCCodeGenerator {
   }
 
   public printString = () => {
-    if (this.printStringCheck) {
-      this.postFunc.push(directive.label(this.PRINT_STRING),
-        construct.pushPop(ARMOpcode.push, [this.lr]),
-        construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
-        construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, directive.immNum(4)),
-        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount - 1}`), // TODO Check if -1 is correct
-        construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, directive.immNum(4)),
-        construct.branch(`printf`, true),
-        construct.move(ARMOpcode.move, this.resultReg, directive.immNum(0)),
-        construct.branch(`fflush`, true),
-        construct.pushPop(ARMOpcode.pop, [this.pc]),
-      )
-    }
+    this.postFunc.push(directive.label(this.PRINT_STRING),
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
+      construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, directive.immNum(4)),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, directive.immNum(4)),
+      construct.branch(`printf`, true),
+      construct.move(ARMOpcode.move, this.resultReg, directive.immNum(0)),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
   }
 
   public printLine = () => {
@@ -227,20 +217,21 @@ class WJSCCodeGenerator {
 
   public sizeGen = (atx: WJSCAst, calledByArray: boolean): number => {
     let typeSize = 0
-    switch (atx.parserRule) {
-      case WJSCParserRules.BoolLiter:
-      case WJSCParserRules.CharLiter:
+    switch (atx.type) {
+      case BaseType.Boolean:
+      case BaseType.Character:
         typeSize = 1
         break
-      case WJSCParserRules.ArrayElem:
-      case WJSCParserRules.IntLiteral:
+      case BaseType.Integer:
+      case BaseType.String:
         typeSize = 4
         break
-      case WJSCParserRules.PairLiter:
-        typeSize = (calledByArray ? 4 : 8)
-        break
       default:
-        break
+        if (isPairType(atx.type)) {
+          typeSize = (calledByArray ? 4 : 8)
+        } else if (isArrayType(atx.type)) {
+          typeSize = 4
+        }
     }
     return typeSize
   }
@@ -390,6 +381,8 @@ class WJSCCodeGenerator {
         default:
           if (isArrayType(child.type)) {
             // Array type
+            params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params, undefined, undefined, true))
           } else if (isPairType(child.type)) {
             // Pair type
           }
@@ -508,38 +501,6 @@ class WJSCCodeGenerator {
     }
   }
 
-  public postFuncCheck = () => {
-    // TODO: TURN THIS INTO AN ENUM SWITCH FOOL OR SMTH THAT ISN'T DISGUSTING
-    if (this.printStringCheck) {
-      this.printString()
-    }
-    if (this.printIntCheck) {
-      this.printInt()
-      this.stringDec('%d\\0')
-    }
-    if (this.printBoolCheck) {
-      this.printBool()
-    }
-    if (this.printlnStringCheck) {
-      this.stringDec('%.*s\\0')
-    }
-    if (this.printReadIntCheck) {
-      this.printReadInt()
-      this.stringDec('%d\\0')
-    }
-    if (this.printNewLnCheck) {
-      this.printLine()
-      this.stringDec('\\0')
-    }
-    if (this.printReadCharCheck) {
-      this.printReadChar()
-      this.stringDec(' %c\\0')
-    }
-    if (this.errorPresent) {
-      this.throwError()
-    }
-  }
-
   public genStatBlock = (statements: WJSCStatement, regList: Register[]) => {
     const stats = this.flattenSequential(statements)
     // Save stack size from parent scope
@@ -602,8 +563,7 @@ class WJSCCodeGenerator {
         this.genExpr(atx.stdlibExpr, reglist)
         this.printBaseType(atx.stdlibExpr, reglist)
         if (hasSameType(atx.stdlibExpr.type, BaseType.String)) {
-          this.printlnStringCheck = true
-          this.pushCheck(Check.printlnString, this.printlnStringCheck)
+          this.pushCheck(Check.printlnString)
         }
         break
       case WJSCParserRules.Println:
@@ -611,11 +571,9 @@ class WJSCCodeGenerator {
         this.printBaseType(atx.stdlibExpr, reglist)
         this.output.push(construct.branch(this.PRINT_NEW_LINE, true))
         if (hasSameType(atx.stdlibExpr.type, BaseType.String)) {
-          this.printlnStringCheck = true
-          this.pushCheck(Check.printlnString, this.printlnStringCheck)
+          this.pushCheck(Check.printlnString)
         }
-        this.printNewLnCheck = true
-        this.pushCheck(Check.printNewLn, this.printNewLnCheck)
+        this.pushCheck(Check.printNewLn)
         break
       case WJSCParserRules.Scope:
         this.switchToChildTable(atx.tableNumber)
@@ -627,12 +585,10 @@ class WJSCCodeGenerator {
         this.move(this.getRegSize(head), ARMOpcode.move, this.resultReg, head)
         if (atx.readType === BaseType.Integer) {
           this.output.push(construct.branch(this.PRINT_READ_INT, true))
-          this.printReadIntCheck = true
-          this.pushCheck(Check.printReadInt, this.printReadIntCheck)
+          this.pushCheck(Check.printReadInt)
         } else {
           this.output.push(construct.branch(this.PRINT_READ_CHAR, true))
-          this.printReadCharCheck = true
-          this.pushCheck(Check.printReadChar, this.printReadCharCheck)
+          this.pushCheck(Check.printReadChar)
         }
         break
       case WJSCParserRules.Free:
@@ -660,18 +616,15 @@ class WJSCCodeGenerator {
       switch (atx.type) {
         case BaseType.Integer:
           this.output.push(construct.branch(this.PRINT_INT, true))
-          this.printIntCheck = true
-          this.pushCheck(Check.printInt, this.printIntCheck)
+          this.pushCheck(Check.printInt)
           break
         case BaseType.String:
           this.output.push(construct.branch(this.PRINT_STRING, true))
-          this.printStringCheck = true
-          this.pushCheck(Check.printString, this.printStringCheck)
+          this.pushCheck(Check.printString)
           break
         case BaseType.Boolean:
           this.output.push(construct.branch(this.PRINT_BOOL, true))
-          this.printBoolCheck = true
-          this.pushCheck(Check.printBool, this.printBoolCheck)
+          this.pushCheck(Check.printBool)
           this.printBoolTemp = atx.value
           break
         case BaseType.Character:
@@ -687,13 +640,11 @@ class WJSCCodeGenerator {
     switch (type) {
       case BaseType.Integer:
         this.output.push(construct.branch(this.PRINT_INT, true))
-        this.printIntCheck = true
-        this.pushCheck(Check.printInt, this.printIntCheck)
+        this.pushCheck(Check.printInt)
         break
       case BaseType.String:
         this.output.push(construct.branch(this.PRINT_STRING, true))
-        this.printStringCheck = true
-        this.pushCheck(Check.printString, this.printStringCheck)
+        this.pushCheck(Check.printString)
         break
       case BaseType.Character:
         this.output.push(construct.branch(`putchar`, true))
@@ -701,8 +652,7 @@ class WJSCCodeGenerator {
       case BaseType.Boolean:
         this.output.push(construct.branch(this.PRINT_BOOL, true))
         this.printBoolTemp = atx.value
-        this.pushCheck(Check.printBool, this.printBoolCheck)
-        this.printBoolCheck = true
+        this.pushCheck(Check.printBool)
         break
     }
   }
@@ -1076,11 +1026,7 @@ class WJSCCodeGenerator {
       // construct.branch('fflush', true),
       // construct.pushPop(ARMOpcode.pop, [this.pc]),
     )
-    if (!this.printStringCheck) {
-      this.printStringCheck = true
-      this.pushCheck(Check.printString, this.printStringCheck)
-      this.printString()
-    }
+    this.pushCheck(Check.printString)
   }
 
   /* -----------------------------------------*/
