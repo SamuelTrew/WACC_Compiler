@@ -67,6 +67,10 @@ interface WJSCAst {
   body?: WJSCStatement
 }
 
+interface WJSCArrayElem extends WJSCAst {
+  specificInd: WJSCExpr[]
+}
+
 interface WJSCTerminal extends WJSCAst {
   terminalType?: TerminalType
   value: any
@@ -158,6 +162,7 @@ const WJSCChecker = {
 export {
   WJSCParserRules,
   WJSCAst,
+  WJSCArrayElem,
   WJSCTerminal,
   WJSCFunction,
   WJSCStatement,

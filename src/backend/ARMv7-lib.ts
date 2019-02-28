@@ -141,18 +141,6 @@ const construct = {
     `${opcode}${condition || ''}${addrMode} ${rn}${
     writeBack ? '!' : ''
     } {${rlist.join(', ')}}${sbit ? '^' : ''}`,
-  boolCalc: (
-    opcode: ARMOpcode.and | ARMOpcode.or | ARMOpcode.exclusiveOr,
-    rd: Register,
-    rd2: Register,
-    rn?: Register,
-    num?: string,
-    set = false,
-  ) =>
-    tabSpace +
-    `${opcode}${
-    set ? 'S' : ''
-    } ${rd}, ${rd2}, ${rn}, ${num}`,
   branch: (
     expression: ARMExpression,
     link = false,
@@ -170,6 +158,18 @@ const construct = {
   ): string =>
     tabSpace +
     `${opcode}${condition || ''} ${rn}, ${stringify.operand(operand)}`,
+  logical: (
+    opcode: ARMOpcode.and | ARMOpcode.or | ARMOpcode.exclusiveOr,
+    rd: Register,
+    rn: Register,
+    operand: ARMOperand,
+    condition?: ARMCondition,
+    set = false,
+  ) =>
+    tabSpace +
+    `${opcode}${condition || ''}${
+      set ? 'S' : ''
+      } ${rd}, ${rn}, ${stringify.operand(operand)}`,
   move: (
     opcode: ARMOpcode,
     rd: Register,

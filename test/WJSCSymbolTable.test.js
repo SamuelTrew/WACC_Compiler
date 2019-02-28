@@ -7,9 +7,6 @@ describe('Scope', function () {
   const symbolTable = new WJSCSymbolTable(0, undefined, false, errorLog)
   describe('Enter Scope', function () {
     const childTable = symbolTable.enterScope()
-    it('should increment scope number', function () {
-      assert(childTable.getScopeLevel() === 1)
-    })
     it('should have set parent level', function () {
       assert(childTable.getParentTable() !== undefined)
       assert(childTable.getParentTable() === symbolTable)
@@ -18,9 +15,6 @@ describe('Scope', function () {
   describe('Enter Function Scope', function () {
     const functionName = 'f'
     const childTable = symbolTable.enterFuncScope(functionName)
-    it('should increment scope number', function () {
-      assert(childTable.getScopeLevel() === 1)
-    })
     it('should have set parent level', function () {
       assert(childTable.getParentTable() !== undefined)
       assert(childTable.getParentTable() === symbolTable)

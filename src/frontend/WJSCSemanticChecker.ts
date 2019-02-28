@@ -35,6 +35,7 @@ import {
 } from '../grammar/WJSCParser'
 import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
+  WJSCArrayElem,
   WJSCAssignment,
   WJSCAssignRhs,
   WJSCAst,
@@ -131,7 +132,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   public visitArrayElement = (ctx: ArrayElementContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx, WJSCParserRules.ArrayElem)
+    const result = this.initWJSCAst(ctx, WJSCParserRules.ArrayElem) as WJSCArrayElem
+    result.specificInd = []
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     this.symbolTable.checkType(ident)
     this.functionUse(result, ident)
@@ -146,6 +148,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         this.errorLog.semErr(child, SemError.Mismatch, BaseType.Integer)
       }
       result.children.push(child)
+      result.specificInd = result.specificInd.concat(child as WJSCExpr)
       if (hasSameType(currElemType, BaseType.String)) {
         currElemType = BaseType.Character
       } else if (isArrayType(currElemType)) {
@@ -645,6 +648,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               const exp1 = this.visitExpression(expressions[0])
               result.children.push(exp1)
               result.type = this.checkOperator(visitedOp, exp1)
+              result.parserRule = WJSCParserRules.Unop
             }
           } else if (operators !== undefined) {
             if (expressions.length !== 2) {
@@ -672,6 +676,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               result.children.push(exp1)
               result.children.push(exp2)
               result.type = this.checkOperator(visitedOp, exp1, exp2)
+              result.parserRule = WJSCParserRules.BinOp
             }
           }
         }
