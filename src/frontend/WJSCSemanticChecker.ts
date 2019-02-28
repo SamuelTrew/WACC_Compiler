@@ -316,6 +316,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       result.children.push(this.visitTerminal(call))
       const ident = ctx.IDENTIFIER()
       const argList = ctx.argList()
+      _.assign(result, { ident, argList })
       if (!ident) {
         this.errorLog.semErr(result, SemError.Undefined)
       } else {

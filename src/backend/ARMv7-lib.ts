@@ -94,19 +94,16 @@ enum RuntimeError {
 }
 
 type ARMAddress = ARMExpression | ARMAddressPreIndex | ARMAddressPostIndex
-type ARMAddressPreIndex =
-  |[Register]
+type ARMAddressPreIndex = [Register]
   | ['pre', Register, ARMExpression]
   | ['pre', Register, ARMShiftType, Register, ARMShift]
-type ARMAddressPostIndex =
-  |['post', Register, ARMExpression]
+type ARMAddressPostIndex = ['post', Register, ARMExpression]
   | ['post', Register, ARMShiftType, Register, ARMShift]
 type ARMExpression = string
 type ARMOperand = [Register, ARMShift] | ARMExpression | Register | string
 type ARMShift = [ARMShiftname, Register | ARMExpression] | 'RRX'
 type ARMShiftType = '+' | '-'
-type ARMBDTAddressingModes =
-  | 'FD'
+type ARMBDTAddressingModes = 'FD'
   | 'ED'
   | 'FA'
   | 'EA'
@@ -235,11 +232,12 @@ const construct = {
     modifier?: 'H' | 'SB' | 'SH',
     byte = false,
     post = false,
+    writeBack = false,
   ): string =>
     tabSpace +
     `${opcode}${condition || ''}${byte ? 'B' : ''}${
     post ? 'T' : ''
-    }${modifier || ''} ${rd}, ${stringify.address(address)}`,
+    }${modifier || ''} ${rd}, ${stringify.address(address)}${writeBack ? '!' : ''}`,
   softwareInterrupt: (comment: string, condition?: string) =>
     tabSpace + `SWI${condition || ''} ${comment}`,
 }
@@ -299,7 +297,7 @@ const stringify = {
     if (typeof address === 'string') {
       stringified += address
     } else {
-      if (address[0] in Register) {
+      if (address[0] !== 'pre' && address[0] !== 'post') {
         stringified += `[${address[0]}]`
       } else {
         const register = address[1]
