@@ -503,12 +503,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       } else if (whileB) {
         // While Condition
         this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
-        const childStatType = this.visitStatement(childStat[0])
+        const visitedTrueBranch = this.visitStatement(childStat[0])
         this.symbolTable = this.symbolTable.exitScope()
-        childStatType.tableNumber = this.tableCounter
+        visitedTrueBranch.tableNumber = this.tableCounter
 
-        this.pushChild(result, childStatType)
-        if (!childStatType) {
+        this.pushChild(result, visitedTrueBranch)
+        result.trueBranch = visitedTrueBranch
+        if (!visitedTrueBranch) {
           this.errorLog.semErr(result, SemError.Undefined)
         }
       }
