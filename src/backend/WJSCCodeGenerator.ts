@@ -12,18 +12,13 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import {
-  BaseType,
-  getTypeSize,
-  hasSameType,
-  isArrayType,
-  isPairType,
-} from '../util/WJSCType'
+import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType, } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
   ARMOpcode,
   ARMOperand,
+  Check,
   construct,
   directive,
   Register,
@@ -87,6 +82,8 @@ class WJSCCodeGenerator {
   private printReadIntCheck = false
   private printReadCharCheck = false
 
+  private checkingArray: number[] = []
+
   /* owowowowowowowowowowowowowowowowowowowowowowowowo */
 
   // TODO: Gen array elem for pair and arrays
@@ -95,6 +92,12 @@ class WJSCCodeGenerator {
   }
 
   /* ------------- Print Management ---------------*/
+
+  public pushCheck = (input: Check, check: boolean) => {
+    if (!this.checkingArray.includes(input)) {
+      this.checkingArray.push(input)
+    }
+  }
 
   public printBool = () => {
     const bool = this.printBoolTemp ? 'true\\0' : 'false\\0'
@@ -452,13 +455,49 @@ class WJSCCodeGenerator {
     let result = this.output
     // Add error warning if there is potential for RE
 
-    this.postFuncCheck()
+    this.postFuncEnumCheck()
 
     if (this.msgCount > 0) {
       result = this.data.concat(this.output)
     }
 
     return result.concat(this.postFunc)
+  }
+
+  public postFuncEnumCheck = () => {
+    this.checkingArray.forEach((item) => {
+      this.enumSwitch(item)
+    })
+  }
+
+  public enumSwitch = (check: Check) => {
+    switch (check) {
+      case Check.printlnString:
+        this.stringDec('%.*s\\0')
+        break
+      case Check.printBool:
+        this.printBool()
+        break
+      case Check.printInt:
+        this.printInt()
+        this.stringDec('%d\\0')
+        break
+      case Check.printReadChar:
+        this.printReadChar()
+        this.stringDec(' %c\\0')
+        break
+      case Check.printReadInt:
+        this.printReadInt()
+        this.stringDec('%d\\0')
+        break
+      case Check.printNewLn:
+        this.printLine()
+        this.stringDec('\\0')
+        break
+      case Check.printString:
+        this.printString()
+        break
+    }
   }
 
   public postFuncCheck = () => {
@@ -561,6 +600,7 @@ class WJSCCodeGenerator {
         this.printBaseType(atx.stdlibExpr, reglist)
         if (hasSameType(atx.stdlibExpr.type, BaseType.String)) {
           this.printlnStringCheck = true
+          this.pushCheck(Check.printlnString, this.printlnStringCheck)
         }
         break
       case WJSCParserRules.Println:
@@ -569,8 +609,10 @@ class WJSCCodeGenerator {
         this.output.push(construct.branch(this.PRINT_NEW_LINE, true))
         if (hasSameType(atx.stdlibExpr.type, BaseType.String)) {
           this.printlnStringCheck = true
+          this.pushCheck(Check.printlnString, this.printlnStringCheck)
         }
         this.printNewLnCheck = true
+        this.pushCheck(Check.printNewLn, this.printNewLnCheck)
         break
       case WJSCParserRules.Scope:
         this.switchToChildTable(atx.tableNumber)
@@ -583,9 +625,11 @@ class WJSCCodeGenerator {
         if (atx.readType === BaseType.Integer) {
           this.output.push(construct.branch(this.PRINT_READ_INT, true))
           this.printReadIntCheck = true
+          this.pushCheck(Check.printReadInt, this.printReadIntCheck)
         } else {
           this.output.push(construct.branch(this.PRINT_READ_CHAR, true))
           this.printReadCharCheck = true
+          this.pushCheck(Check.printReadChar, this.printReadCharCheck)
         }
         break
       case WJSCParserRules.Free:
@@ -614,14 +658,17 @@ class WJSCCodeGenerator {
         case BaseType.Integer:
           this.output.push(construct.branch(this.PRINT_INT, true))
           this.printIntCheck = true
+          this.pushCheck(Check.printInt, this.printIntCheck)
           break
         case BaseType.String:
           this.output.push(construct.branch(this.PRINT_STRING, true))
           this.printStringCheck = true
+          this.pushCheck(Check.printString, this.printStringCheck)
           break
         case BaseType.Boolean:
           this.output.push(construct.branch(this.PRINT_BOOL, true))
           this.printBoolCheck = true
+          this.pushCheck(Check.printBool, this.printBoolCheck)
           this.printBoolTemp = atx.value
           break
         case BaseType.Character:
@@ -638,10 +685,12 @@ class WJSCCodeGenerator {
       case BaseType.Integer:
         this.output.push(construct.branch(this.PRINT_INT, true))
         this.printIntCheck = true
+        this.pushCheck(Check.printInt, this.printIntCheck)
         break
       case BaseType.String:
         this.output.push(construct.branch(this.PRINT_STRING, true))
         this.printStringCheck = true
+        this.pushCheck(Check.printString, this.printStringCheck)
         break
       case BaseType.Character:
         this.output.push(construct.branch(`putchar`, true))
@@ -649,6 +698,7 @@ class WJSCCodeGenerator {
       case BaseType.Boolean:
         this.output.push(construct.branch(this.PRINT_BOOL, true))
         this.printBoolTemp = atx.value
+        this.pushCheck(Check.printBool, this.printBoolCheck)
         this.printBoolCheck = true
         break
     }
@@ -1019,6 +1069,7 @@ class WJSCCodeGenerator {
     )
     if (!this.printStringCheck) {
       this.printStringCheck = true
+      this.pushCheck(Check.printString, this.printStringCheck)
       this.printString()
     }
   }

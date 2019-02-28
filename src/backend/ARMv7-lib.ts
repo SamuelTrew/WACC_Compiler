@@ -93,6 +93,16 @@ enum RuntimeError {
   nullDeref = 'NullReferenceError: dereference a null reference\\n\\0',
 }
 
+export enum Check {
+  printlnString,
+  printInt,
+  printString,
+  printBool,
+  printNewLn,
+  printReadInt,
+  printReadChar,
+}
+
 type ARMAddress = ARMExpression | ARMAddressPreIndex | ARMAddressPostIndex
 type ARMAddressPreIndex = [Register]
   | ['pre', Register, ARMExpression]
