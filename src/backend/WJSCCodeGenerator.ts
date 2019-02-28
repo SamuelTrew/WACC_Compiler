@@ -113,7 +113,7 @@ class WJSCCodeGenerator {
       construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.nequal),
     )
-    this.stringDec(bool)
+    this.stringDec(notBool)
     this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.equal),
       construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
       construct.branch(`printf`, true),
@@ -121,7 +121,7 @@ class WJSCCodeGenerator {
       construct.branch(`fflush`, true),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
     )
-    this.stringDec(notBool)
+    this.stringDec(bool)
   }
 
   public printString = () => {
@@ -279,37 +279,37 @@ class WJSCCodeGenerator {
         this.checkOverflow(ARMCondition.overflow)
         break
       case '>':
-        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+        this.output.push(construct.compareTest(ARMOpcode.compare, head, next),
           construct.move(ARMOpcode.move, head, `#1`, ARMCondition.greaterThan),
           construct.move(ARMOpcode.move, head, `#0`, ARMCondition.lessEqual),
         )
         break
       case '>=':
-        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+        this.output.push(construct.compareTest(ARMOpcode.compare, head, next),
           construct.move(ARMOpcode.move, head, `#1`, ARMCondition.greaterEqual),
           construct.move(ARMOpcode.move, head, `#0`, ARMCondition.lessThan),
         )
         break
       case '<':
-        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+        this.output.push(construct.compareTest(ARMOpcode.compare, head, next),
           construct.move(ARMOpcode.move, head, `#1`, ARMCondition.lessThan),
           construct.move(ARMOpcode.move, head, `#0`, ARMCondition.greaterEqual),
         )
         break
       case '<=':
-        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+        this.output.push(construct.compareTest(ARMOpcode.compare, head, next),
           construct.move(ARMOpcode.move, head, `#1`, ARMCondition.lessEqual),
           construct.move(ARMOpcode.move, head, `#0`, ARMCondition.greaterThan),
         )
         break
       case '==':
-        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+        this.output.push(construct.compareTest(ARMOpcode.compare, head, next),
           construct.move(ARMOpcode.move, head, `#1`, ARMCondition.equal),
           construct.move(ARMOpcode.move, head, `#0`, ARMCondition.nequal),
         )
         break
       case '!=':
-        this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
+        this.output.push(construct.compareTest(ARMOpcode.compare, head, next),
           construct.move(ARMOpcode.move, head, `#1`, ARMCondition.nequal),
           construct.move(ARMOpcode.move, head, `#0`, ARMCondition.equal),
         )
@@ -867,7 +867,7 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genExpr = (atx: WJSCExpr, regList: Register[]) => {
+  public genExpr = (atx: WJSCExpr, regList: Register[], set: boolean = false) => {
     const [head, next] = regList
     let value = atx.value
     switch (atx.parserRule) {
@@ -897,10 +897,9 @@ class WJSCCodeGenerator {
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
         const offsetString = spOffset ? `, #${spOffset}` : ''
         const identType = this.symbolTable.lookup(atx.value)
-        if (identType === BaseType.Character) {
+        if (identType === BaseType.Character || identType === BaseType.Boolean) {
           this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, 'SB', false))
         } else {
-          // If boolean I think
           this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${this.sp}${offsetString}]`, undefined, undefined, sizeIsByte))
         }
         break
