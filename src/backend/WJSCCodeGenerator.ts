@@ -13,7 +13,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { getTypeSize } from '../util/WJSCType'
+import { BaseType, getTypeSize } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -58,7 +58,11 @@ class WJSCCodeGenerator {
   private readonly PRINT_STRING = 'p_print_string'
   private readonly PRINT_INT = 'p_print_int'
   private readonly PRINT_NEW_LINE = 'p_print_ln'
-  private printCheck = true
+  private printLnCheck = true
+  private printIntCheck = true
+  private printStringCheck = true
+  private printBoolCheck = true
+  private printNewLnCheck = true
 
   /* ----------------------------------------------*/
 
@@ -70,64 +74,76 @@ class WJSCCodeGenerator {
   /* ------------- Print Management ---------------*/
 
   public printBool = (boolInput: boolean) => {
-    const bool = boolInput ? `true\0` : `false\0`
-    const notBool = boolInput ? `false\0` : `true\0`
-    this.stringDec(bool)
-    this.postFunc.push(this.PRINT_BOOL + ':',
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.nequal),
-    )
-    this.stringDec(notBool)
-    this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.equal),
-      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(`printf`, true),
-      construct.move(ARMOpcode.move, this.resultReg, `#0`),
-      construct.branch(`fflush`, true),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-    )
+    if (this.printBoolCheck) {
+      const bool = boolInput ? `true\0` : `false\0`
+      const notBool = boolInput ? `false\0` : `true\0`
+      this.stringDec(bool)
+      this.postFunc.push(this.PRINT_BOOL + ':',
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
+        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.nequal),
+      )
+      this.stringDec(notBool)
+      this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.equal),
+        construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+        construct.branch(`printf`, true),
+        construct.move(ARMOpcode.move, this.resultReg, `#0`),
+        construct.branch(`fflush`, true),
+        construct.pushPop(ARMOpcode.pop, [this.pc]),
+      )
+      this.printBoolCheck = false
+    }
   }
 
   public printString = (stringInput: string) => {
-    this.stringDec(stringInput)
-    this.postFunc.push(this.PRINT_STRING + ':',
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
-      construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, `#4`),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
-      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(`printf`, true),
-      construct.move(ARMOpcode.move, this.resultReg, `#0`),
-      construct.branch(`fflush`, true),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-    )
+    if (this.printStringCheck) {
+      this.stringDec(stringInput)
+      this.postFunc.push(this.PRINT_STRING + ':',
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
+        construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, `#4`),
+        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
+        construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+        construct.branch(`printf`, true),
+        construct.move(ARMOpcode.move, this.resultReg, `#0`),
+        construct.branch(`fflush`, true),
+        construct.pushPop(ARMOpcode.pop, [this.pc]),
+      )
+      this.printStringCheck = false
+    }
   }
 
   public printLine = () => {
-    this.stringDec('\\0')
-    this.postFunc.push(directive.label(this.PRINT_NEW_LINE),
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
-      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, '#4'),
-      construct.branch('puts', true),
-      construct.move(ARMOpcode.move, this.resultReg, '#0'),
-      construct.branch('fflush', true),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-    )
+    if (this.printNewLnCheck) {
+      this.stringDec('\\0')
+      this.postFunc.push(directive.label(this.PRINT_NEW_LINE),
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
+        construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, '#4'),
+        construct.branch('puts', true),
+        construct.move(ARMOpcode.move, this.resultReg, '#0'),
+        construct.branch('fflush', true),
+        construct.pushPop(ARMOpcode.pop, [this.pc]),
+      )
+      this.printNewLnCheck = false
+    }
   }
 
   public printInt = () => {
-    this.stringDec('%d\\0')
-    this.postFunc.push(directive.label(this.PRINT_INT),
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.move(ARMOpcode.move, Register.r1, this.resultReg),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
-      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(`printf`, true),
-      construct.move(ARMOpcode.move, this.resultReg, `#0`),
-      construct.branch(`fflush`, true),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-    )
+    if (this.printIntCheck) {
+      this.stringDec('%d\\0')
+      this.postFunc.push(directive.label(this.PRINT_INT),
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.move(ARMOpcode.move, Register.r1, this.resultReg),
+        construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
+        construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+        construct.branch(`printf`, true),
+        construct.move(ARMOpcode.move, this.resultReg, `#0`),
+        construct.branch(`fflush`, true),
+        construct.pushPop(ARMOpcode.pop, [this.pc]),
+      )
+      this.printIntCheck = false
+    }
   }
   /* ------------------------------------------- */
 
@@ -482,25 +498,25 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Print:
         this.genExpr(atx.stdlibExpr, [head, ...tail])
         this.printBaseType(atx.stdlibExpr, [head, ...tail])
-        if (this.printCheck) {
+        if (this.printLnCheck) {
           this.stringDec('%.*s\\0')
-          this.printCheck = false
+          this.printLnCheck = false
         }
         break
       case WJSCParserRules.Println:
         this.genExpr(atx.stdlibExpr, [head, ...tail])
         this.printBaseType(atx.stdlibExpr, [head, ...tail])
         this.output.push(construct.branch(this.PRINT_NEW_LINE, true))
-        if (this.printCheck) {
+        if (this.printLnCheck) {
           this.stringDec('%.*s\\0')
-          this.printCheck = false
+          this.printLnCheck = false
         }
         this.printLine()
         break
     }
   }
 
-  public printBaseType = (atx: WJSCExpr, [head, ...tail]: Register[]) => {
+  public printBaseType = (atx: WJSCExpr, [head, ..._]: Register[]) => {
     this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
@@ -517,6 +533,31 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.CharLiter:
         this.output.push(construct.branch(`putchar`, true))
+        break
+      case WJSCParserRules.Identifier:
+        const type = this.symbolTable.lookup(atx.value)
+        this.printFromIdent(atx)
+        break
+    }
+  }
+
+  public printFromIdent = (atx: WJSCExpr) => {
+    const type = this.symbolTable.lookup(atx.value)
+    switch (type) {
+      case BaseType.Integer:
+        this.output.push(construct.branch(this.PRINT_INT, true))
+        break
+      case BaseType.String:
+        this.output.push(construct.branch(this.PRINT_STRING, true))
+        this.printString(atx.value)
+        break
+      case BaseType.Character:
+        this.output.push(construct.branch(`putchar`, true))
+        break
+      case BaseType.Boolean:
+        this.output.push(construct.branch(this.PRINT_BOOL, true))
+        this.printBool(atx.value)
+        break
     }
   }
 
