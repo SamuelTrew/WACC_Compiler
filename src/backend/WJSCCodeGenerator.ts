@@ -293,12 +293,7 @@ class WJSCCodeGenerator {
   // For genArray Literal
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
-    let typeSize
-    if (children.length !== 0) {
-      typeSize = this.sizeGen(atx.children[0], true)
-    } else {
-      typeSize = 0
-    }
+    const typeSize = (children.length !== 0) ? this.sizeGen(atx.children[0], true) : 0
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
     const itemUsed = this.nextRegister(list)
@@ -501,6 +496,7 @@ class WJSCCodeGenerator {
   }
 
   public printBaseType = (atx: WJSCExpr, [head, ...tail]: Register[]) => {
+    console.log('called')
     this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
@@ -509,6 +505,7 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.StringLiter:
         this.output.push(construct.branch(this.PRINT_STRING, true))
+        console.log('val: ' + atx.value)
         this.printString(atx.value)
         break
       case WJSCParserRules.BoolLiter:
