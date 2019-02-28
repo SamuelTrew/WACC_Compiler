@@ -208,7 +208,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       let index = 0
       while (index !== length) {
         if (index < comma.length) {
-          const currComma = this.visitTerminal(comma[index])
+          // code HI : const currComma = this.visitTerminal(comma[index])
           // result.children.push(currComma)
         }
         if (index < expressions.length - 1) {
