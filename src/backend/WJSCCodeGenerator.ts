@@ -51,6 +51,7 @@ class WJSCCodeGenerator {
   private readonly pc = Register.r15
   private readonly switchFault = 'No Matching Parser Rule'
   private msgCount = 0
+  private labelCount = 0
   private totalStackSize = 0
   private decStackSize = 0
   private ltorgCheck = true
@@ -308,12 +309,7 @@ class WJSCCodeGenerator {
   // For genArray Literal
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
-    let typeSize
-    if (children.length !== 0) {
-      typeSize = this.sizeGen(atx.children[0], true)
-    } else {
-      typeSize = 0
-    }
+    const typeSize = (children.length !== 0) ? this.sizeGen(atx.children[0], true) : 0
     const size = (children.length * typeSize) + 4   // 4 being the array size
     // Setup for array
     const itemUsed = this.nextRegister(list)
@@ -492,8 +488,7 @@ class WJSCCodeGenerator {
         this.genConditionalIf(atx, [head, ...tail])
         break
       case WJSCParserRules.ConditionalWhile:
-        this.genExpr(atx.stdlibExpr, [head, ...tail])
-        this.traverseStat(atx.stat, [head, ...tail])
+        this.genCondWhile(atx, [head, ...tail])
         break
       case WJSCParserRules.Print:
         this.genExpr(atx.stdlibExpr, [head, ...tail])
@@ -525,6 +520,7 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.StringLiter:
         this.output.push(construct.branch(this.PRINT_STRING, true))
+        console.log('val: ' + atx.value)
         this.printString(atx.value)
         break
       case WJSCParserRules.BoolLiter:
@@ -565,9 +561,8 @@ class WJSCCodeGenerator {
     this.genExpr(atx.condition, [head, ...tail])
     this.output.push(construct.compareTest(ARMOpcode.compare, head, '#0'))
 
-    const linkCounter = 0
-    const label1 = `L${linkCounter}`
-    const label2 = `L${linkCounter + 1}`
+    const label1 = `L${this.getLabelNo()}`
+    const label2 = `L${this.getLabelNo()}`
     // TODO change symbol table with scope
     // Jump to label1 if false
     this.output.push(construct.branch(label1, false, ARMCondition.equal))
@@ -578,6 +573,22 @@ class WJSCCodeGenerator {
     // False body
     this.genStatBlock(atx.falseBranch, [head, ...tail])
     this.output.push(directive.label(label2))
+  }
+
+  public genCondWhile = (atx: WJSCStatement, [head, ...tail]: Register[]) => {
+    const label1 = `L${this.getLabelNo()}`
+    const label2 = `L${this.getLabelNo()}`
+
+    this.output.push(construct.branch(label1, false))
+    this.output.push(directive.label(label2))
+    // True branch
+    this.genStatBlock(atx.trueBranch, [head, ...tail])
+    this.output.push(directive.label(label1))
+
+    // Check condition
+    this.genExpr(atx.condition, [head, ...tail])
+    this.output.push(construct.compareTest(ARMOpcode.compare, head, '#1'))
+    this.output.push(construct.branch(label2, false, ARMCondition.equal))
   }
 
   public flattenSequential = (atx: WJSCStatement): WJSCStatement[] => {
@@ -864,6 +875,10 @@ class WJSCCodeGenerator {
     `.word ${directive.messageCharCount(symbol.toString() || '')}` +
     '\n' + tabSpace + directive.ascii(symbol.toString() || ''),
   )
+
+  private getLabelNo = (): number => {
+    return this.labelCount++
+  }
 }
 
 export { WJSCCodeGenerator }

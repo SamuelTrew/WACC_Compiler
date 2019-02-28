@@ -243,8 +243,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         type instanceof BaseTypeContext
           ? this.visitBaseType(type)
           : type instanceof ArrayTypeContext
-          ? this.visitArrayType(type)
-          : this.visitPairType(type)
+            ? this.visitArrayType(type)
+            : this.visitPairType(type)
       result.type = {
         arrayType: arrayNode.type,
       }
@@ -392,7 +392,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   public visitAssignment = (ctx: AssignmentContext): WJSCAst => {
     const result
-        = this.initWJSCAst(ctx, WJSCParserRules.Assignment) as WJSCAssignment
+      = this.initWJSCAst(ctx, WJSCParserRules.Assignment) as WJSCAssignment
     const lhs = ctx.assignLhs()
     const rhs = ctx.assignRhs()
     const visitedLhs = this.visitAssignLhs(lhs)
@@ -410,7 +410,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   public visitDeclare = (ctx: DeclareContext): WJSCDeclare => {
     const result
-        = this.initWJSCAst(ctx, WJSCParserRules.Declare) as WJSCDeclare
+      = this.initWJSCAst(ctx, WJSCParserRules.Declare) as WJSCDeclare
     const lhsType = ctx.type()
     const lhsIdent = ctx.IDENTIFIER()
     const rhs = ctx.assignRhs()
@@ -422,7 +422,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const visitedIdentifier = this.visitTerminal(lhsIdent)
     /* Check for double declaration */
     const possibleEntry
-        = this.symbolTable.getLocalEntry(visitedIdentifier.value)
+      = this.symbolTable.getLocalEntry(visitedIdentifier.value)
     if (possibleEntry && !possibleEntry.params) {
       this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
     }
@@ -468,8 +468,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       ifB
         ? WJSCParserRules.ConditionalIf
         : whileB
-        ? WJSCParserRules.ConditionalWhile
-        : WJSCParserRules.Undefined,
+          ? WJSCParserRules.ConditionalWhile
+          : WJSCParserRules.Undefined,
     ) as WJSCStatement
     if (ifB && childStat.length !== 2) {
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
@@ -503,12 +503,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       } else if (whileB) {
         // While Condition
         this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
-        const childStatType = this.visitStatement(childStat[0])
+        const visitedTrueBranch = this.visitStatement(childStat[0])
         this.symbolTable = this.symbolTable.exitScope()
-        childStatType.tableNumber = this.tableCounter
+        visitedTrueBranch.tableNumber = this.tableCounter
 
-        this.pushChild(result, childStatType)
-        if (!childStatType) {
+        this.pushChild(result, visitedTrueBranch)
+        result.trueBranch = visitedTrueBranch
+        if (!visitedTrueBranch) {
           this.errorLog.semErr(result, SemError.Undefined)
         }
       }
@@ -814,8 +815,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         possibles instanceof BaseTypeContext
           ? this.visitBaseType(possibles)
           : possibles instanceof ArrayTypeContext
-          ? this.visitArrayType(possibles)
-          : this.visitTerminal(possibles)
+            ? this.visitArrayType(possibles)
+            : this.visitTerminal(possibles)
       this.pushChild(result, possiblesType)
     }
     return result
@@ -1057,8 +1058,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         type instanceof BaseTypeContext
           ? this.visitBaseType(type)
           : type instanceof ArrayTypeContext
-          ? this.visitArrayType(type)
-          : this.visitPairType(type)
+            ? this.visitArrayType(type)
+            : this.visitPairType(type)
       this.pushChild(result, childType)
     }
     return result
@@ -1126,16 +1127,20 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       const strRegexTest =
         // tslint:disable-next-line:max-line-length
         /(?<=")([\u0000-\u0021]|[\u0023-\u0026]|[\u0028-\u005b]|[\u005d-\u007f]|\\(0|b|t|n|f|r|'|\\|"))+(?=")/
-      const str = strRegexTest.exec(token)
-      if (str) {
-        terminal.value = str[0]
-      } else if (!token) {
-        this.errorLog.synErr(
-          terminal.line,
-          terminal.column,
-          SynError.IllegalStr,
-          'Illegal String',
-        )
+      if (/^""$/.test(token)) {
+        terminal.value = ''
+      } else {
+        const str = strRegexTest.exec(token)
+        if (str) {
+          terminal.value = str[0]
+        } else if (!token) {
+          this.errorLog.synErr(
+            terminal.line,
+            terminal.column,
+            SynError.IllegalStr,
+            'Illegal String',
+          )
+        }
       }
     } else if (WJSCLexer.INTEGER <= type && type <= WJSCLexer.PAIR) {
       switch (type) {
@@ -1479,8 +1484,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   /* Visit a param and check if it has already been declared. */
   private checkParam = (ctx: ParamContext): WJSCIdentifier => {
     const result = this.initWJSCAst(
-        ctx,
-        WJSCParserRules.Identifier,
+      ctx,
+      WJSCParserRules.Identifier,
     ) as WJSCIdentifier
     const visitedIdent = this.visitTerminal(ctx.IDENTIFIER())
     result.identifier = visitedIdent.value
