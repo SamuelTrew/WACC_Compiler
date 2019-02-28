@@ -2,15 +2,13 @@ import * as lodash from 'lodash'
 import { EOL } from 'os'
 import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
+  WJSCArrayElem,
   WJSCAssignment,
   WJSCAssignRhs,
   WJSCAst,
   WJSCDeclare,
   WJSCExpr,
   WJSCFunction,
-  WJSCIdentifier,
-  WJSCOperators,
-  WJSCParam,
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
@@ -364,6 +362,8 @@ class WJSCCodeGenerator {
           break
         case WJSCParserRules.Identifier:
           break
+        case WJSCParserRules.ArrayElem:
+          break
         case WJSCParserRules.Unop:
           break
         case WJSCParserRules.BinOp:
@@ -378,45 +378,25 @@ class WJSCCodeGenerator {
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, `[${itemUsed}]`))
   }
 
-  public genArrayElem = (atx: WJSCAst, list: Register[], nextReg: Register, index: number, prevReg?: Register) => {
-    const typeSize = this.sizeGen(atx, true)
-    let params
-    switch (atx.parserRule) {
-      case (WJSCParserRules.IntLiteral):
-        this.load(typeSize, ARMOpcode.load, nextReg, `=${atx.token}`)
-        if (!prevReg) {
-          params = `[${nextReg}, ${directive.immNum(typeSize * (index + 1))}]`
-        } else {
-          params = `[${prevReg}, ${directive.immNum(typeSize * (index + 1))}]`
-        }
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params))
-        break
-      case (WJSCParserRules.CharLiter):
-      case (WJSCParserRules.BoolLiter):
-        const value = (atx.parserRule === WJSCParserRules.CharLiter ? `#${atx.token}` :
-          (atx.token === 'true' ? directive.immNum(1) : directive.immNum(0)))
-        this.move(typeSize, ARMOpcode.move, nextReg, value)
-        if (!prevReg) {
-          params = `[${nextReg}, ${directive.immNum(4 + typeSize * (index))}]`
-        } else {
-          params = `[${prevReg}, ${directive.immNum(4 + typeSize * (index))}]`
-        }
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params, undefined, undefined, true))
-        break
-      case (WJSCParserRules.ArrayLiteral):
-        this.genArray(atx, list)
-        this.load(typeSize, ARMOpcode.load, nextReg, `${atx.token}`)
-        break
-      default:
-        this.load(typeSize, ARMOpcode.load, nextReg, `${atx.token}`)
-        if (!prevReg) {
-          params = `[${nextReg}, ${directive.immNum(typeSize * (index + 1))}]`
-        } else {
-          params = `[${prevReg}, ${directive.immNum(typeSize * (index + 1))}]`
-        }
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextReg, params))
-        break
+  public genArrayElem = (atx: WJSCAst , list: Register[]) => {
+    const size = this.sizeGen(atx, false)
+    const dimensions = (atx.children[0] as WJSCArrayElem).specificInd
+    const itemUsed = this.nextRegister(list)
+    if (list.includes(itemUsed)) {
+      list.shift()
     }
+    const nextItem = this.nextRegister(list)
+    /* :(
+    if (list.includes(nextItem)) {
+      list.shift()
+    }*/
+    dimensions.forEach((currDim, index) => {
+      this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(size)))
+      this.genExpr(currDim, list)
+      this.load(this.getRegSize(Register.r0), ARMOpcode.load, itemUsed, `[${Register.r0}]`)
+      this.move(this.getRegSize(nextItem), ARMOpcode.move, Register.r0, nextItem)
+      this.move(this.getRegSize(itemUsed), ARMOpcode.move, Register.r1, itemUsed)
+    })
   }
 
   public genProgram = (atx: WJSCAst): string[] => {
@@ -722,7 +702,7 @@ class WJSCCodeGenerator {
       }
       case WJSCParserRules.ArrayElem: {
         // TODO get declaration of parent and its parent's length
-        this.genArrayElem(atx, tail, head, 0)
+        this.genArrayElem(atx, [head, ...tail])
         break
       }
       case WJSCParserRules.Pair: {
@@ -838,7 +818,7 @@ class WJSCCodeGenerator {
         }
         break
       case WJSCParserRules.ArrayElem:
-        // this.genArrayElem(atx, regList)
+        this.genArrayElem(atx, regList)
         this.checkArrayOutOfBounds()
         break
       case WJSCParserRules.BinOp:
