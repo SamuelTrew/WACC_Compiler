@@ -58,6 +58,7 @@ class WJSCCodeGenerator {
   private readonly PRINT_STRING = 'p_print_string'
   private readonly PRINT_INT = 'p_print_int'
   private readonly PRINT_NEW_LINE = 'p_print_ln'
+  private printCheck = true
 
   /* ----------------------------------------------*/
 
@@ -115,14 +116,14 @@ class WJSCCodeGenerator {
     )
   }
 
-  public printInt = (intInput: number) => {
-    this.stringDec(intInput)
+  public printInt = () => {
+    this.stringDec('%d\\0')
     this.postFunc.push(directive.label(this.PRINT_INT),
       construct.pushPop(ARMOpcode.push, [this.lr]),
       construct.move(ARMOpcode.move, Register.r1, this.resultReg),
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`),
       construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(`puts`, true),
+      construct.branch(`printf`, true),
       construct.move(ARMOpcode.move, this.resultReg, `#0`),
       construct.branch(`fflush`, true),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
@@ -481,13 +482,19 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Print:
         this.genExpr(atx.stdlibExpr, [head, ...tail])
         this.printBaseType(atx.stdlibExpr, [head, ...tail])
-        this.stringDec('%.*s\\0')
+        if (this.printCheck) {
+          this.stringDec('%.*s\\0')
+          this.printCheck = false
+        }
         break
       case WJSCParserRules.Println:
         this.genExpr(atx.stdlibExpr, [head, ...tail])
         this.printBaseType(atx.stdlibExpr, [head, ...tail])
         this.output.push(construct.branch(this.PRINT_NEW_LINE, true))
-        this.stringDec('%.*s\\0')
+        if (this.printCheck) {
+          this.stringDec('%.*s\\0')
+          this.printCheck = false
+        }
         this.printLine()
         break
     }
@@ -498,7 +505,7 @@ class WJSCCodeGenerator {
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
         this.output.push(construct.branch(this.PRINT_INT, true))
-        this.printInt(atx.value)
+        this.printInt()
         break
       case WJSCParserRules.StringLiter:
       case WJSCParserRules.CharLiter:
