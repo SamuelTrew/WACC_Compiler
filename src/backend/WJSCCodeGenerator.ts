@@ -1,5 +1,4 @@
 import { EOL } from 'os'
-
 import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
   WJSCAssignment,
@@ -28,7 +27,6 @@ import {
   RuntimeError,
   tabSpace,
 } from './ARMv7-lib'
-import {Runtime} from "inspector"
 
 class WJSCCodeGenerator {
   public static stringifyAsm = (asm: string[]) => asm.join(EOL)
@@ -56,12 +54,82 @@ class WJSCCodeGenerator {
   private totalStackSize = 0
   private decStackSize = 0
   private ltorgCheck = true
+  private readonly PRINT_BOOL = 'p_print_bool:'
+  private readonly PRINT_STRING = 'p_print_string:'
+  private readonly PRINT_INT = 'p_print_int:'
+  private readonly PRINT_NEW_LINE = 'p_print_ln:'
 
   /* ----------------------------------------------*/
+
   // TODO: Gen array elem for pair and arrays
   constructor(symbolTable: WJSCSymbolTable) {
     this.symbolTable = symbolTable
   }
+
+  /* ------------- Print Management ---------------*/
+
+  public printBool = (boolInput: boolean) => {
+    const bool = boolInput ? `true\0` : `false\0`
+    const notBool = boolInput ? `false\0` : `true\0`
+    directive.stringDec(bool)
+    this.postFunc.push(this.PRINT_BOOL,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`, ARMCondition.nequal),
+    )
+    directive.stringDec(notBool)
+    this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`, ARMCondition.equal),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`printf`, true),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
+  public printString = (stringInput: string) => {
+    directive.stringDec(stringInput)
+    this.postFunc.push(this.PRINT_STRING,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
+      construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, `#4`),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`printf`, true),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
+  public printLine = () => {
+    directive.stringDec(`\n`)
+    this.postFunc.push(this.PRINT_NEW_LINE,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`puts`, true),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+
+  public printInt = (intInput: number) => {
+    const int = `${intInput}`
+    directive.stringDec(int)
+    this.postFunc.push(this.PRINT_INT,
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.move(ARMOpcode.move, Register.r1, this.resultReg),
+      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${msgCount}`),
+      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
+      construct.branch(`puts`, true),
+      construct.move(ARMOpcode.move, this.resultReg, `#0`),
+      construct.branch(`fflush`, true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
+  }
+  /* ------------------------------------------- */
 
   public setRegSize = (reg: Register, size: number) => {
     this.registerContentSize.set(reg, size)
@@ -72,7 +140,7 @@ class WJSCCodeGenerator {
       return this.registerContentSize.get(reg) as number
     } else {
       // WARNING: This should never happen!
-      return 0
+      return -10000
     }
   }
 
@@ -197,67 +265,6 @@ class WJSCCodeGenerator {
         break
     }
     this.genExpr(atx.expr2, [head, next, ...tail])
-  }
-
-  public printBool = (boolInput: boolean) => {
-    const bool = boolInput ? `true\0` : `false\0`
-    const notBool = boolInput ? `false\0` : `true\0`
-    directive.stringDec(bool)
-    this.postFunc.push(`p_print_bool`,
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`, ARMCondition.nequal),
-    )
-    directive.stringDec(notBool)
-    this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`, ARMCondition.equal),
-      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(`printf`, true),
-      construct.move(ARMOpcode.move, this.resultReg, `#0`),
-      construct.branch(`fflush`, true),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-    )
-  }
-
-  public printString = (stringInput: string) => {
-    directive.stringDec(stringInput)
-    this.postFunc.push(`p_print_string`,
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.singleDataTransfer(ARMOpcode.load, Register.r1, `[${this.resultReg}]`),
-      construct.arithmetic(ARMOpcode.add, Register.r2, this.resultReg, `#4`),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`),
-      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(`printf`, true),
-      construct.move(ARMOpcode.move, this.resultReg, `#0`),
-      construct.branch(`fflush`, true),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-    )
-  }
-
-  public printLine = () => {
-    directive.stringDec(`\n`)
-    this.postFunc.push(`p_print_ln`,
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`),
-      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(`puts`, true),
-      construct.move(ARMOpcode.move, this.resultReg, `#0`),
-      construct.branch(`fflush`, true),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-    )
-  }
-
-  public printInt = (intInput: number) => {
-    const int = `${intInput}`
-    this.postFunc.push(`p_print_int`,
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.move(ARMOpcode.move, Register.r1, this.resultReg),
-      construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `msg_${msgCount}`),
-      construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
-      construct.branch(`puts`, true),
-      construct.move(ARMOpcode.move, this.resultReg, `#0`),
-      construct.branch(`fflush`, true),
-      construct.pushPop(ARMOpcode.pop, [this.pc]),
-    )
   }
 
   public genUnOp = (atx: WJSCExpr, [head, next, ...tail]: Register[]) => {
@@ -480,6 +487,36 @@ class WJSCCodeGenerator {
       case WJSCParserRules.ConditionalWhile:
         this.genExpr(atx.stdlibExpr, [head, ...tail])
         this.traverseStat(atx.stat, [head, ...tail])
+        break
+      case WJSCParserRules.Print:
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${msgCount}`))
+        this.genExpr(atx.stdlibExpr, [head, ...tail])
+        this.printBaseType(atx.stdlibExpr, [head, ...tail])
+        break
+      case WJSCParserRules.Println:
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `=${msgCount}`))
+        this.genExpr(atx.stdlibExpr, [head, ...tail])
+        this.printBaseType(atx.stdlibExpr, [head, ...tail])
+        this.printLine()
+        break
+    }
+  }
+
+  public printBaseType = (atx: WJSCExpr, [head, ...tail]: Register[]) => {
+    this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
+    switch (atx.parserRule) {
+      case WJSCParserRules.IntLiteral:
+        this.output.push(construct.branch(this.PRINT_INT, true))
+        this.printInt(atx.value)
+        break
+      case WJSCParserRules.StringLiter:
+      case WJSCParserRules.CharLiter:
+        this.output.push(construct.branch(this.PRINT_STRING, true))
+        this.printString(atx.value)
+        break
+      case WJSCParserRules.BoolLiter:
+        this.output.push(construct.branch(this.PRINT_BOOL, true))
+        this.printBool(atx.value)
         break
     }
   }
