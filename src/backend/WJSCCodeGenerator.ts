@@ -508,7 +508,6 @@ class WJSCCodeGenerator {
         this.printInt()
         break
       case WJSCParserRules.StringLiter:
-      case WJSCParserRules.CharLiter:
         this.output.push(construct.branch(this.PRINT_STRING, true))
         this.printString(atx.value)
         break
@@ -516,6 +515,8 @@ class WJSCCodeGenerator {
         this.output.push(construct.branch(this.PRINT_BOOL, true))
         this.printBool(atx.value)
         break
+      case WJSCParserRules.CharLiter:
+        this.output.push(construct.branch(`putchar`, true))
     }
   }
 
