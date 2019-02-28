@@ -243,10 +243,9 @@ const construct = {
 }
 
 // ------------------ UTILITY --------------------
-export let msgCount = 0
 
 const directive = {
-  ascii: (str: string): string => `.ascii "${str}"`,
+  ascii: (str: string): string => `.ascii${tabSpace}"${str}"`,
   bss: '.bss',
   data: '.data\n',
   global: (...symbol: string[]): string => `.global ${symbol.join(', ')}`,
@@ -256,9 +255,7 @@ const directive = {
   local: (...symbol: string[]): string => `.local ${symbol.join(', ')}`,
   ltorg: '.ltorg',
   malloc: (content: ARMOpcode): string => tabSpace + `${content} malloc`,
-  messageCharCount: (name: string): number => {
-    return 0
-  },
+  messageCharCount: (name: string): number => name.length,
   popSection: '.popsection',
   pushSection: (...args: any): string =>
     `.pushsection ${directive.section(args)}`,
@@ -282,9 +279,6 @@ const directive = {
     (linkage ? `${linkage} ` : '') +
     (linkOrderSymbol ? `${linkOrderSymbol} ` : '') +
     (unique && uniqueId ? `${unique} ${uniqueId}` : ''),
-  stringDec: (symbol: string): string => 'msg_' + msgCount++ + ':\n' + tabSpace +
-      `.word ${directive.messageCharCount(symbol || '')}` +
-      '\n' + tabSpace + directive.ascii(symbol || ''),
   text: '.text\n',
   weak: (...symbol: string[]): string => `.weak ${symbol.join(', ')}`,
 }
