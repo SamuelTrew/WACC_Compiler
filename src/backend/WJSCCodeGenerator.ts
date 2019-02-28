@@ -663,7 +663,7 @@ class WJSCCodeGenerator {
     }
     // check in instruction body itself
     this.output.push(construct.branch('p_check_array_bounds', true))
-    // appending function to end of messages, if not already set up
+    // appending function to postFunc, if not already set up
     if (!this.postFunc.includes('p_check_array_bounds')) {
       // TODO: FIND REAL WORD LENGTH
       this.postFunc = this.postFunc.concat(directive.label('p_check_array_bounds'),
@@ -691,7 +691,7 @@ class WJSCCodeGenerator {
     // check in instruction body itself
     this.output.push(construct.branch('p_check_divide_by_zero', true))
     this.output.push(construct.branch('__aeabi_idiv', true))
-    // appending function to end of messages, if not already set up
+    // appending function to postFunc, if not already set up
     if (!this.postFunc.includes('p_check_divide_by_zero')) {
       this.postFunc = this.postFunc.concat(directive.label('p_check_divide_by_zero'),
           construct.pushPop(ARMOpcode.push, [this.lr]),
@@ -700,6 +700,23 @@ class WJSCCodeGenerator {
               `=msg_${this.findTrueMessageIndex(RuntimeError.divByZero)}`, ARMCondition.equal),
           construct.branch('p_throw_runtime_error', true, ARMCondition.equal),
           construct.pushPop(ARMOpcode.pop, [this.pc]))
+    }
+  }
+
+  public checkOverflow = () => {
+    this.errorPresent = true
+    // Setting up the message if not already set up
+    if (!this.data.includes(RuntimeError.intOverFlow)) {
+      this.data.push(directive.stringDec(RuntimeError.intOverFlow))
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch('p_throw_overflow_error', true, ARMCondition.overflow))
+    // appending function to postFunc
+    if (!this.postFunc.includes('p_throw_overflow_error')) {
+      this.postFunc = this.postFunc.concat(directive.label('p_throw_overflow_error'),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+              `=msg_${this.findTrueMessageIndex(RuntimeError.intOverFlow)}`),
+          construct.branch('p_throw_runtime_error', true))
     }
   }
 
