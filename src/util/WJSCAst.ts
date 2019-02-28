@@ -105,7 +105,7 @@ interface WJSCStatement extends WJSCAst {
   condition: WJSCExpr
   trueBranch: WJSCStatement
   falseBranch: WJSCStatement
-  readType: BaseType.Integer | BaseType.Character
+  readType: TypeName
 }
 
 interface WJSCIdentifier extends WJSCAst {
