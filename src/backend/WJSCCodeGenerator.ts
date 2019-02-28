@@ -262,12 +262,12 @@ class WJSCCodeGenerator {
         this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
         break
       case '+':
-        this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next))
-        this.output.push(construct.branch(ARMOpcode.branchLink, true, ARMCondition.nequal))
+        this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, true))
+        this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, ARMCondition.overflow))
         break
       case '-':
         this.output.push(construct.arithmetic(ARMOpcode.subtract, head, head, next))
-        this.output.push(construct.branch(ARMOpcode.branchLink, true, ARMCondition.overflow))
+        this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, ARMCondition.overflow))
         break
       case '>':
         this.output.push(construct.compareTest(ARMOpcode.compare, next, head),
@@ -920,7 +920,7 @@ class WJSCCodeGenerator {
     this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, ARMCondition.nequal))
     // appending function to postFunc
     if (!this.postFunc.includes(this.THROW_OVERFLOW_ERROR)) {
-      this.postFunc = this.postFunc.concat(directive.label(this.THROW_OVERFLOW_ERROR),
+      this.postFunc.push(directive.label(this.THROW_OVERFLOW_ERROR),
         construct.singleDataTransfer(ARMOpcode.load, Register.r0,
           `=msg_${this.findTrueMessageIndex(RuntimeError.intOverFlow)}`),
         construct.branch(this.THROW_RUNTIME_ERROR, true))
