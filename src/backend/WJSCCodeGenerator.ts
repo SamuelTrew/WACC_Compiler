@@ -1,3 +1,4 @@
+import * as _ from 'lodash'
 import { EOL } from 'os'
 import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
@@ -13,7 +14,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import {BaseType, getTypeSize} from '../util/WJSCType'
+import { getTypeSize } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -376,18 +377,6 @@ class WJSCCodeGenerator {
     }
   }
 
-  public genIdent = (atx: WJSCIdentifier, [head, ...tail]: Register[]): string[] => {
-    return []
-  }
-
-  public genOperator = (atx: WJSCOperators, [head, ...tail]: Register[]): string[] => {
-    return []
-  }
-
-  public genParam = (atx: WJSCParam, [head, ...tail]: Register[]): string[] => {
-    return []
-  }
-
   public genProgram = (atx: WJSCAst): string[] => {
     const regList = [Register.r4, Register.r5, Register.r6,
                      Register.r7, Register.r8, Register.r9,
@@ -509,6 +498,9 @@ class WJSCCodeGenerator {
         this.printLine()
         break
       case WJSCParserRules.Scope:
+        this.switchToChildTable(atx.tableNumber)
+        this.traverseStat(atx.stat, [head, ...tail])
+        this.switchToParentTable()
         break
       case WJSCParserRules.Read:
         break
@@ -920,8 +912,20 @@ class WJSCCodeGenerator {
     '\n' + tabSpace + directive.ascii(symbol.toString() || ''),
   )
 
-  private getLabelNo = (): number => {
-    return this.labelCount++
+  private getLabelNo = (): number => this.labelCount++
+
+  // Find child table with the given table number
+  private switchToChildTable = (tableNumber: number) => {
+    const childTable = _.find(this.symbolTable.getChildrenTables(), (child) => child.getTableNumber() === tableNumber)
+    if (childTable) {
+      this.symbolTable = childTable
+    } else {
+      console.log(`Can't enter symbol table`)
+    }
+  }
+
+  private switchToParentTable = () => {
+    this.symbolTable = this.symbolTable.exitScope()
   }
 }
 
