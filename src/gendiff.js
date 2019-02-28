@@ -29,16 +29,19 @@ const refcode = fs.readFileSync(asmfile, 'utf8')
 const diff = jsdiff.diffTrimmedLines(eol.auto(refcode), eol.auto(gencode), { ignoreCase: true })
 diff.forEach((change) => {
   if (change.added) {
-    change.value.split(os.EOL).forEach(line => {
-      console.log(`${ConsoleColors.FgGreen} + ${line}${ConsoleColors.Reset}`)
+    change.value.split(os.EOL).forEach((line, index) => {
+      if (index !== change.value.split(os.EOL).length - 1)
+        console.log(`${ConsoleColors.FgGreen} + ${line}${ConsoleColors.Reset}`)
     })
   } else if (change.removed) {
-    change.value.split(os.EOL).forEach(line => {
-      console.log(`${ConsoleColors.FgRed} - ${line}${ConsoleColors.Reset}`)
+    change.value.split(os.EOL).forEach((line, index) => {
+      if (index !== change.value.split(os.EOL).length - 1)
+        console.log(`${ConsoleColors.FgRed} - ${line}${ConsoleColors.Reset}`)
     })
   } else {
-    change.value.split(os.EOL).forEach(line => {
-      console.log(`${ConsoleColors.Dim}   ${line}${ConsoleColors.Reset}`)
+    change.value.split(os.EOL).forEach((line, index) => {
+      if (index !== change.value.split(os.EOL).length - 1)
+        console.log(`${ConsoleColors.Dim}   ${line}${ConsoleColors.Reset}`)
     })
   }
 })

@@ -111,4 +111,5 @@ export interface WJSCSymbolTableValue {
   type: TypeName
   spOffset?: number
   params?: TypeName[]
+  messageName?: string
 }

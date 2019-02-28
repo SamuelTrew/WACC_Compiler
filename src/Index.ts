@@ -7,7 +7,6 @@ import * as path from 'path'
 
 /* Our code */
 import { ConsoleColors } from './util/Colors'
-import { WJSCAst } from './util/WJSCAst'
 import WJSCCompiler from './WJSCCompiler'
 
 const antinos = 'HXLY' + 311
@@ -54,7 +53,6 @@ argp.addArgument(['-ps', '--print-asm'], {
 
 argp.addArgument(['-t', '--tree'], {
   action: 'store',
-  defaultValue: 'tree.json',
   help: 'Output tree to a file',
 })
 
@@ -65,7 +63,7 @@ argp.addArgument(['--debug'], {
 
 const args = argp.parseArgs()
 const output = path.resolve(args.output || (path.parse(args.src).name + '.s'))
-const treeout = path.resolve(args.tree)
+const treeout = args.tree
 const errout = path.resolve(args.errors)
 const printErrors = args.print_errors
 const printAst = args.print_ast
@@ -116,8 +114,8 @@ fs.readFile(args.src, 'utf8', (err, data) => {
     console.log(`  ${ConsoleColors.FgGreen}[OK]${ConsoleColors.Reset} Checking succeeded.`)
     asm = compiler.generate()
 
-    if (tree) {
-      writeOut(treeout, JSON.stringify(tree, null, 2), 'AST', printAst ? 'log' : undefined).catch((error) => {
+    if (tree && treeout) {
+      writeOut(path.resolve(treeout), JSON.stringify(tree, null, 2), 'AST', printAst ? 'log' : undefined).catch((error) => {
         warn(error)
       })
     }
