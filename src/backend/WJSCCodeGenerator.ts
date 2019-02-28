@@ -13,7 +13,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize } from '../util/WJSCType'
+import {BaseType, getTypeSize} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -832,7 +832,6 @@ class WJSCCodeGenerator {
   }
   // Remember to have put the pair/ array into r0!
   public checkFreeNullPair = () => {
-    // The alternative being an array
     this.errorPresent = true
     // Setting up the message if not already set up
     if (!this.data.includes(RuntimeError.nullDeref)) {
@@ -855,6 +854,27 @@ class WJSCCodeGenerator {
               `[${Register.r0}, ${directive.immNum(4)}]`),
           construct.branch('free', true),
           construct.pushPop(ARMOpcode.pop, [Register.r0]),
+          construct.branch('free', true),
+          construct.pushPop(ARMOpcode.pop, [this.pc]))
+    }
+  }
+  // Remember to put the array to r0!
+  public checkFreeNullArray = () => {
+    this.errorPresent = true
+    // Setting up the message if not already set up
+    if (!this.data.includes(RuntimeError.nullDeref)) {
+      this.stringDec(RuntimeError.nullDeref)
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch('p_free_array', true))
+    // appending function to postFunc
+    if (!this.postFunc.includes('p_free')) {
+      this.postFunc = this.postFunc.concat(directive.label('p_free_array'),
+          construct.pushPop(ARMOpcode.push, [this.lr]),
+          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+              `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+          construct.branch('p_throw_runtime_error', false, ARMCondition.equal),
           construct.branch('free', true),
           construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
