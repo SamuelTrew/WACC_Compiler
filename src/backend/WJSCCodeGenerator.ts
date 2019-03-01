@@ -801,7 +801,7 @@ class WJSCCodeGenerator {
     this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize)
     let offsetctr = 0
     atx.paramList.forEach((param, index) => {
-      this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += getTypeSize(param.type))
+      this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += (index === 0 ? 4 : getTypeSize(param.type)))
     })
     this.genStatBlock(atx.body, regList)
     this.switchToParentTable()
