@@ -188,7 +188,7 @@ class WJSCCodeGenerator {
   public checkNullPointer = () => {
     this.errorPresent = true
     // Setting up the message if not already set up
-    if (!this.data.includes(RuntimeError.nullDeref)) {
+    if (this.findTrueMessageIndex(RuntimeError.nullDeref) < 0) {
       this.stringDec(RuntimeError.nullDeref)
     }
     // appending function to postFunc
@@ -439,9 +439,6 @@ class WJSCCodeGenerator {
     dimensions.forEach((currDim, index) => {
       // index * size)
       // position = distance of variable from where you are
-      // TODO; GET ACTUAL
-      // console.log(arrElem)
-      // console.log(this.symbolTable.getVarMemAddr(arrElem.ident))
       this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident))))
       this.genExpr(currDim, future)
       this.load(this.getRegSize(itemUsed), itemUsed, `[${itemUsed}]`)
@@ -939,16 +936,16 @@ class WJSCCodeGenerator {
   public checkArrayOutOfBounds = () => {
     // Setting up the messages if not already set up
     this.errorPresent = true
-    if (!this.data.includes(RuntimeError.negIndex)) {
+    if (this.findTrueMessageIndex(RuntimeError.negIndex) < 0) {
       this.stringDec(RuntimeError.negIndex)
     }
-    if (!this.data.includes(RuntimeError.largeIndex)) {
+    if (this.findTrueMessageIndex(RuntimeError.largeIndex) < 0) {
       this.stringDec(RuntimeError.largeIndex)
     }
     // check in instruction body itself
     this.output.push(construct.branch('p_check_array_bounds', true))
     // appending function to postFunc, if not already set up
-    if (!this.postFunc.includes('p_check_array_bounds')) {
+    if (!this.isInPostFunc('p_check_array_bounds')) {
       this.postFunc = this.postFunc.concat(directive.label('p_check_array_bounds'),
         construct.pushPop(ARMOpcode.push, [this.lr]),
         construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
@@ -968,7 +965,7 @@ class WJSCCodeGenerator {
   public checkDivByZero = (mod: boolean) => {
     this.errorPresent = true
     // Setting up the message if not already set up
-    if (!this.data.includes(RuntimeError.divByZero)) {
+    if (this.findTrueMessageIndex(RuntimeError.divByZero) < 0) {
       this.stringDec(RuntimeError.divByZero)
     }
     // check in instruction body itself
@@ -976,7 +973,7 @@ class WJSCCodeGenerator {
     const divCheck = mod ? '__aeabi_idivmod' : '__aeabi_idiv'
     this.output.push(construct.branch(divCheck, true))
     // appending function to postFunc, if not already set up
-    if (!this.postFunc.includes(this.CHECK_DIVIDE_BY_ZERO)) {
+    if (!this.isInPostFunc(this.CHECK_DIVIDE_BY_ZERO)) {
       this.postFunc = this.postFunc.concat(directive.label(this.CHECK_DIVIDE_BY_ZERO),
         construct.pushPop(ARMOpcode.push, [this.lr]),
         construct.compareTest(ARMOpcode.compare, Register.r1, directive.immNum(0)),
@@ -990,13 +987,13 @@ class WJSCCodeGenerator {
   public checkOverflow = (condition: ARMCondition) => {
     this.errorPresent = true
     // Setting up the message if not already set up
-    if (!this.data.includes(RuntimeError.intOverFlow)) {
+    if (this.findTrueMessageIndex(RuntimeError.intOverFlow) < 0) {
       this.stringDec(RuntimeError.intOverFlow)
     }
     // check in instruction body itself
     this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, condition))
     // appending function to postFunc
-    if (!this.postFunc.includes(this.THROW_OVERFLOW_ERROR)) {
+    if (!this.isInPostFunc(this.THROW_OVERFLOW_ERROR)) {
       this.postFunc.push(directive.label(this.THROW_OVERFLOW_ERROR),
         construct.singleDataTransfer(ARMOpcode.load, Register.r0,
           `=msg_${this.findTrueMessageIndex(RuntimeError.intOverFlow)}`),
@@ -1004,17 +1001,37 @@ class WJSCCodeGenerator {
     }
   }
 
+/*
+  public checkNullPointer = () => {
+    this.errorPresent = true
+    // Setting up the message if not already set up
+    if (this.findTrueMessageIndex(RuntimeError.nullDeref) < 0) {
+      this.stringDec(RuntimeError.nullDeref)
+    }
+    // check in instruction body itself
+    this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
+    // appending function to postFunc
+    if (!this.isInPostFunc(this.CHECK_NULL_POINTER)) {
+      this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
+        construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+        construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
+        construct.pushPop(ARMOpcode.pop, [this.pc]))
+    }
+  }
+*/
   // Remember to have put the pair/ array into r0!
   public checkFreeNullPair = () => {
     this.errorPresent = true
     // Setting up the message if not already set up
-    if (!this.data.includes(RuntimeError.nullDeref)) {
+    if (this.findTrueMessageIndex(RuntimeError.nullDeref) < 0) {
       this.stringDec(RuntimeError.nullDeref)
     }
     // check in instruction body itself
     this.output.push(construct.branch(this.CHECK_FREE_NULL_PAIR, true))
     // appending function to postFunc
-    if (!this.postFunc.includes(this.CHECK_FREE_NULL_PAIR)) {
+    if (!this.isInPostFunc(this.CHECK_FREE_NULL_PAIR)) {
       this.postFunc = this.postFunc.concat(directive.label(this.CHECK_FREE_NULL_PAIR),
           construct.pushPop(ARMOpcode.push, [this.lr]),
           construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
@@ -1037,13 +1054,13 @@ class WJSCCodeGenerator {
   public checkFreeNullArray = () => {
     this.errorPresent = true
     // Setting up the message if not already set up
-    if (!this.data.includes(RuntimeError.nullDeref)) {
+    if (this.findTrueMessageIndex(RuntimeError.nullDeref) < 0) {
       this.stringDec(RuntimeError.nullDeref)
     }
     // check in instruction body itself
     this.output.push(construct.branch(this.CHECK_FREE_NULL_ARRAY, true))
     // appending function to postFunc
-    if (!this.postFunc.includes(this.CHECK_FREE_NULL_ARRAY)) {
+    if (!this.isInPostFunc(this.CHECK_FREE_NULL_ARRAY)) {
       this.postFunc = this.postFunc.concat(directive.label(this.CHECK_FREE_NULL_ARRAY),
           construct.pushPop(ARMOpcode.push, [this.lr]),
           construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
@@ -1075,13 +1092,23 @@ class WJSCCodeGenerator {
 
   // Helper function to get the position of a message in the data
   public findTrueMessageIndex = (searchTerm: string): number => {
-    let foundIndex = 0
+    let foundIndex = -10000 // <- In the event it wasnt in
     this.data.forEach((child, index) => {
       if (child.includes(searchTerm)) {
         foundIndex = index - 1 // <- Because .data is counted as an elem
       }
     })
     return foundIndex
+  }
+
+  public isInPostFunc = (searchTerm: string): boolean => {
+    let isInFunc = false
+    this.postFunc.forEach((child) => {
+      if (child.includes(searchTerm)) {
+        isInFunc = true
+      }
+    })
+    return isInFunc
   }
 
   private stringDec = (symbol: string | number): number => this.data.push(
