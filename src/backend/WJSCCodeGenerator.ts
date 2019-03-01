@@ -830,7 +830,18 @@ class WJSCCodeGenerator {
       }
       case WJSCParserRules.ArrayElem: {
         // TODO get declaration of parent and its parent's length
-        this.genArrayElem(atx, [head, ...tail])
+        this.genArrayElem(atx, [...tail])
+        this.checkArrayOutOfBounds()
+        this.output.push(construct.arithmetic(ARMOpcode.add, head, head, directive.immNum(4)))
+        /* :(
+        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
+          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next))
+          this.load(this.getRegSize(head), head, `[${head}]`, undefined, 'SB')
+        } else {
+          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, false,
+              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
+          this.load(this.getRegSize(head), head, `[${head}]`)
+        }*/
         break
       }
       case WJSCParserRules.PairElem: {
