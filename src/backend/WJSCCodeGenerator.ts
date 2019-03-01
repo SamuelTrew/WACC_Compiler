@@ -192,7 +192,7 @@ class WJSCCodeGenerator {
       this.stringDec(RuntimeError.nullDeref)
     }
     // appending function to postFunc
-    if (!this.postFunc.includes(this.CHECK_NULL_POINTER)) {
+    if (!this.isInPostFunc(this.CHECK_NULL_POINTER)) {
       this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
         construct.pushPop(ARMOpcode.push, [this.lr]),
         construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
