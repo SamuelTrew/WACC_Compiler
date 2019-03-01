@@ -1,5 +1,4 @@
-
 begin
-	pair(int, int) p = null ;
-	read fst p
+  print "An escaped character example is " ;
+  println '\"'
 end

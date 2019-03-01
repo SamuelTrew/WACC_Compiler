@@ -642,14 +642,14 @@ class WJSCCodeGenerator {
         this.genCondWhile(atx, reglist)
         break
       case WJSCParserRules.Print:
-        this.genExpr(atx.stdlibExpr, reglist)
+        this.genExpr(atx.stdlibExpr, reglist, true)
         this.printBaseType(atx.stdlibExpr, reglist)
         if (hasSameType(atx.stdlibExpr.type, BaseType.String)) {
           this.pushCheck(Check.printlnString)
         }
         break
       case WJSCParserRules.Println:
-        this.genExpr(atx.stdlibExpr, reglist)
+        this.genExpr(atx.stdlibExpr, reglist, true)
         this.printBaseType(atx.stdlibExpr, reglist)
         this.output.push(construct.branch(this.PRINT_NEW_LINE, true))
         if (hasSameType(atx.stdlibExpr.type, BaseType.String)) {
@@ -1003,7 +1003,11 @@ class WJSCCodeGenerator {
       case WJSCParserRules.CharLiter:
         if (value.toString()[0] === '\\') {
           value = value.toString()[1]
-          this.move(getTypeSize(value), head, `#${value}`)
+          if (set) {
+            this.move(getTypeSize(value), head, `#'${value}'`)
+          } else {
+            this.move(getTypeSize(value), head, `#${value}`)
+          }
         } else {
           this.move(getTypeSize(BaseType.Character), head, `#'${value}'`)
         }
