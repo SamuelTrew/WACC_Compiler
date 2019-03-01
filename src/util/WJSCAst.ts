@@ -74,6 +74,10 @@ interface WJSCArrayElem extends WJSCAst {
   ident: string
 }
 
+interface WJSCPairElem extends WJSCAst {
+  ident: string
+}
+
 interface WJSCTerminal extends WJSCAst {
   terminalType?: TerminalType
   value: any
