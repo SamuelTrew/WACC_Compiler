@@ -1261,6 +1261,7 @@ class WJSCCodeGenerator {
 
   private switchToParentTable = () => {
     this.symbolTable = this.symbolTable.exitScope()
+    this.spOffset = this.symbolTable.getSpOffset()
   }
 }
 
