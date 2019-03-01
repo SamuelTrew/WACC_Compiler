@@ -717,6 +717,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         'statement missing return statement',
       )
     }
+    statements.tableNumber = this.tableCounter
     result.body = statements
     /* Exit child scope */
     this.symbolTable = this.symbolTable.exitScope()

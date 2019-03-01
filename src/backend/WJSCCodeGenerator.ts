@@ -555,6 +555,7 @@ class WJSCCodeGenerator {
 
     // Move sp for all declarations at once
     stats.forEach((stat) => {
+      console.log(stat.parserRule)
       if (stat.parserRule === WJSCParserRules.Declare) {
         this.totalStackSize += getTypeSize(stat.declaration.type)
       }
@@ -772,6 +773,7 @@ class WJSCCodeGenerator {
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
     this.output.push(directive.label(`f_${atx.identifier}`),
       construct.pushPop(ARMOpcode.push, [this.lr]))
+    this.switchToChildTable(atx.body.tableNumber)
     // We now deal with the children
     // TODO: paramlist is undefined, we are not handling the parameters at all
     // this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize)
@@ -780,6 +782,7 @@ class WJSCCodeGenerator {
     //   this.genExpr(param as WJSCExpr, regList)
     // })
     this.genStatBlock(atx.body, regList)
+    this.switchToParentTable()
     this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]),
       construct.pushPop(ARMOpcode.pop, [this.pc]))
     if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || atx.body.parserRule === WJSCParserRules.ConditionalIf) {
