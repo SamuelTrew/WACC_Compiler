@@ -965,6 +965,7 @@ class WJSCCodeGenerator {
         const argv = (atx.argList || [])
         const argc = argv.length
         let offsetctr = 0
+        const oldOffset = this.spOffset
         /* Setup the stack */
         argv.reverse().forEach((arg: WJSCExpr) => {
           this.genExpr(arg, regList)
@@ -976,7 +977,7 @@ class WJSCCodeGenerator {
         this.output.push(construct.branch(`f_${atx.ident}`, true))
         if (argc > 0) {
           this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(offsetctr)))
-          this.spOffset = 0
+          this.spOffset = oldOffset
         }
         this.move(this.getRegSize(Register.r0), head, Register.r0)
     }
@@ -1030,6 +1031,7 @@ class WJSCCodeGenerator {
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
         const spOffset = this.symbolTable.getVarMemAddr(atx.value, this.spOffset)
+        console.log('spoffset: ' + spOffset + ', curr: ' + this.spOffset)
         const offsetString = spOffset ? `, #${spOffset}` : ''
         const identType = this.symbolTable.lookup(atx.value)
         if (identType === BaseType.Character || identType === BaseType.Boolean) {
