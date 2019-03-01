@@ -10,7 +10,7 @@ export class WJSCSymbolTable {
   private readonly errorLog: WJSCErrorLog
   private functionName?: string
   private parentLevel?: WJSCSymbolTable
-  private spOffset?: number
+  private spOffset = 0
 
   constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, isInFunction: boolean, errorLog: WJSCErrorLog) {
     this.tableNumber = scopeLevel
@@ -27,7 +27,7 @@ export class WJSCSymbolTable {
 
   public getChildrenTables = (): WJSCSymbolTable[] => this.childrenTables
 
-  public getSpOffset = (): number | undefined => this.spOffset
+  public getSpOffset = (): number => this.spOffset
 
   public setSpOffset = (offset: number) => this.spOffset = offset
 
@@ -85,40 +85,35 @@ export class WJSCSymbolTable {
     return true
   }
 
-  // Store stack pointer offset of id
+  // Store offset of variable from stack base
   public setVarMemAddr(id: string, offset: number) {
     const entry = this.getGlobalEntry(id)
     if (entry) {
-      entry.spOffset = offset
+      entry.spOffset = (this.getSpOffset() || 0) - offset
     } else {
       console.log(`Can't set variable memory address`)
     }
   }
 
   // Get stack pointer offset of id
-  public getVarMemAddr(id: string, spoffset = 0): number {
+  public getVarMemAddr(id: string, currSp: number): number {
     const entry = this.getGlobalEntry(id)
-    if (entry && entry.spOffset !== undefined) {
-      return entry.spOffset - spoffset
+    if (entry && entry.spOffset) {
+      return currSp - entry.spOffset
     }
     return -10000
   }
 
   // Get stack pointer offset of id
-  public getAssignAddr(id: string, lineNo: number): number {
+  public getAssignAddr(id: string, lineNo: number, currSp: number): number {
     let entry = this.getGlobalEntry(id)
 
     if (entry) {
       if (entry.lineNo > lineNo && this.parentLevel) {
         entry = this.parentLevel.getGlobalEntry(id)
       }
-      if (entry) {
-        const TableDiff = (this.spOffset || 0) - (entry.table.spOffset || 0)
-        if (entry.spOffset) {
-          return entry.spOffset + TableDiff
-        } else if (entry.spOffset === 0) {
-          return TableDiff
-        }
+      if (entry && entry.spOffset) {
+        return currSp - entry.spOffset
       }
     }
     return -10000
