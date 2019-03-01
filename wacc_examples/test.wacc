@@ -1,5 +1,4 @@
 begin
-   print "why";
-   int x = 10 / 0;
-   print "hello"
+	pair(int, int) p = null ;
+	read snd p
 end
