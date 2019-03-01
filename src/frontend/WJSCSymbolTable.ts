@@ -86,20 +86,20 @@ export class WJSCSymbolTable {
   }
 
   // Store stack pointer offset of id
-  public setVarMemAddr(id: string, offset: number) {
+  public setVarMemAddr(id: string, offset: number, curoffset: number) {
     const entry = this.getGlobalEntry(id)
     if (entry) {
-      entry.spOffset = offset
+      entry.spOffset = offset + curoffset
     } else {
       console.log(`Can't set variable memory address`)
     }
   }
 
   // Get stack pointer offset of id
-  public getVarMemAddr(id: string, spoffset = 0): number {
+  public getVarMemAddr(id: string, curoffset: number): number {
     const entry = this.getGlobalEntry(id)
     if (entry && entry.spOffset !== undefined) {
-      return entry.spOffset - spoffset
+      return entry.spOffset - curoffset
     }
     return -10000
   }

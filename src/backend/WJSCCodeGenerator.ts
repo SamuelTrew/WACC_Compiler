@@ -1,5 +1,5 @@
-import {EOL} from 'os'
-import {WJSCSymbolTable} from '../frontend/WJSCSymbolTable'
+import { EOL } from 'os'
+import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
   WJSCArrayElem,
   WJSCAssignLhs,
@@ -14,7 +14,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import {BaseType, getTypeSize, hasSameType, isArrayType, isPairType} from '../util/WJSCType'
+import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -53,13 +53,11 @@ class WJSCCodeGenerator {
   private readonly sp = Register.r13
   private readonly lr = Register.r14
   private readonly pc = Register.r15
-  private readonly switchFault = 'No Matching Parser Rule'
   private msgCount = 0
   private labelCount = 0
   private totalStackSize = 0
   private decStackSize = 0
-  private spScopeOffset = 0
-  private spFuncOffset = 0
+  private spOffset = 0
   private ltorgCheck = true
 
   // Print functions
@@ -366,7 +364,7 @@ class WJSCCodeGenerator {
       case 'len':
         let offset: any = 0
         if (isArrayType(atx.expr1.type)) {
-          offset = this.symbolTable.getVarMemAddr(atx.expr1.token)
+          offset = this.symbolTable.getVarMemAddr(atx.expr1.token, this.spOffset)
         } else if (hasSameType(atx.expr1.type, BaseType.String)) {
           offset = `=msg_${this.symbolTable.getMsgNum(atx.value)}`
         }
@@ -468,7 +466,7 @@ class WJSCCodeGenerator {
               `[${nextItem}]`))
         }
      */
-    this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident))))
+    this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident, this.spOffset))))
     dimensions.forEach((currDim, index) => {
       // index * size)
       // position = distance of variable from where you are
@@ -598,22 +596,20 @@ class WJSCCodeGenerator {
   public genStatBlock = (statements: WJSCStatement, regList: Register[]) => {
     const stats = this.flattenSequential(statements)
     // Save stack size from parent scope
-    const prevStackSize = this.totalStackSize
-    this.totalStackSize = 0
-
+    let thisStackSize = 0
     // Move sp for all declarations at once
     stats.forEach((stat) => {
       if (stat.parserRule === WJSCParserRules.Declare) {
-        this.totalStackSize += getTypeSize(stat.declaration.type)
+        thisStackSize += getTypeSize(stat.declaration.type)
       }
     })
-    this.decStackSize = this.totalStackSize
-    this.symbolTable.setSpOffset(prevStackSize + this.totalStackSize)
-    const numStackOffsets = Math.ceil(this.totalStackSize / this.MAX_SP_OFFSET)
+    this.decStackSize = thisStackSize
+    this.symbolTable.setSpOffset(-(this.spOffset += -(this.totalStackSize + thisStackSize)))
+    const numStackOffsets = Math.ceil(thisStackSize / this.MAX_SP_OFFSET)
     const stackOffsets: string[] = Array(numStackOffsets).fill('#' + this.MAX_SP_OFFSET)
-    stackOffsets[numStackOffsets - 1] = '#' + this.totalStackSize % this.MAX_SP_OFFSET
+    stackOffsets[numStackOffsets - 1] = '#' + thisStackSize % this.MAX_SP_OFFSET
     // Decrement sp
-    if (this.totalStackSize) {
+    if (thisStackSize) {
       stackOffsets.forEach((operand) => {
         this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
       })
@@ -622,14 +618,11 @@ class WJSCCodeGenerator {
     this.traverseStat(statements, regList)
 
     // Increment sp
-    if (this.totalStackSize) {
+    if (thisStackSize) {
       stackOffsets.forEach((operand) => {
         this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
       })
     }
-
-    // Restore parent stack size
-    this.totalStackSize = prevStackSize
   }
 
   public traverseStat = (atx: WJSCStatement, reglist: Register[]) => {
@@ -686,8 +679,8 @@ class WJSCCodeGenerator {
         if (atx.children[1].parserRule === WJSCParserRules.PairElem) {
           const node = atx.children[1].children[0] as WJSCPairElem
           let params
-          if (this.symbolTable.getVarMemAddr(node.ident) !== 0) {
-            params = `[${[this.sp]}, ${directive.immNum(this.symbolTable.getVarMemAddr(node.ident))}]`
+          if (this.symbolTable.getVarMemAddr(node.ident, this.spOffset) !== 0) {
+            params = `[${[this.sp]}, ${directive.immNum(this.symbolTable.getVarMemAddr(node.ident, this.spOffset))}]`
           } else {
             params = `[${[this.sp]}]`
           }
@@ -845,11 +838,11 @@ class WJSCCodeGenerator {
     this.output.push(directive.label(`f_${atx.identifier}`),
       construct.pushPop(ARMOpcode.push, [this.lr]))
     this.switchToChildTable(atx.body.tableNumber)
-    this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize)
+    this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize, this.spOffset)
     let offsetctr = 4
     let lastoffset = 0
     atx.paramList.forEach((param, index) => {
-      this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += lastoffset)
+      this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += lastoffset, this.spOffset)
       lastoffset = getTypeSize(param.type)
     })
     this.genStatBlock(atx.body, regList)
@@ -924,7 +917,7 @@ class WJSCCodeGenerator {
 
     // Load rhs expression into 'head' register
     this.decStackSize -= typeSize
-    this.symbolTable.setVarMemAddr(id, this.decStackSize)
+    this.symbolTable.setVarMemAddr(id, this.decStackSize, this.spOffset)
     this.genAssignRhs(rhs, regList)
     if (hasSameType(type, BaseType.String)) {
       this.symbolTable.setMsgNum(id, this.msgCount - 1)
@@ -983,12 +976,12 @@ class WJSCCodeGenerator {
           const argsize = getTypeSize(arg.type)
           offsetctr += argsize
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-argsize)], undefined, undefined, argsize === 1, undefined, true))
-          this.spFuncOffset -= argsize
+          this.spOffset -= argsize
         })
         this.output.push(construct.branch(`f_${atx.ident}`, true))
         if (argc > 0) {
           this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(offsetctr)))
-          this.spFuncOffset = 0
+          this.spOffset = 0
         }
         this.move(this.getRegSize(Register.r0), head, Register.r0)
     }
@@ -1037,7 +1030,7 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Identifier:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
-        const spOffset = this.symbolTable.getVarMemAddr(atx.value, this.spFuncOffset)
+        const spOffset = this.symbolTable.getVarMemAddr(atx.value, this.spOffset)
         const offsetString = spOffset ? `, #${spOffset}` : ''
         const identType = this.symbolTable.lookup(atx.value)
         if (identType === BaseType.Character || identType === BaseType.Boolean) {
