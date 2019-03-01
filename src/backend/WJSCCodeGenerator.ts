@@ -565,10 +565,8 @@ class WJSCCodeGenerator {
     this.decStackSize = this.totalStackSize
     this.symbolTable.setSpOffset(prevStackSize + this.totalStackSize)
     const numStackOffsets = Math.ceil(this.totalStackSize / this.MAX_SP_OFFSET)
-    const stackOffsets: string[] = []
-    for (let i = 0; i < numStackOffsets; i++) {
-      stackOffsets.push('#' + (i === numStackOffsets - 1 ? this.totalStackSize % this.MAX_SP_OFFSET : this.MAX_SP_OFFSET))
-    }
+    const stackOffsets: string[] = Array(numStackOffsets).fill('#' + this.MAX_SP_OFFSET)
+    stackOffsets[numStackOffsets - 1] = '#' + this.totalStackSize % this.MAX_SP_OFFSET
     // Decrement sp
     if (this.totalStackSize) {
       stackOffsets.forEach((operand) => {
@@ -787,7 +785,7 @@ class WJSCCodeGenerator {
     this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize)
     console.log(atx.paramList.length)
     let offsetctr = 0
-    atx.paramList.forEach((param) => {
+    atx.paramList.forEach((param, index) => {
       this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += getTypeSize(param.type))
     })
     this.genStatBlock(atx.body, regList)
