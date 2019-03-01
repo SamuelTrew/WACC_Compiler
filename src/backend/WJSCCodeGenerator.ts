@@ -681,7 +681,7 @@ class WJSCCodeGenerator {
           this.pushCheck(Check.printNullRef)
           this.load(this.getRegSize(head), head, `[${head}, ${directive.immNum(4)}]`)
         } else {
-          this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, '#0'))
+          this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(atx.children[1].token, this.spOffset))))
         }
         this.move(this.getRegSize(head), this.resultReg, head)
         if (atx.readType === BaseType.Integer) {
@@ -885,7 +885,11 @@ class WJSCCodeGenerator {
       case WJSCParserRules.PairElem: {
         const [next, ..._] = tail
         this.genPairElem(atx.pairElem, tail)
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${next}]`))
+        if (atx.pairElem.type === BaseType.Boolean || atx.pairElem.type === BaseType.Character) {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${next}]`, undefined, undefined, true))
+        } else {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${next}]`))
+        }
         break
       }
     }
@@ -950,7 +954,11 @@ class WJSCCodeGenerator {
       case WJSCParserRules.PairElem:
         const pairElem = atx.pairElem
         this.genPairElem(pairElem, regList)
-        this.load(this.getRegSize(head), head, `[${head}]`)
+        if (pairElem.type === BaseType.Character || pairElem.type === BaseType.Boolean) {
+          this.load(this.getRegSize(head), head, `[${head}]`, undefined, 'SB')
+        } else {
+          this.load(this.getRegSize(head), head, `[${head}]`)
+        }
         break
       case WJSCParserRules.FunctionCall:
         /* Determine the number of arguments required for the function call */
