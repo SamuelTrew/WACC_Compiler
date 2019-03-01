@@ -1,6 +1,5 @@
 begin
-  int[] a = [43, 2, 18, 1] ;
-  int[] b = [1, 2, 3] ;	
-  int[] c = [1];
-  println a[-2]
+   print "why";
+   int x = 10 / 0;
+   print "hello"
 end
