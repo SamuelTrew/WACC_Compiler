@@ -34,11 +34,10 @@ class WJSCCodeGenerator {
   public symbolTable: WJSCSymbolTable
   public output: string[] = []
   public data: string[] = [directive.data]
-  public errData: string[] = []
   public postFunc: string[] = []
   public errorPresent: boolean = false
 
-  /* uwuwuwuwuwuwuwu MEMORY MANAGEMENT uwuwuwuwuwuwuwu */
+  /* ---------------- MEMORY MANAGEMENT -------------- */
   public memIndex: number = 0
   public registerContentSize = new Map([
     [Register.r0, 0], [Register.r1, 0], [Register.r2, 0],
@@ -85,9 +84,8 @@ class WJSCCodeGenerator {
   private printBoolTemp = undefined
   private checkingArray: number[] = []
 
-  /* owowowowowowowowowowowowowowowowowowowowowowowowo */
+  /* ---------------------------------------------- */
 
-  // TODO: Gen array elem for pair and arrays
   constructor(symbolTable: WJSCSymbolTable) {
     this.symbolTable = symbolTable
   }
@@ -215,6 +213,7 @@ class WJSCCodeGenerator {
       construct.pushPop(ARMOpcode.pop, [this.pc]))
   }
   /* ------------------------------------------- */
+  /* -----------REGISTER MANAGEMENT------------- */
 
   public setRegSize = (reg: Register, size: number) => {
     this.registerContentSize.set(reg, size)
@@ -230,7 +229,6 @@ class WJSCCodeGenerator {
   }
 
   public nextRegister = (viableRegs: Register[], push: boolean): Register => {
-    // this.output.push(this.outOfRegScope)
     const regListWithoutR11andR12 = 2
     if (viableRegs.length > regListWithoutR11andR12) {
       return viableRegs[0]
@@ -250,8 +248,6 @@ class WJSCCodeGenerator {
         this.outOfRegScope--
         return Register.r11
       }
-      // code is this.output.push(construct.singleDataTransfer(ARMOpcode.store, Register.r12, directive.immAddr(this.memIndex)))
-      // this.memIndex = this.memIndex + this.getRegSize(Register.r12)
     }
   }
 
@@ -287,6 +283,7 @@ class WJSCCodeGenerator {
     }
     return typeSize
   }
+  /* ------------------------------------------- */
 
   public genBinOp = (atx: WJSCExpr, regList: Register[]) => {
     const [head, next, ...tail] = regList
@@ -533,7 +530,6 @@ class WJSCCodeGenerator {
       result = this.data.concat('', this.output)
     }
 
-    // TODO: add msgLabels to errData, taking into account this.data.length. Then append to result
     return result.concat(this.postFunc)
   }
 
@@ -736,7 +732,6 @@ class WJSCCodeGenerator {
           this.pushCheck(Check.printRef)
       }
     }
-    // TODO printing of array and pairs
   }
 
   public printFromIdent = (atx: WJSCExpr) => {
@@ -773,7 +768,6 @@ class WJSCCodeGenerator {
 
     const label1 = `L${this.getLabelNo()}`
     const label2 = `L${this.getLabelNo()}`
-    // TODO change symbol table with scope
     // Jump to label1 if false
     this.output.push(construct.branch(label1, false, ARMCondition.equal))
     // True body
@@ -859,7 +853,6 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.ArrayElem: {
-        // TODO get declaration of parent and its parent's length
         const itemUsed = this.nextRegister([head, ...tail], true)
         let present: Register[] = []
         if ([head, ...tail].includes(itemUsed)) {
@@ -903,8 +896,6 @@ class WJSCCodeGenerator {
 
     const typeSize = getTypeSize(type)
     const sizeIsByte = typeSize === 1
-
-    // TODO add cases for pairs and arrays
 
     // Load rhs expression into 'head' register
     this.decStackSize -= typeSize
@@ -1124,26 +1115,6 @@ class WJSCCodeGenerator {
     }
   }
 
-  /*
-    public checkNullPointer = () => {
-      this.errorPresent = true
-      // Setting up the message if not already set up
-      if (this.findTrueMessageIndex(RuntimeError.nullDeref) < 0) {
-        this.stringDec(RuntimeError.nullDeref)
-      }
-      // check in instruction body itself
-      this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
-      // appending function to postFunc
-      if (!this.isInPostFunc(this.CHECK_NULL_POINTER)) {
-        this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
-          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-            `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-          construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
-          construct.pushPop(ARMOpcode.pop, [this.pc]))
-      }
-    }
-  */
   // Remember to have put the pair/ array into r0!
   public checkFreeNullPair = () => {
     this.errorPresent = true
@@ -1173,7 +1144,7 @@ class WJSCCodeGenerator {
         construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
-  // Remember to put the array to r0!
+
   public checkFreeNullArray = () => {
     this.errorPresent = true
     // Setting up the message if not already set up
