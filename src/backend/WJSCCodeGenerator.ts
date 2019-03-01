@@ -883,6 +883,8 @@ class WJSCCodeGenerator {
         this.checkArrayOutOfBounds()
         this.output.push(construct.arithmetic(ARMOpcode.add, head, head, directive.immNum(4)))
         if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
+          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next))
+          this.load(this.getRegSize(head), ARMOpcode.load, head, `[${head}]`, undefined, 'SB')
         } else {
           this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, false,
               ARMShiftname.logicalShiftLeft, directive.immNum(2)))

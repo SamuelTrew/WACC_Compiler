@@ -1,5 +1,5 @@
 
 begin
-  int[] a = [1] ;
+  char[] a = ['1'] ;
   println a[0]
 end
