@@ -102,6 +102,7 @@ export enum Check {
   printReadInt,
   printReadChar,
   printRef,
+  printNullRef,
 }
 
 type ARMAddress = ARMExpression | ARMAddressPreIndex | ARMAddressPostIndex
