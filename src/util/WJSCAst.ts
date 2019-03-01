@@ -76,6 +76,7 @@ interface WJSCArrayElem extends WJSCAst {
 
 interface WJSCPairElem extends WJSCAst {
   ident: string
+  expr: WJSCExpr
 }
 
 interface WJSCTerminal extends WJSCAst {
@@ -146,10 +147,6 @@ interface WJSCAssignLhs extends WJSCAst {
   pairElem: WJSCPairElem
   arrayElem: WJSCAst
   ident: string
-}
-
-interface WJSCPairElem extends  WJSCAst {
-  expr: WJSCExpr
 }
 
 interface WJSCExpr extends WJSCAst {
