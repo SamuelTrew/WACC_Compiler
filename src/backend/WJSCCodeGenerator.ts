@@ -11,13 +11,14 @@ import {
   WJSCFunction,
   WJSCParserRules,
   WJSCStatement,
+  WJSCIdentifier,
 } from '../util/WJSCAst'
 import {
   BaseType,
   getTypeSize,
   hasSameType,
   isArrayType,
-  isPairType
+  isPairType,
 } from '../util/WJSCType'
 import {
   ARMAddress,
@@ -187,15 +188,15 @@ class WJSCCodeGenerator {
 
   public printReference = () => {
     this.postFunc.push(directive.label(this.PRINT_REFERENCE),
-        construct.pushPop(ARMOpcode.push, [this.lr]),
-        construct.move(ARMOpcode.move, Register.r1, Register.r0),
-        construct.singleDataTransfer(ARMOpcode.load, Register.r0, `=msg_${this.msgCount}`),
-        construct.arithmetic(ARMOpcode.add, Register.r0, Register.r0, directive.immNum(4)),
-        construct.branch('printf', true),
-        construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
-        construct.branch('fflush', true),
-        construct.pushPop(ARMOpcode.pop, [this.pc]),
-        )
+      construct.pushPop(ARMOpcode.push, [this.lr]),
+      construct.move(ARMOpcode.move, Register.r1, Register.r0),
+      construct.singleDataTransfer(ARMOpcode.load, Register.r0, `=msg_${this.msgCount}`),
+      construct.arithmetic(ARMOpcode.add, Register.r0, Register.r0, directive.immNum(4)),
+      construct.branch('printf', true),
+      construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
+      construct.branch('fflush', true),
+      construct.pushPop(ARMOpcode.pop, [this.pc]),
+    )
   }
 
   public checkNullPointer = () => {
@@ -431,7 +432,7 @@ class WJSCCodeGenerator {
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, `[${itemUsed}]`))
   }
 
-  public genArrayElem = (atx: WJSCAst , list: Register[]) => {
+  public genArrayElem = (atx: WJSCAst, list: Register[]) => {
     const size = this.sizeGen(atx, false)
     const arrElem = atx.children[0] as WJSCArrayElem
     const dimensions = (arrElem).specificInd
@@ -774,13 +775,12 @@ class WJSCCodeGenerator {
     this.output.push(directive.label(`f_${atx.identifier}`),
       construct.pushPop(ARMOpcode.push, [this.lr]))
     this.switchToChildTable(atx.body.tableNumber)
-    // We now deal with the children
-    // TODO: paramlist is undefined, we are not handling the parameters at all
-    // this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize)
-    // this.output.push(`${atx.identifier}`)
-    // atx.paramList.forEach((param) => {
-    //   this.genExpr(param as WJSCExpr, regList)
-    // })
+    this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize)
+    console.log(atx.paramList.length)
+    let offsetctr = 0
+    atx.paramList.forEach((param) => {
+      this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += 4)
+    })
     this.genStatBlock(atx.body, regList)
     this.switchToParentTable()
     this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]),
@@ -947,7 +947,7 @@ class WJSCCodeGenerator {
           this.load(this.getRegSize(head), head, `[${head}]`, undefined, 'SB')
         } else {
           this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, false,
-              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
+            ARMShiftname.logicalShiftLeft, directive.immNum(2)))
           this.load(this.getRegSize(head), head, `[${head}]`)
         }
         break
@@ -1035,26 +1035,26 @@ class WJSCCodeGenerator {
     }
   }
 
-/*
-  public checkNullPointer = () => {
-    this.errorPresent = true
-    // Setting up the message if not already set up
-    if (this.findTrueMessageIndex(RuntimeError.nullDeref) < 0) {
-      this.stringDec(RuntimeError.nullDeref)
+  /*
+    public checkNullPointer = () => {
+      this.errorPresent = true
+      // Setting up the message if not already set up
+      if (this.findTrueMessageIndex(RuntimeError.nullDeref) < 0) {
+        this.stringDec(RuntimeError.nullDeref)
+      }
+      // check in instruction body itself
+      this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
+      // appending function to postFunc
+      if (!this.isInPostFunc(this.CHECK_NULL_POINTER)) {
+        this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
+          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+            `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+          construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
+          construct.pushPop(ARMOpcode.pop, [this.pc]))
+      }
     }
-    // check in instruction body itself
-    this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
-    // appending function to postFunc
-    if (!this.isInPostFunc(this.CHECK_NULL_POINTER)) {
-      this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
-        construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
-        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-          `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-        construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
-        construct.pushPop(ARMOpcode.pop, [this.pc]))
-    }
-  }
-*/
+  */
   // Remember to have put the pair/ array into r0!
   public checkFreeNullPair = () => {
     this.errorPresent = true
@@ -1067,21 +1067,21 @@ class WJSCCodeGenerator {
     // appending function to postFunc
     if (!this.isInPostFunc(this.CHECK_FREE_NULL_PAIR)) {
       this.postFunc = this.postFunc.concat(directive.label(this.CHECK_FREE_NULL_PAIR),
-          construct.pushPop(ARMOpcode.push, [this.lr]),
-          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-              `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-          construct.branch(this.THROW_RUNTIME_ERROR, false, ARMCondition.equal),
-          construct.pushPop(ARMOpcode.push, [Register.r0]),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0, `[${Register.r0}]`),
-          construct.branch('free', true),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0, `[${this.sp}]`),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-              `[${Register.r0}, ${directive.immNum(4)}]`),
-          construct.branch('free', true),
-          construct.pushPop(ARMOpcode.pop, [Register.r0]),
-          construct.branch('free', true),
-          construct.pushPop(ARMOpcode.pop, [this.pc]))
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+        construct.branch(this.THROW_RUNTIME_ERROR, false, ARMCondition.equal),
+        construct.pushPop(ARMOpcode.push, [Register.r0]),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0, `[${Register.r0}]`),
+        construct.branch('free', true),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0, `[${this.sp}]`),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `[${Register.r0}, ${directive.immNum(4)}]`),
+        construct.branch('free', true),
+        construct.pushPop(ARMOpcode.pop, [Register.r0]),
+        construct.branch('free', true),
+        construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
   // Remember to put the array to r0!
@@ -1096,13 +1096,13 @@ class WJSCCodeGenerator {
     // appending function to postFunc
     if (!this.isInPostFunc(this.CHECK_FREE_NULL_ARRAY)) {
       this.postFunc = this.postFunc.concat(directive.label(this.CHECK_FREE_NULL_ARRAY),
-          construct.pushPop(ARMOpcode.push, [this.lr]),
-          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-              `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-          construct.branch(this.THROW_RUNTIME_ERROR, false, ARMCondition.equal),
-          construct.branch('free', true),
-          construct.pushPop(ARMOpcode.pop, [this.pc]))
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+        construct.branch(this.THROW_RUNTIME_ERROR, false, ARMCondition.equal),
+        construct.branch('free', true),
+        construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
 

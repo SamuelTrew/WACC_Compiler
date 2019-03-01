@@ -707,6 +707,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     if (paramList) {
       const visitedParamList = this.visitParamList(paramList)
       this.pushChild(result, visitedParamList)
+      result.paramList = visitedParamList.children
+    } else {
+      result.paramList = []
     }
     const statements = this.visitStatement(ctx.statement())
     if (!this.containsNeverStatement(statements)) {
