@@ -1,0 +1,25 @@
+# simple scoping test
+
+# Output:
+# #empty#
+
+# Program:
+
+begin
+  int x = 0;
+  begin
+    int y = x;
+    begin
+      int z = 20 + x;
+      begin
+        int a = x * y * z;
+        begin
+          int b = a + 2;
+          println b;
+          skip
+        end
+      end
+    end
+  end
+end
+
