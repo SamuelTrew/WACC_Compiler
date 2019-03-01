@@ -62,6 +62,7 @@ class WJSCCodeGenerator {
   private labelCount = 0
   private totalStackSize = 0
   private decStackSize = 0
+  private spScopeOffset = 0
   private ltorgCheck = true
 
   // Print functions
@@ -416,12 +417,8 @@ class WJSCCodeGenerator {
         case BaseType.String:
           break
         default:
-          if (isArrayType(child.type)) {
-            // Array type
-            params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
-            this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
-          } else if (isPairType(child.type)) {
-            // Pair type
+          if (isArrayType(child.type) || isPairType(child.type)) {
+            // Array and pair type
             params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
             this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
           }
@@ -563,6 +560,7 @@ class WJSCCodeGenerator {
       }
     })
     this.decStackSize = this.totalStackSize
+    this.symbolTable.setSpOffset(prevStackSize + this.totalStackSize)
     const operand = `#${this.totalStackSize}`
     // Decrement sp
     if (this.totalStackSize) {
@@ -625,8 +623,8 @@ class WJSCCodeGenerator {
         this.pushCheck(Check.printNewLn)
         break
       case WJSCParserRules.Scope:
-        this.switchToChildTable(atx.tableNumber)
-        this.traverseStat(atx.stat, reglist)
+        this.switchToChildTable(atx.stat.tableNumber)
+        this.genStatBlock(atx.stat, reglist)
         this.switchToParentTable()
         break
       case WJSCParserRules.Read:
@@ -727,11 +725,16 @@ class WJSCCodeGenerator {
     // Jump to label1 if false
     this.output.push(construct.branch(label1, false, ARMCondition.equal))
     // True body
+    this.switchToChildTable(atx.trueBranch.tableNumber)
     this.genStatBlock(atx.trueBranch, regList)
+    this.switchToParentTable()
+
     this.output.push(construct.branch(label2, false))
     this.output.push(directive.label(label1))
     // False body
+    this.switchToChildTable(atx.falseBranch.tableNumber)
     this.genStatBlock(atx.falseBranch, regList)
+    this.switchToParentTable()
     this.output.push(directive.label(label2))
   }
 
@@ -743,7 +746,10 @@ class WJSCCodeGenerator {
     this.output.push(construct.branch(label1, false))
     this.output.push(directive.label(label2))
     // True branch
+    this.switchToChildTable(atx.trueBranch.tableNumber)
     this.genStatBlock(atx.trueBranch, regList)
+    this.switchToParentTable()
+
     this.output.push(directive.label(label1))
 
     // Check condition
@@ -792,9 +798,10 @@ class WJSCCodeGenerator {
     switch (atx.parserRule) {
       case WJSCParserRules.Identifier: {
         const sizeIsByte = getTypeSize(atx.type) === 1
+        const id = atx.token
+        const offset = this.symbolTable.getAssignAddr(id, atx.line)
 
-        // TODO get address of ident and store it there instead of sp
-        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}${offset ? `, #${offset}` : ''}]`, undefined, undefined, sizeIsByte))
         break
       }
       case WJSCParserRules.ArrayElem: {

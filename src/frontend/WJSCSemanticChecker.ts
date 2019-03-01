@@ -440,7 +440,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(visitedRhs, SemError.Mismatch, visitedLhsType)
     }
     /* Insert type into symbol table */
-    this.symbolTable.insertSymbol(visitedIdentifier.value, visitedLhsType)
+    this.symbolTable.insertSymbol(visitedIdentifier.value, visitedLhsType, result.line)
     result.type = visitedLhsType
     result.identifier = visitedIdentifier.value
     result.rhs = visitedRhs
@@ -724,6 +724,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   public visitFuncDec = (ctx: FuncContext): void => {
+    const result = this.initWJSCAst(ctx, WJSCParserRules.Function)
     const visitedType = this.visitType(ctx.type()).type
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     const paramList = ctx.paramList()
@@ -735,14 +736,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else {
       paramTypes = []
     }
-    this.symbolTable.insertSymbol(ident.token, visitedType, paramTypes)
+    this.symbolTable.insertSymbol(ident.token, visitedType, result.line, paramTypes)
     this.symbolTable = this.symbolTable.exitScope()
     /* Double insertion check */
     const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
     if (possibleEntry && possibleEntry.params) {
       this.errorLog.semErr(ident, SemError.DoubleDeclare)
     } else {
-      this.symbolTable.insertSymbol(ident.token, visitedType, paramTypes)
+      this.symbolTable.insertSymbol(ident.token, visitedType, result.line, paramTypes)
     }
   }
 
@@ -856,7 +857,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const visitedIdent = this.visitTerminal(ctx.IDENTIFIER())
     result.identifier = visitedIdent.value
     result.type = this.visitType(ctx.type()).type
-    this.symbolTable.insertSymbol(result.identifier, result.type)
+    this.symbolTable.insertSymbol(result.identifier, result.type, result.line)
     return result
   }
 
@@ -990,8 +991,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
           this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
-          result.tableNumber = this.tableCounter
           const visitedStatement = this.visitStatement(stat[0])
+          visitedStatement.tableNumber = this.tableCounter
           this.pushChild(result, visitedStatement)
           this.symbolTable = this.symbolTable.exitScope()
           result.stat = visitedStatement
@@ -1505,7 +1506,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     if (this.symbolTable.getLocalEntry(visitedIdent.value)) {
       this.errorLog.semErr(visitedIdent, SemError.DoubleDeclare)
     }
-    this.symbolTable.insertSymbol(result.identifier, result.type)
+    this.symbolTable.insertSymbol(result.identifier, result.type, result.line)
     return result
   }
 

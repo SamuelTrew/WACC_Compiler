@@ -10,6 +10,7 @@ export class WJSCSymbolTable {
   private readonly errorLog: WJSCErrorLog
   private functionName?: string
   private parentLevel?: WJSCSymbolTable
+  private spOffset?: number
 
   constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, isInFunction: boolean, errorLog: WJSCErrorLog) {
     this.tableNumber = scopeLevel
@@ -25,6 +26,10 @@ export class WJSCSymbolTable {
   public getParentTable = (): WJSCSymbolTable | undefined => this.parentLevel
 
   public getChildrenTables = (): WJSCSymbolTable[] => this.childrenTables
+
+  public getSpOffset = (): number | undefined => this.spOffset
+
+  public setSpOffset = (offset: number) => this.spOffset = offset
 
   // Return if this table is inside a function declaration
   public inFunction = (): boolean => this.isInFunction
@@ -51,7 +56,10 @@ export class WJSCSymbolTable {
   public exitScope = (): WJSCSymbolTable => (this.parentLevel || (this.errorLog.runtimeError(new Error('Cannot exit from top level scope')), this))
 
   // Add an entry to the symbol table with optional function params
-  public insertSymbol = (identifier: string, type: TypeName, params?: TypeName[]) => this.symbolTable.set(identifier, { type, params })
+  public insertSymbol = (identifier: string, type: TypeName, lineNo: number, params?: TypeName[]) => {
+    const table = this
+    this.symbolTable.set(identifier, { type, table, lineNo, params })
+  }
 
   // Return the type of entry with given identifier if found
   public lookup = (identifier: string): TypeName => (this.getGlobalEntry(identifier) || { type: undefined }).type
@@ -101,6 +109,26 @@ export class WJSCSymbolTable {
     return -10000
   }
 
+  // Get stack pointer offset of id
+  public getAssignAddr(id: string, lineNo: number): number {
+    let entry = this.getGlobalEntry(id)
+
+    if (entry) {
+      if (entry.lineNo > lineNo && this.parentLevel) {
+        entry = this.parentLevel.getGlobalEntry(id)
+      }
+      if (entry) {
+        const TableDiff = (this.spOffset || 0) - (entry.table.spOffset || 0)
+        if (entry.spOffset) {
+          return entry.spOffset + TableDiff
+        } else if (entry.spOffset === 0) {
+          return TableDiff
+        }
+      }
+    }
+    return -10000
+  }
+
   public setMsgNum(id: string, msgNum: number) {
     const entry = this.getGlobalEntry(id)
     if (entry) {
@@ -133,8 +161,11 @@ export class WJSCSymbolTable {
 
 export interface WJSCSymbolTableValue {
   type: TypeName
-  spOffset?: number
+  table: WJSCSymbolTable
+  lineNo: number
   params?: TypeName[]
+  tableOffset?: number
   messageName?: string
   msgNumber?: number
+  spOffset?: number
 }
