@@ -15,7 +15,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType, PairType } from '../util/WJSCType'
+import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -831,18 +831,31 @@ class WJSCCodeGenerator {
       }
       case WJSCParserRules.ArrayElem: {
         // TODO get declaration of parent and its parent's length
+        const itemUsed = this.nextRegister([head, ...tail])
+        let present: Register[] = []
+        if ([head, ...tail].includes(itemUsed)) {
+          present = tail
+        }
+        const nextItem = this.nextRegister(present)
+        let future: Register[] = []
+        if (present.includes(nextItem)) {
+          const [heads, ...tails] = present
+          future = tails
+        }
+        const futureItem = this.nextRegister(future)
         this.genArrayElem(atx, [...tail])
         this.checkArrayOutOfBounds()
-        this.output.push(construct.arithmetic(ARMOpcode.add, head, head, directive.immNum(4)))
-        /* :(
+        this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, directive.immNum(4)))
         if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
-          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next))
-          this.load(this.getRegSize(head), head, `[${head}]`, undefined, 'SB')
+          this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, futureItem))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
+              `[${nextItem}]`, undefined, undefined, true))
         } else {
-          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, false,
+          this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, futureItem, undefined, false,
               ARMShiftname.logicalShiftLeft, directive.immNum(2)))
-          this.load(this.getRegSize(head), head, `[${head}]`)
-        }*/
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
+              `[${nextItem}]`))
+        }
         break
       }
       case WJSCParserRules.PairElem: {
