@@ -34,11 +34,10 @@ class WJSCCodeGenerator {
   public symbolTable: WJSCSymbolTable
   public output: string[] = []
   public data: string[] = [directive.data]
-  public errData: string[] = []
   public postFunc: string[] = []
   public errorPresent: boolean = false
 
-  /* uwuwuwuwuwuwuwu MEMORY MANAGEMENT uwuwuwuwuwuwuwu */
+  /* ---------------- MEMORY MANAGEMENT -------------- */
   public memIndex: number = 0
   public registerContentSize = new Map([
     [Register.r0, 0], [Register.r1, 0], [Register.r2, 0],
@@ -85,9 +84,8 @@ class WJSCCodeGenerator {
   private printBoolTemp = undefined
   private checkingArray: number[] = []
 
-  /* owowowowowowowowowowowowowowowowowowowowowowowowo */
+  /* ---------------------------------------------- */
 
-  // TODO: Gen array elem for pair and arrays
   constructor(symbolTable: WJSCSymbolTable) {
     this.symbolTable = symbolTable
   }
@@ -223,6 +221,7 @@ class WJSCCodeGenerator {
       construct.pushPop(ARMOpcode.pop, [this.pc]))
   }
   /* ------------------------------------------- */
+  /* -----------REGISTER MANAGEMENT------------- */
 
   public setRegSize = (reg: Register, size: number) => {
     this.registerContentSize.set(reg, size)
@@ -292,6 +291,7 @@ class WJSCCodeGenerator {
     }
     return typeSize
   }
+  /* ------------------------------------------- */
 
   // Generates code for Binary Operators
   public genBinOp = (atx: WJSCExpr, regList: Register[]) => {
@@ -542,7 +542,6 @@ class WJSCCodeGenerator {
       result = this.data.concat('', this.output)
     }
 
-    // TODO: add msgLabels to errData, taking into account this.data.length. Then append to result
     return result.concat(this.postFunc)
   }
 
@@ -744,7 +743,6 @@ class WJSCCodeGenerator {
           this.pushCheck(Check.printRef)
       }
     }
-    // TODO printing of array and pairs
   }
 
   public printFromIdent = (atx: WJSCExpr) => {
@@ -781,7 +779,6 @@ class WJSCCodeGenerator {
 
     const label1 = `L${this.getLabelNo()}`
     const label2 = `L${this.getLabelNo()}`
-    // TODO change symbol table with scope
     // Jump to label1 if false
     this.output.push(construct.branch(label1, false, ARMCondition.equal))
     // True body
@@ -870,7 +867,6 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.ArrayElem: {
-        // TODO get declaration of parent and its parent's length
         const itemUsed = this.nextRegister([head, ...tail], true)
         let present: Register[] = []
         if ([head, ...tail].includes(itemUsed)) {
@@ -914,8 +910,6 @@ class WJSCCodeGenerator {
 
     const typeSize = getTypeSize(type)
     const sizeIsByte = typeSize === 1
-
-    // TODO add cases for pairs and arrays
 
     // Load rhs expression into 'head' register
     this.decStackSize -= typeSize
@@ -977,18 +971,19 @@ class WJSCCodeGenerator {
         const argv = (atx.argList || [])
         const argc = argv.length
         let offsetctr = 0
+        const oldOffset = this.spOffset
         /* Setup the stack */
         argv.reverse().forEach((arg: WJSCExpr) => {
           this.genExpr(arg, regList)
           const argsize = getTypeSize(arg.type)
           offsetctr += argsize
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-argsize)], undefined, undefined, argsize === 1, undefined, true))
-          this.spOffset -= argsize
+          this.spOffset += argsize
         })
         this.output.push(construct.branch(`f_${atx.ident}`, true))
         if (argc > 0) {
           this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(offsetctr)))
-          this.spOffset = 0
+          this.spOffset = oldOffset
         }
         this.move(this.getRegSize(Register.r0), head, Register.r0)
     }
@@ -1044,6 +1039,7 @@ class WJSCCodeGenerator {
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
         const spOffset = this.symbolTable.getVarMemAddr(atx.value, this.spOffset)
+        console.log('spoffset: ' + spOffset + ', curr: ' + this.spOffset)
         const offsetString = spOffset ? `, #${spOffset}` : ''
         const identType = this.symbolTable.lookup(atx.value)
         if (identType === BaseType.Character || identType === BaseType.Boolean) {
@@ -1167,7 +1163,7 @@ class WJSCCodeGenerator {
         construct.pushPop(ARMOpcode.pop, [this.pc]))
     }
   }
-  // Remember to put the array to r0!
+
   public checkFreeNullArray = () => {
     this.errorPresent = true
     // Setting up the message if not already set up
@@ -1256,6 +1252,7 @@ class WJSCCodeGenerator {
 
   private switchToParentTable = () => {
     this.symbolTable = this.symbolTable.exitScope()
+    this.spOffset = this.symbolTable.getSpOffset()
   }
 }
 
