@@ -440,31 +440,6 @@ class WJSCCodeGenerator {
       future = tail
     }
     const nextItem = this.nextRegister(future, false)
-    /* :(
-        this.output.push(construct.arithmetic(ARMOpcode.add, head, head, directive.immNum(4)))
-        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
-          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next))
-          this.load(this.getRegSize(head), head, `[${head}]`, undefined, 'SB')
-        } else {
-          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, false,
-            ARMShiftname.logicalShiftLeft, directive.immNum(2)))
-          this.load(this.getRegSize(head), head, `[${head}]`)
-        }
-    }*/
-
-    /*:)
-            this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, directive.immNum(4)))
-        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
-          this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, futureItem))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
-              `[${nextItem}]`, undefined, undefined, true))
-        } else {
-          this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, futureItem, undefined, false,
-              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
-              `[${nextItem}]`))
-        }
-     */
     this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident, this.spOffset))))
     dimensions.forEach((currDim, index) => {
       // index * size)
@@ -475,20 +450,11 @@ class WJSCCodeGenerator {
       this.move(this.getRegSize(itemUsed), Register.r1, itemUsed)
       this.checkArrayOutOfBounds()
       this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, directive.immNum(4)))
-      if (isFromExpr) {
-        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
-          this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem))
-        } else {
-          this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem, undefined, false,
-              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
-        }
+      if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
+        this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem))
       } else {
-        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
-          this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem))
-        } else {
-          this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem, undefined, false,
-              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
-        }
+        this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem, undefined, false,
+            ARMShiftname.logicalShiftLeft, directive.immNum(2)))
       }
     })
     if (isFromExpr) {
@@ -497,7 +463,6 @@ class WJSCCodeGenerator {
       } else {
         this.load(this.getRegSize(itemUsed), itemUsed, `[${itemUsed}]`)
       }
-    } else {
     }
   }
 
