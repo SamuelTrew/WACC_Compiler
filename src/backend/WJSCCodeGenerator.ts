@@ -511,6 +511,7 @@ class WJSCCodeGenerator {
         break
       case Check.printRef:
         this.printReference()
+        this.stringDec('%p\\0')
         break
     }
   }

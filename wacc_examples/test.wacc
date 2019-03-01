@@ -1,4 +1,4 @@
 begin
-  int[] a = [43, 2, 18, 1] ;
-  println a[0]
+  int[] a = [43, 2, 18, 1];
+  println a
 end
