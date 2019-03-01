@@ -12,7 +12,13 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType } from '../util/WJSCType'
+import {
+  BaseType,
+  getTypeSize,
+  hasSameType,
+  isArrayType,
+  isPairType
+} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -352,7 +358,8 @@ class WJSCCodeGenerator {
         this.output.push(construct.logical(ARMOpcode.exclusiveOr, head, head, '#1'))
         break
       case '-':
-        this.output.push(construct.arithmetic(ARMOpcode.reverseSubtract, head, head, `#0`))
+        this.output.push(construct.arithmetic(ARMOpcode.reverseSubtract, head, head, `#0`, undefined, true))
+        this.checkOverflow(ARMCondition.overflow)
         break
       case 'len':
         let offset: any = 0
