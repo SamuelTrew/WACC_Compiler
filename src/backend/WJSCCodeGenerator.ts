@@ -192,13 +192,15 @@ class WJSCCodeGenerator {
       this.stringDec(RuntimeError.nullDeref)
     }
     // appending function to postFunc
-    this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
-      construct.pushPop(ARMOpcode.push, [this.lr]),
-      construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
-      construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-        `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-      construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
-      construct.pushPop(ARMOpcode.pop, [this.pc]))
+    if (!this.postFunc.includes(this.CHECK_NULL_POINTER)) {
+      this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0,
+          `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
+        construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
+        construct.pushPop(ARMOpcode.pop, [this.pc]))
+    }
   }
   /* ------------------------------------------- */
 
@@ -498,7 +500,6 @@ class WJSCCodeGenerator {
     this.checkingArray.forEach((item) => {
       this.enumSwitch(item)
     })
-    console.log(this.checkingArray)
   }
 
   public enumSwitch = (check: Check) => {
@@ -1075,7 +1076,7 @@ class WJSCCodeGenerator {
   // Generate errors with appropriate message
   public throwError = () => {
     // Setting up the final message
-    // I don't think that you need this :       this.stringDec('%.*s\\0')
+    this.stringDec('%.*s\\0')
     // Setting up the error message
     this.postFunc = this.postFunc.concat(directive.label(this.THROW_RUNTIME_ERROR),
       construct.branch('p_print_string', true),
