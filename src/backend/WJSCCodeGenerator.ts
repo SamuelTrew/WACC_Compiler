@@ -12,7 +12,8 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType, } from '../util/WJSCType'
+import { BaseType,
+  getTypeSize, hasSameType, isArrayType, isPairType } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -64,7 +65,7 @@ class WJSCCodeGenerator {
   private readonly PRINT_NEW_LINE = 'p_print_ln'
   private readonly PRINT_READ_INT = 'p_read_int'
   private readonly PRINT_READ_CHAR = 'p_read_char'
-
+  private readonly PRINT_REFERENCE = 'p_print_reference'
   // Error functions
   private readonly THROW_RUNTIME_ERROR = 'p_throw_runtime_error'
   private readonly CHECK_DIVIDE_BY_ZERO = 'p_check_divide_by_zero'
@@ -170,6 +171,19 @@ class WJSCCodeGenerator {
       construct.branch(`scanf`, true),
       construct.pushPop(ARMOpcode.pop, [this.pc]),
     )
+  }
+
+  public printReference = () => {
+    this.postFunc.push(directive.label(this.PRINT_REFERENCE),
+        construct.pushPop(ARMOpcode.push, [this.lr]),
+        construct.move(ARMOpcode.move, Register.r1, Register.r0),
+        construct.singleDataTransfer(ARMOpcode.load, Register.r0, `=msg_${this.msgCount}`),
+        construct.arithmetic(ARMOpcode.add, Register.r0, Register.r0, directive.immNum(4)),
+        construct.branch('printf', true),
+        construct.move(ARMOpcode.move, Register.r0, directive.immNum(0)),
+        construct.branch('fflush', true),
+        construct.pushPop(ARMOpcode.pop, [this.pc]),
+        )
   }
   /* ------------------------------------------- */
 
@@ -377,9 +391,11 @@ class WJSCCodeGenerator {
           if (isArrayType(child.type)) {
             // Array type
             params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
-            this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params, undefined, undefined, true))
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
           } else if (isPairType(child.type)) {
             // Pair type
+            params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
+            this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
           }
           break
       }
@@ -492,6 +508,9 @@ class WJSCCodeGenerator {
         break
       case Check.printString:
         this.printString()
+        break
+      case Check.printRef:
+        this.printReference()
         break
     }
   }
@@ -625,6 +644,11 @@ class WJSCCodeGenerator {
         case BaseType.Character:
           this.output.push(construct.branch(`putchar`, true))
           break
+        default:
+          if (isArrayType(atx.type) || isPairType(atx.type)) {
+            this.output.push(construct.branch(this.PRINT_REFERENCE, true))
+            this.pushCheck(Check.printRef)
+          }
       }
     }
     // TODO printing of array and pairs
@@ -649,6 +673,11 @@ class WJSCCodeGenerator {
         this.printBoolTemp = atx.value
         this.pushCheck(Check.printBool)
         break
+      default:
+        if (isArrayType(type) || isPairType(type)) {
+          this.output.push(construct.branch(this.PRINT_REFERENCE, true))
+          this.pushCheck(Check.printRef)
+        }
     }
   }
 
