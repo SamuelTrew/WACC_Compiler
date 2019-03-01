@@ -43,6 +43,8 @@ enum WJSCParserRules {
   Newpair = 'new pair',
   PairElem = 'pair elem',
   FunctionCall = 'function call',
+  FirstElem = 'first elem',
+  SecondElem = 'second elem',
 }
 
 enum WJSCStandardLibrary {
@@ -131,9 +133,13 @@ interface WJSCAssignRhs extends WJSCAst {
   expr: WJSCExpr
   expr2: WJSCExpr
   arrayLiter: WJSCAst
-  pairElem: WJSCAst
+  pairElem: WJSCPairElem
   ident: string
   argList: WJSCExpr[]
+}
+
+interface WJSCPairElem extends  WJSCAst {
+  expr: WJSCExpr
 }
 
 interface WJSCExpr extends WJSCAst {
@@ -172,6 +178,7 @@ export {
   WJSCDeclare,
   WJSCOperators,
   WJSCParam,
+  WJSCPairElem,
   WJSCChecker,
   WJSCExpr,
   WJSCAssignRhs,

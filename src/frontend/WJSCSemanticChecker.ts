@@ -43,7 +43,7 @@ import {
   WJSCExpr,
   WJSCFunction,
   WJSCIdentifier,
-  WJSCOperators,
+  WJSCOperators, WJSCPairElem,
   WJSCParam,
   WJSCParserRules,
   WJSCStatement,
@@ -798,8 +798,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     return result
   }
 
-  public visitPairElement = (ctx: PairElementContext): WJSCAst => {
-    const result = this.initWJSCAst(ctx, WJSCParserRules.Pair)
+  public visitPairElement = (ctx: PairElementContext): WJSCPairElem => {
+    const result = this.initWJSCAst(ctx, WJSCParserRules.PairElem) as WJSCPairElem
     const order = ctx.FIRST() || ctx.SECOND()
     const expression = ctx.expression()
     if (!expression || !order) {
@@ -807,12 +807,15 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else {
       result.children.push(this.visitTerminal(order))
       const visitedExpr = this.visitExpression(expression)
+      result.expr = visitedExpr
       /* Expression must be of type 'pair' */
       if (!isPairType(visitedExpr.type)) {
         this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Pair)
       } else if (ctx.FIRST()) {
+        result.parserRule = WJSCParserRules.FirstElem
         result.type = getFstInPair(visitedExpr.type)
       } else if (ctx.SECOND()) {
+        result.parserRule = WJSCParserRules.SecondElem
         result.type = getSndInPair(visitedExpr.type)
       }
       result.children.push(visitedExpr)

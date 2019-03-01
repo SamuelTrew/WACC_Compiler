@@ -9,9 +9,9 @@ import {
   WJSCDeclare,
   WJSCExpr,
   WJSCFunction,
+  WJSCIdentifier,
   WJSCParserRules,
   WJSCStatement,
-  WJSCIdentifier,
 } from '../util/WJSCAst'
 import {
   BaseType,
@@ -875,12 +875,18 @@ class WJSCCodeGenerator {
           construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
         break
       case WJSCParserRules.PairElem:
-        // this is code this.load(this.getRegSize(head), head, `[${this.sp}, #${this.totalStackSize }]`)
+        const pairElem = atx.pairElem
+        this.genExpr(pairElem.expr, regList)
+
         this.move(this.getRegSize(this.resultReg), this.resultReg, head)
         this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
         this.pushCheck(Check.printNullRef)
-        // this is code this.load(this.getRegSize(head), head, `[${this.sp}, #${atx.pointer}]`)
-        //   this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
+        if (pairElem.parserRule === WJSCParserRules.FirstElem) {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
+        } else {
+          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}, #4]`))
+        }
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
         break
       case WJSCParserRules.FunctionCall:
         /* Determine the number of arguments required for the function call */
@@ -1024,8 +1030,7 @@ class WJSCCodeGenerator {
     }
     // check in instruction body itself
     this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, condition))
-    // TODO: this is not meant to be resultReg but idk where to get the head of the tail from here
-    // this.output.push(construct.pushPop(ARMOpcode.pop, [this.resultReg]))
+
     // appending function to postFunc
     if (!this.isInPostFunc(this.THROW_OVERFLOW_ERROR)) {
       this.postFunc.push(directive.label(this.THROW_OVERFLOW_ERROR),
