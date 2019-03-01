@@ -377,10 +377,9 @@ class WJSCCodeGenerator {
     }
   }
 
-
   // Generates code for unary operators
   public genUnOp = (atx: WJSCExpr, regList: Register[]) => {
-    const [head, _] = regList
+    const [head] = regList
     this.genExpr(atx.expr1, regList)
     switch (atx.operator.token) {
       case '!':
@@ -391,12 +390,6 @@ class WJSCCodeGenerator {
         this.checkOverflow(ARMCondition.overflow)
         break
       case 'len':
-        let offset: any = 0
-        if (isArrayType(atx.expr1.type)) {
-          offset = this.symbolTable.getVarMemAddr(atx.expr1.token, this.spOffset)
-        } else if (hasSameType(atx.expr1.type, BaseType.String)) {
-          offset = `=msg_${this.symbolTable.getMsgNum(atx.value)}`
-        }
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
         break
       case 'ord':
@@ -418,16 +411,10 @@ class WJSCCodeGenerator {
                                       construct.move(ARMOpcode.move, itemUsed, Register.r0)])
     let present: Register[] = []
     if (list.includes(itemUsed)) {
-      const [head, ...tail] = list
-      present = tail
+      present = list.slice(1)
     }
     // loading in elements
     const nextItem = this.nextRegister(present, false)
-    let future: Register[] = []
-    if (present.includes(nextItem)) {
-      const [head, ...tail] = present
-      future = tail
-    }
     children.forEach((child, index) => {
       this.genExpr(child as WJSCExpr, present)
       // Then we need to store the values
@@ -461,14 +448,12 @@ class WJSCCodeGenerator {
 
   // Generates code for array elems
   public genArrayElem = (atx: WJSCAst, list: Register[], isFromExpr: boolean) => {
-    const size = this.sizeGen(atx, false)
     const arrElem = atx.children[0] as WJSCArrayElem
     const dimensions = (arrElem).specificInd
     const itemUsed = this.nextRegister(list, false)
     let future: Register[] = []
     if (list.includes(itemUsed)) {
-      const [head, ...tail] = list
-      future = tail
+      future = list.slice(1)
     }
     const nextItem = this.nextRegister(future, false)
     this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident, this.spOffset))))
@@ -605,6 +590,7 @@ class WJSCCodeGenerator {
     const stackOffsets: string[] = Array(numStackOffsets).fill('#' + this.MAX_SP_OFFSET)
     stackOffsets[numStackOffsets - 1] = '#' + thisStackSize % this.MAX_SP_OFFSET
     // Decrement sp
+    // tslint:disable-next-line
     if (thisStackSize) {
       stackOffsets.forEach((operand) => {
         this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
@@ -614,6 +600,7 @@ class WJSCCodeGenerator {
     this.traverseStat(statements, regList)
 
     // Increment sp
+    // tslint:disable-next-line
     if (thisStackSize) {
       stackOffsets.forEach((operand) => {
         this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
@@ -873,11 +860,6 @@ class WJSCCodeGenerator {
           present = tail
         }
         const nextItem = this.nextRegister(present, true)
-        let future: Register[] = []
-        if (present.includes(nextItem)) {
-          const [_, ...tails] = present
-          future = tails
-        }
         this.genArrayElem(atx, [...tail], false)
         if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
@@ -889,7 +871,7 @@ class WJSCCodeGenerator {
         break
       }
       case WJSCParserRules.PairElem: {
-        const [next, ..._] = tail
+        const [next] = tail
         this.genPairElem(atx.pairElem, tail)
         if (atx.pairElem.type === BaseType.Boolean || atx.pairElem.type === BaseType.Character) {
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${next}]`, undefined, undefined, true))
@@ -973,6 +955,7 @@ class WJSCCodeGenerator {
         let offsetctr = 0
         const oldOffset = this.spOffset
         /* Setup the stack */
+        // tslint:disable-next-line
         argv.reverse().forEach((arg: WJSCExpr) => {
           this.genExpr(arg, regList)
           const argsize = getTypeSize(arg.type)
@@ -1005,7 +988,7 @@ class WJSCCodeGenerator {
 
   // Generates code for Expressions
   public genExpr = (atx: WJSCExpr, regList: Register[], set: boolean = false) => {
-    const [head, _] = regList
+    const [head] = regList
     let value = atx.value
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
@@ -1039,7 +1022,6 @@ class WJSCCodeGenerator {
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
         const spOffset = this.symbolTable.getVarMemAddr(atx.value, this.spOffset)
-        console.log('spoffset: ' + spOffset + ', curr: ' + this.spOffset)
         const offsetString = spOffset ? `, #${spOffset}` : ''
         const identType = this.symbolTable.lookup(atx.value)
         if (identType === BaseType.Character || identType === BaseType.Boolean) {

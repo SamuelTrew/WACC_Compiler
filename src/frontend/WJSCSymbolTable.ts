@@ -87,7 +87,6 @@ export class WJSCSymbolTable {
 
   // Store offset of variable from stack base
   public setVarMemAddr(id: string, offset: number) {
-    console.log(`id: ${id}, offset: ${offset}, symbtab offset: ${this.spOffset}`)
     const entry = this.getGlobalEntry(id)
     if (entry) {
       entry.spOffset = (this.getSpOffset() || 0) - offset
