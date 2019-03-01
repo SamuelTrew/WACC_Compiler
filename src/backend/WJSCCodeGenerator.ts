@@ -626,6 +626,7 @@ class WJSCCodeGenerator {
         this.output.push(construct.branch('exit', true))
         break
       case WJSCParserRules.Declare:
+        this.output.push()
         this.genDeclare(atx.declaration, reglist)
         break
       case WJSCParserRules.Assignment:
@@ -731,10 +732,8 @@ class WJSCCodeGenerator {
           this.output.push(construct.branch(`putchar`, true))
           break
         default:
-          if (isArrayType(atx.type) || isPairType(atx.type)) {
-            this.output.push(construct.branch(this.PRINT_REFERENCE, true))
-            this.pushCheck(Check.printRef)
-          }
+          this.output.push(construct.branch(this.PRINT_REFERENCE, true))
+          this.pushCheck(Check.printRef)
       }
     }
     // TODO printing of array and pairs
