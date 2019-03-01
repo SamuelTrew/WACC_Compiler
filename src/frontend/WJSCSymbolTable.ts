@@ -100,6 +100,27 @@ export class WJSCSymbolTable {
     return -10000
   }
 
+  public setMsgNum(id: string, msgNum: number) {
+    const entry = this.getGlobalEntry(id)
+    if (entry) {
+      entry.msgNumber = msgNum
+    } else {
+      console.log(`Can't set message number`)
+    }
+  }
+
+  public getMsgNum(id: string): number {
+    const entry = this.getGlobalEntry(id)
+    if (entry) {
+      if (entry.msgNumber) {
+        return entry.msgNumber
+      } else if (entry.msgNumber === 0) {
+        return 0
+      }
+    }
+    return -10000
+  }
+
   // Decircularize the symbol table for printing
   public clearParentDependencies = () => {
     this.parentLevel = undefined
@@ -114,4 +135,5 @@ export interface WJSCSymbolTableValue {
   spOffset?: number
   params?: TypeName[]
   messageName?: string
+  msgNumber?: number
 }

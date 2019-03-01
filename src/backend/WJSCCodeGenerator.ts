@@ -12,12 +12,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType,
-  getTypeSize,
-  hasSameType,
-  isArrayType,
-  isPairType,
-} from '../util/WJSCType'
+import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType, } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -203,9 +198,9 @@ class WJSCCodeGenerator {
     }
   }
 
-  public move = (size: number, opcode: ARMOpcode, rd: Register, operand: ARMOperand, condition?: ARMCondition) => {
+  public move = (size: number, rd: Register, operand: ARMOperand, condition?: ARMCondition) => {
     this.setRegSize(rd, size)
-    this.output.push(construct.move(opcode, rd, operand, condition))
+    this.output.push(construct.move(ARMOpcode.move, rd, operand, condition))
   }
 
   // load
@@ -250,16 +245,16 @@ class WJSCCodeGenerator {
         this.checkOverflow(ARMCondition.nequal)
         break
       case '/':
-        this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
-        this.move(getTypeSize(atx.type), ARMOpcode.move, Register.r1, next)
+        this.move(getTypeSize(atx.type), this.resultReg, head)
+        this.move(getTypeSize(atx.type), Register.r1, next)
         this.checkDivByZero(false)
-        this.move(getTypeSize(atx.type), ARMOpcode.move, head, this.resultReg)
+        this.move(getTypeSize(atx.type), head, this.resultReg)
         break
       case '%':
-        this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
-        this.move(getTypeSize(atx.type), ARMOpcode.move, Register.r1, next)
+        this.move(getTypeSize(atx.type), this.resultReg, head)
+        this.move(getTypeSize(atx.type), Register.r1, next)
         this.checkDivByZero(true)
-        this.move(getTypeSize(atx.type), ARMOpcode.move, head, Register.r1)
+        this.move(getTypeSize(atx.type), head, Register.r1)
         break
       case '+':
         this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, true))
@@ -316,25 +311,28 @@ class WJSCCodeGenerator {
 
   public genUnOp = (atx: WJSCExpr, regList: Register[]) => {
     const [head, next] = regList
+    this.genExpr(atx.expr1, regList)
     switch (atx.operator.token) {
       case '!':
-        // code HI : this.output.push(construct.branch(`p_print_bool`, true))
-        // this.printBoolCheck = true
-        // this.printLine()
+        this.output.push(construct.logical(ARMOpcode.exclusiveOr, head, head, '#1'))
         break
       case '-':
         this.output.push(construct.arithmetic(ARMOpcode.reverseSubtract, head, head, `#0`))
         break
       case 'len':
-        this.symbolTable.lookup(atx.value)
-        // TODO: divide the pointer count by 4
+        let offset: any = 0
+        if (isArrayType(atx.expr1.type)) {
+          offset = this.symbolTable.getVarMemAddr(atx.expr1.token)
+        } else if (hasSameType(atx.expr1.type, BaseType.String)) {
+          offset = `=msg_${this.symbolTable.getMsgNum(atx.value)}`
+        }
+        this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
         break
       case 'ord':
         break
       case 'chr':
         break
     }
-    this.genExpr(atx.expr1, regList)
   }
 
   // For genArray Literal
@@ -410,8 +408,8 @@ class WJSCCodeGenerator {
       this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(size)))
       this.genExpr(currDim, future)
       this.load(this.getRegSize(itemUsed), ARMOpcode.load, itemUsed, `[${itemUsed}]`)
-      this.move(this.getRegSize(nextItem), ARMOpcode.move, Register.r0, nextItem)
-      this.move(this.getRegSize(itemUsed), ARMOpcode.move, Register.r1, itemUsed)
+      this.move(this.getRegSize(nextItem), Register.r0, nextItem)
+      this.move(this.getRegSize(itemUsed), Register.r1, itemUsed)
     })
   }
 
@@ -579,7 +577,7 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.Read:
         this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, '#0'))
-        this.move(this.getRegSize(head), ARMOpcode.move, this.resultReg, head)
+        this.move(this.getRegSize(head), this.resultReg, head)
         if (atx.readType === BaseType.Integer) {
           this.output.push(construct.branch(this.PRINT_READ_INT, true))
           this.pushCheck(Check.printReadInt)
@@ -591,7 +589,7 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Free:
         // Push result to r0 and call appropriate free
         this.load(this.getRegSize(this.lr), ARMOpcode.load, head, `[${this.sp}]`)
-        this.move(this.getRegSize(head), ARMOpcode.move, this.resultReg, head)
+        this.move(this.getRegSize(head), this.resultReg, head)
         if (isArrayType(atx.children[1].type)) {
           this.checkFreeNullArray()
         } else if (isPairType(atx.children[1].type)) {
@@ -606,7 +604,7 @@ class WJSCCodeGenerator {
   }
 
   public printBaseType = (atx: WJSCExpr, [head]: Register[]) => {
-    this.move(getTypeSize(atx.type), ARMOpcode.move, this.resultReg, head)
+    this.move(getTypeSize(atx.type), this.resultReg, head)
     if (atx.parserRule === WJSCParserRules.Identifier) {
       this.printFromIdent(atx)
     } else {
@@ -755,6 +753,9 @@ class WJSCCodeGenerator {
     this.genAssignRhs(rhs, regList)
     this.decStackSize -= typeSize
     this.symbolTable.setVarMemAddr(id, this.decStackSize)
+    if (hasSameType(type, BaseType.String)) {
+      this.symbolTable.setMsgNum(id, this.msgCount - 1)
+    }
     // Save content of 'head' to memory
     if (this.decStackSize > 0) {
       this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, ${directive.immNum(this.decStackSize)}]`, undefined, undefined, sizeIsByte))
@@ -808,9 +809,7 @@ class WJSCCodeGenerator {
         if (argc > 0) {
           this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(argc * 4)))
         }
-        this.move(this.getRegSize(Register.r0), ARMOpcode.move, head, Register.r0)
-      default:
-        break
+        this.move(this.getRegSize(Register.r0), head, Register.r0)
     }
   }
 
@@ -823,7 +822,7 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.BoolLiter:
         value = atx.value ? 1 : 0
-        this.move(1, ARMOpcode.move, head, directive.immNum(value))
+        this.move(1, head, directive.immNum(value))
         break
       case WJSCParserRules.CharLiter:
         if (value.toString()[0] === '\\') {
