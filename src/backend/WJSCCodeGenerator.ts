@@ -93,14 +93,19 @@ class WJSCCodeGenerator {
   }
 
   public printBool = () => {
-    const bool = this.printBoolTemp ? 'true\\0' : 'false\\0'
+    let bool = this.printBoolTemp ? 'true\\0' : 'false\\0'
     const notBool = this.printBoolTemp ? 'false\\0' : 'true\\0'
     this.postFunc.push(this.PRINT_BOOL + ':',
       construct.pushPop(ARMOpcode.push, [this.lr]),
       construct.compareTest(ARMOpcode.compare, this.resultReg, `#0`),
       construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.nequal),
     )
-    this.stringDec(notBool)
+    if (this.printBoolTemp) {
+      this.stringDec(bool)
+      bool = notBool
+    } else {
+      this.stringDec(notBool)
+    }
     this.postFunc.push(construct.singleDataTransfer(ARMOpcode.load, this.resultReg, `=msg_${this.msgCount}`, ARMCondition.equal),
       construct.arithmetic(ARMOpcode.add, this.resultReg, this.resultReg, `#4`),
       construct.branch(`printf`, true),
@@ -192,7 +197,7 @@ class WJSCCodeGenerator {
       this.stringDec(RuntimeError.nullDeref)
     }
     // appending function to postFunc
-    if (!this.postFunc.includes(this.CHECK_NULL_POINTER)) {
+    // if (!this.postFunc.includes(this.CHECK_NULL_POINTER)) {
       this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
         construct.pushPop(ARMOpcode.push, [this.lr]),
         construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
@@ -200,7 +205,7 @@ class WJSCCodeGenerator {
           `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
         construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
         construct.pushPop(ARMOpcode.pop, [this.pc]))
-    }
+    // }
   }
   /* ------------------------------------------- */
 
@@ -851,12 +856,12 @@ class WJSCCodeGenerator {
           construct.singleDataTransfer(ARMOpcode.store, this.resultReg, `[${head}, #4]`))
         break
       case WJSCParserRules.PairElem:
-        // this is code this.load(this.getRegSize(head), head, `[${this.sp}, #${this.totalStackSize - 4}]`)
-        // this.move(this.getRegSize(this.resultReg), this.resultReg, head)
+        // this is code this.load(this.getRegSize(head), head, `[${this.sp}, #${this.totalStackSize }]`)
+        this.move(this.getRegSize(this.resultReg), this.resultReg, head)
         this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
         this.pushCheck(Check.printNullRef)
         // this is code this.load(this.getRegSize(head), head, `[${this.sp}, #${atx.pointer}]`)
-        // this.output.push(construct.singleDataTransfer(ARMOpcode.storeBoolean, head, `[${head}]`, undefined, 'SB'))
+        //   this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
         break
       case WJSCParserRules.FunctionCall:
         /* Determine the number of arguments required for the function call */
