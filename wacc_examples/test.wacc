@@ -1,4 +1,5 @@
+
 begin
 	pair(int, int) p = null ;
-	read snd p
+	read fst p
 end

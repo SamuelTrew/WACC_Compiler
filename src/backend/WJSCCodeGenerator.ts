@@ -650,7 +650,6 @@ class WJSCCodeGenerator {
           this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
           this.pushCheck(Check.printNullRef)
           this.load(this.getRegSize(head), head, `[${head}, ${directive.immNum(4)}]`)
-          this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, '#0'))
         } else {
           this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, '#0'))
         }
