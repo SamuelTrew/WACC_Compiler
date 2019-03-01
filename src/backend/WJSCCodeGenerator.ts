@@ -81,6 +81,8 @@ class WJSCCodeGenerator {
   private readonly CHECK_NULL_POINTER = 'p_check_null_pointer'
   private readonly CHECK_FREE_NULL_PAIR = 'p_free_pair'
   private readonly CHECK_FREE_NULL_ARRAY = 'p_free_array'
+  // Other macros
+  private readonly MAX_SP_OFFSET = 1024
 
   // Print info
   private printBoolTemp = undefined
@@ -556,24 +558,31 @@ class WJSCCodeGenerator {
 
     // Move sp for all declarations at once
     stats.forEach((stat) => {
-      console.log(stat.parserRule)
       if (stat.parserRule === WJSCParserRules.Declare) {
         this.totalStackSize += getTypeSize(stat.declaration.type)
       }
     })
     this.decStackSize = this.totalStackSize
     this.symbolTable.setSpOffset(prevStackSize + this.totalStackSize)
-    const operand = `#${this.totalStackSize}`
+    const numStackOffsets = Math.ceil(this.totalStackSize / this.MAX_SP_OFFSET)
+    const stackOffsets: string[] = []
+    for (let i = 0; i < numStackOffsets; i++) {
+      stackOffsets.push('#' + (i === numStackOffsets - 1 ? this.totalStackSize % this.MAX_SP_OFFSET : this.MAX_SP_OFFSET))
+    }
     // Decrement sp
     if (this.totalStackSize) {
-      this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
+      stackOffsets.forEach((operand) => {
+        this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
+      })
     }
     // Traverse body
     this.traverseStat(statements, regList)
 
     // Increment sp
     if (this.totalStackSize) {
-      this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
+      stackOffsets.forEach((operand) => {
+        this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
+      })
     }
 
     // Restore parent stack size
@@ -779,7 +788,7 @@ class WJSCCodeGenerator {
     console.log(atx.paramList.length)
     let offsetctr = 0
     atx.paramList.forEach((param) => {
-      this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += 4)
+      this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += getTypeSize(param.type))
     })
     this.genStatBlock(atx.body, regList)
     this.switchToParentTable()
@@ -892,14 +901,17 @@ class WJSCCodeGenerator {
         /* Determine the number of arguments required for the function call */
         const argv = (atx.argList || [])
         const argc = argv.length
+        let offsetctr = 0
         /* Setup the stack */
         argv.reverse().forEach((arg: WJSCExpr) => {
           this.genExpr(arg, regList)
-          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-4)], undefined, undefined, undefined, undefined, true))
+          const argsize = getTypeSize(arg.type)
+          offsetctr += argsize
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-argsize)], undefined, undefined, argsize === 1, undefined, true))
         })
         this.output.push(construct.branch(`f_${atx.ident}`, true))
         if (argc > 0) {
-          this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(argc * 4)))
+          this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(offsetctr)))
         }
         this.move(this.getRegSize(Register.r0), head, Register.r0)
     }
