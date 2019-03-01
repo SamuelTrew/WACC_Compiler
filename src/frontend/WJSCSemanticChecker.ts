@@ -136,6 +136,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.specificInd = []
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     this.symbolTable.checkType(ident)
+    result.ident = ident.token
     this.functionUse(result, ident)
     const expressions = ctx.expression()
     if (expressions.length === 0) {

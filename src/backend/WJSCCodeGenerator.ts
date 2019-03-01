@@ -423,7 +423,8 @@ class WJSCCodeGenerator {
 
   public genArrayElem = (atx: WJSCAst , list: Register[]) => {
     const size = this.sizeGen(atx, false)
-    const dimensions = (atx.children[0] as WJSCArrayElem).specificInd
+    const arrElem = atx.children[0] as WJSCArrayElem
+    const dimensions = (arrElem).specificInd
     const itemUsed = this.nextRegister(list)
     let future: Register[] = []
     if (list.includes(itemUsed)) {
@@ -436,7 +437,12 @@ class WJSCCodeGenerator {
       list.shift()
     }*/
     dimensions.forEach((currDim, index) => {
-      this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(index * size)))
+      // index * size)
+      // position = distance of variable from where you are
+      // TODO; GET ACTUAL
+      // console.log(arrElem)
+      // console.log(this.symbolTable.getVarMemAddr(arrElem.ident))
+      this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident))))
       this.genExpr(currDim, future)
       this.load(this.getRegSize(itemUsed), itemUsed, `[${itemUsed}]`)
       this.move(this.getRegSize(nextItem), Register.r0, nextItem)
