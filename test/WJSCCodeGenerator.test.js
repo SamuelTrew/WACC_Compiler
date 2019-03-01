@@ -36,6 +36,15 @@ describe.skip('Environment is setup correctly', function () {
   })
 })
 
+const getdiff = (difference) => `Diff: ${difference.length} chunks:\n` + 
+  difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map((line, index) => 
+    (b.value.split(os.EOL).length === (index - 1)) ? '' : `+ ${line}` 
+  ).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map((line, index) => 
+    (b.value.split(os.EOL).length === (index - 1)) ? '' : `- ${line}` 
+  ).join(os.EOL) : b.value.split(os.EOL).map((line, index) => 
+    (b.value.split(os.EOL).length === (index - 1)) ? '' : `  ${line}` 
+  ).join(os.EOL))) + os.EOL, '')
+
 readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'], (err, files) => {
   if (err) {
     throw err
@@ -70,7 +79,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -91,7 +100,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -112,7 +121,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -133,7 +142,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -154,7 +163,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -175,7 +184,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -196,7 +205,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -217,7 +226,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -238,7 +247,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -259,7 +268,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -280,7 +289,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -301,7 +310,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
@@ -322,7 +331,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
               fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
                 if (asmreaderr) { throw asmreaderr }
                 const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, `Diff: ${difference.length} chunks:\n` + difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map(line => `+ ${line}`).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map(line => `- ${line}`).join(os.EOL) : b.value.split(os.EOL).map(line => `  ${line}`).join(os.EOL))) + os.EOL, ''))
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
                 done()
               })
             })
