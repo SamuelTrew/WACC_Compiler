@@ -32,6 +32,7 @@ class WJSCCodeGenerator {
   public symbolTable: WJSCSymbolTable
   public output: string[] = []
   public data: string[] = [directive.data]
+  public errData: string[] = []
   public postFunc: string[] = []
   public errorPresent: boolean = false
 
@@ -495,7 +496,7 @@ class WJSCCodeGenerator {
     if (this.msgCount > 0) {
       result = this.data.concat('', this.output)
     }
-
+    // TODO: add msgLabels to errData, taking into account this.data.length. Then append to result
     return result.concat(this.postFunc)
   }
 
@@ -1082,7 +1083,9 @@ class WJSCCodeGenerator {
   // Generate errors with appropriate message
   public throwError = () => {
     // Setting up the final message
-    this.stringDec('%.*s\\0')
+    if (this.findTrueMessageIndex('%.*s\\0') < 0) {
+      this.stringDec('%.*s\\0')
+    }
     // Setting up the error message
     this.postFunc = this.postFunc.concat(directive.label(this.THROW_RUNTIME_ERROR),
       construct.branch('p_print_string', true),
