@@ -239,7 +239,6 @@ class WJSCCodeGenerator {
       // First we store
       if (push) {
         if (viableRegs[0]) {
-          this.output.push(viableRegs[0])
           this.borrowReg.push(viableRegs[0])
         }
         this.output.push(construct.pushPop(ARMOpcode.push, [Register.r10]))
