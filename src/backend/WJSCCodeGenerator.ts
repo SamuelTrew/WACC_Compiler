@@ -501,6 +501,7 @@ class WJSCCodeGenerator {
     if (this.msgCount > 0) {
       result = this.data.concat('', this.output)
     }
+
     // TODO: add msgLabels to errData, taking into account this.data.length. Then append to result
     return result.concat(this.postFunc)
   }
@@ -1207,9 +1208,14 @@ class WJSCCodeGenerator {
 
   // Find child table with the given table number
   private switchToChildTable = (tableNumber: number) => {
-    const childTable = lodash.find(this.symbolTable.getChildrenTables(), (child) => child.getTableNumber() === tableNumber)
-    if (childTable) {
-      this.symbolTable = childTable
+    let result
+    this.symbolTable.getChildrenTables().forEach((child) => {
+      if (child.getTableNumber() === tableNumber) {
+        result = child
+      }
+    })
+    if (result) {
+      this.symbolTable = result
     } else {
       console.log(`Can't enter symbol table`)
     }

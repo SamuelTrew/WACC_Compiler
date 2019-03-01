@@ -494,15 +494,17 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // If Condition
         const [trueBranch, falseBranch] = childStat
         /* Ensure that children[0] = true, children[1] = false */
-        this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
+        const trueTableNo = this.getTableNumber()
+        this.symbolTable = this.symbolTable.enterScope(trueTableNo)
         const visitedTrueBranch = this.visitStatement(trueBranch)
         this.symbolTable = this.symbolTable.exitScope()
-        visitedTrueBranch.tableNumber = this.tableCounter
+        visitedTrueBranch.tableNumber = trueTableNo
 
-        this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
+        const falseTableNo = this.getTableNumber()
+        this.symbolTable = this.symbolTable.enterScope(falseTableNo)
         const visitedFalseBranch = this.visitStatement(falseBranch)
         this.symbolTable = this.symbolTable.exitScope()
-        visitedFalseBranch.tableNumber = this.tableCounter
+        visitedFalseBranch.tableNumber = falseTableNo
 
         this.pushChild(result, visitedTrueBranch, true)
         this.pushChild(result, visitedFalseBranch, true)
@@ -705,7 +707,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.identifier = ident.value
     result.type = visitedType
     /* Check types of Params and Statements, enter child scope */
-    this.symbolTable = this.symbolTable.enterFuncScope(ident.value, this.getTableNumber())
+    const tableNo = this.getTableNumber()
+    this.symbolTable = this.symbolTable.enterFuncScope(ident.value, tableNo)
     if (paramList) {
       const visitedParamList = this.visitParamList(paramList)
       this.pushChild(result, visitedParamList)
@@ -722,7 +725,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         'statement missing return statement',
       )
     }
-    statements.tableNumber = this.tableCounter
+    statements.tableNumber = tableNo
     result.body = statements
     /* Exit child scope */
     this.symbolTable = this.symbolTable.exitScope()
@@ -1002,9 +1005,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         if (!stat || !end) {
           this.errorLog.semErr(result, SemError.Undefined)
         } else {
-          this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
+          const tableNo = this.getTableNumber()
+          this.symbolTable = this.symbolTable.enterScope(tableNo)
           const visitedStatement = this.visitStatement(stat[0])
-          visitedStatement.tableNumber = this.tableCounter
+          visitedStatement.tableNumber = tableNo
           this.pushChild(result, visitedStatement)
           this.symbolTable = this.symbolTable.exitScope()
           result.stat = visitedStatement
