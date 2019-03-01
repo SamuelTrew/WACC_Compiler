@@ -60,6 +60,7 @@ class WJSCCodeGenerator {
   private totalStackSize = 0
   private decStackSize = 0
   private spScopeOffset = 0
+  private spFuncOffset = 0
   private ltorgCheck = true
 
   // Print functions
@@ -925,10 +926,12 @@ class WJSCCodeGenerator {
           const argsize = getTypeSize(arg.type)
           offsetctr += argsize
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-argsize)], undefined, undefined, argsize === 1, undefined, true))
+          this.spFuncOffset -= argsize
         })
         this.output.push(construct.branch(`f_${atx.ident}`, true))
         if (argc > 0) {
           this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(offsetctr)))
+          this.spFuncOffset = 0
         }
         this.move(this.getRegSize(Register.r0), head, Register.r0)
     }
@@ -976,7 +979,7 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Identifier:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
-        const spOffset = this.symbolTable.getVarMemAddr(atx.value)
+        const spOffset = this.symbolTable.getVarMemAddr(atx.value) - this.spFuncOffset
 
         const offsetString = spOffset ? `, #${spOffset}` : ''
         const identType = this.symbolTable.lookup(atx.value)
