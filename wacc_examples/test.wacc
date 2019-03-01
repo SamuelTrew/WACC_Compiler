@@ -1,5 +1,6 @@
-
 begin
-  char[] a = ['1'] ;
-  println a[0]
+  int[] a = [43, 2, 18, 1] ;
+  int[] b = [1, 2, 3] ;	
+  int[] c = [1];
+  println a[-2]
 end

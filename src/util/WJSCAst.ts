@@ -69,6 +69,7 @@ interface WJSCAst {
 
 interface WJSCArrayElem extends WJSCAst {
   specificInd: WJSCExpr[]
+  ident: string
 }
 
 interface WJSCTerminal extends WJSCAst {
