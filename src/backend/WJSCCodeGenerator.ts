@@ -13,13 +13,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import {
-  BaseType,
-  getTypeSize,
-  hasSameType,
-  isArrayType,
-  isPairType,
-} from '../util/WJSCType'
+import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType, PairType, } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -895,6 +889,8 @@ class WJSCCodeGenerator {
         } else {
           this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}, #4]`))
         }
+        // console.log(pairElem.expr.type)
+        // if (pairElem.expr.type === PairType.pairType.)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
         break
       case WJSCParserRules.FunctionCall:
