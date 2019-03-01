@@ -3,6 +3,7 @@ import { EOL } from 'os'
 import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
   WJSCArrayElem,
+  WJSCAssignLhs,
   WJSCAssignment,
   WJSCAssignRhs,
   WJSCAst,
@@ -10,6 +11,7 @@ import {
   WJSCExpr,
   WJSCFunction,
   WJSCIdentifier,
+  WJSCPairElem,
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
@@ -806,7 +808,7 @@ class WJSCCodeGenerator {
     this.genAssignLhs(atx.lhs, registers)
   }
 
-  public genAssignLhs = (atx: WJSCAst, [head, ...tail]: Register[]) => {
+  public genAssignLhs = (atx: WJSCAssignLhs, [head, ...tail]: Register[]) => {
     switch (atx.parserRule) {
       case WJSCParserRules.Identifier: {
         const sizeIsByte = getTypeSize(atx.type) === 1
@@ -821,14 +823,17 @@ class WJSCCodeGenerator {
         this.genArrayElem(atx, [head, ...tail])
         break
       }
-      case WJSCParserRules.Pair: {
+      case WJSCParserRules.PairElem: {
+        const [next, ..._] = tail
+        this.genPairElem(atx.pairElem, tail)
+        this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${next}]`))
         break
       }
     }
   }
 
   public genDeclare = (atx: WJSCDeclare, regList: Register[]) => {
-    const [head, tail] = regList
+    const [head] = regList
     const type = atx.type
     const rhs = atx.rhs
     const id = atx.identifier
@@ -885,16 +890,7 @@ class WJSCCodeGenerator {
         break
       case WJSCParserRules.PairElem:
         const pairElem = atx.pairElem
-        this.genExpr(pairElem.expr, regList)
-
-        this.move(this.getRegSize(this.resultReg), this.resultReg, head)
-        this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
-        this.pushCheck(Check.printNullRef)
-        if (pairElem.parserRule === WJSCParserRules.FirstElem) {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
-        } else {
-          this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}, #4]`))
-        }
+        this.genPairElem(pairElem, regList)
         this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
         break
       case WJSCParserRules.FunctionCall:
@@ -914,6 +910,19 @@ class WJSCCodeGenerator {
           this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(offsetctr)))
         }
         this.move(this.getRegSize(Register.r0), head, Register.r0)
+    }
+  }
+
+  public genPairElem(pairElem: WJSCPairElem, regList: Register[]) {
+    const [head] = regList
+    this.genExpr(pairElem.expr, regList)
+    this.move(this.getRegSize(this.resultReg), this.resultReg, head)
+    this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
+    this.pushCheck(Check.printNullRef)
+    if (pairElem.parserRule === WJSCParserRules.FirstElem) {
+      this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}]`))
+    } else {
+      this.output.push(construct.singleDataTransfer(ARMOpcode.load, head, `[${head}, #4]`))
     }
   }
 

@@ -35,7 +35,7 @@ import {
 } from '../grammar/WJSCParser'
 import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
-  WJSCArrayElem,
+  WJSCArrayElem, WJSCAssignLhs,
   WJSCAssignment,
   WJSCAssignRhs,
   WJSCAst,
@@ -260,9 +260,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   /** Ensure either identifier, array element or pair element. Visit them ro
    * ensure it's in the symbol table, then ensure correct type.
    */
-  public visitAssignLhs = (ctx: AssignLhsContext): WJSCAst => {
+  public visitAssignLhs = (ctx: AssignLhsContext): WJSCAssignLhs => {
     // We need to rewrite the parser rules!
-    const result = this.initWJSCAst(ctx, WJSCParserRules.Assignment)
+    const result = this.initWJSCAst(ctx, WJSCParserRules.Assignment) as WJSCAssignLhs
     const lhsElems = ctx.IDENTIFIER() || ctx.arrayElement() || ctx.pairElement()
     if (!lhsElems) {
       this.errorLog.semErr(result, SemError.Undefined)
@@ -283,6 +283,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         // Pair elem case
         lhsNode = this.visitPairElement(lhsElems)
         result.parserRule = WJSCParserRules.PairElem
+        result.pairElem = lhsNode
       }
       this.pushChild(result, lhsNode)
       if (lhsElems instanceof TerminalNode) {

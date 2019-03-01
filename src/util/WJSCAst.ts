@@ -118,7 +118,7 @@ interface WJSCIdentifier extends WJSCAst {
 
 interface WJSCAssignment extends WJSCAst {
   parserRule: WJSCParserRules.Assignment
-  lhs: WJSCAst
+  lhs: WJSCAssignLhs
   rhs: WJSCAssignRhs
 }
 
@@ -136,6 +136,12 @@ interface WJSCAssignRhs extends WJSCAst {
   pairElem: WJSCPairElem
   ident: string
   argList: WJSCExpr[]
+}
+
+interface WJSCAssignLhs extends WJSCAst {
+  pairElem: WJSCPairElem
+  arrayElem: WJSCAst
+  ident: string
 }
 
 interface WJSCPairElem extends  WJSCAst {
@@ -182,4 +188,5 @@ export {
   WJSCChecker,
   WJSCExpr,
   WJSCAssignRhs,
+  WJSCAssignLhs,
 }
