@@ -1,6 +1,6 @@
 import * as lodash from 'lodash'
-import { EOL } from 'os'
-import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
+import {EOL} from 'os'
+import {WJSCSymbolTable} from '../frontend/WJSCSymbolTable'
 import {
   WJSCArrayElem,
   WJSCAssignment,
@@ -12,8 +12,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType,
-  getTypeSize, hasSameType, isArrayType, isPairType } from '../util/WJSCType'
+import {BaseType, getTypeSize, hasSameType, isArrayType, isPairType} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -421,7 +420,7 @@ class WJSCCodeGenerator {
       list.shift()
     }*/
     dimensions.forEach((currDim, index) => {
-      this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(size)))
+      this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(index * size)))
       this.genExpr(currDim, future)
       this.load(this.getRegSize(itemUsed), ARMOpcode.load, itemUsed, `[${itemUsed}]`)
       this.move(this.getRegSize(nextItem), Register.r0, nextItem)
@@ -882,6 +881,13 @@ class WJSCCodeGenerator {
       case WJSCParserRules.ArrayElem:
         this.genArrayElem(atx, regList)
         this.checkArrayOutOfBounds()
+        this.output.push(construct.arithmetic(ARMOpcode.add, head, head, directive.immNum(4)))
+        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
+        } else {
+          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, false,
+              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
+          this.load(this.getRegSize(head), ARMOpcode.load, head, `[${head}]`)
+        }
         break
       case WJSCParserRules.BinOp:
         this.genBinOp(atx, regList)

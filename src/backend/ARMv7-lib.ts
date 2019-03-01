@@ -135,11 +135,13 @@ const construct = {
     operand: ARMOperand,
     condition?: ARMCondition,
     set = false,
+    shift?: ARMShiftname,
+    extent?: string,
   ) =>
     tabSpace +
     `${opcode}${condition || ''}${
     set ? 'S' : ''
-    } ${rd}, ${rn}, ${stringify.operand(operand)}`,
+    } ${rd}, ${rn}, ${stringify.operand(operand)}${shift ? ', ' + shift + ' ' + extent : ''}`,
   blockDataTransfer: (
     opcode: ARMOpcode.loadMultiple | ARMOpcode.storeMultiple,
     addrMode: ARMBDTAddressingModes,
