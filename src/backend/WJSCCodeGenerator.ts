@@ -94,12 +94,14 @@ class WJSCCodeGenerator {
 
   /* ------------- Print Management ---------------*/
 
+  // Checks whether or not the Check enum item is already in the array to avoid duplicates
   public pushCheck = (input: Check) => {
     if (!this.checkingArray.includes(input)) {
       this.checkingArray.push(input)
     }
   }
 
+  // Generates the code for bool printing
   public printBool = () => {
     let bool = this.printBoolTemp ? 'true\\0' : 'false\\0'
     const notBool = this.printBoolTemp ? 'false\\0' : 'true\\0'
@@ -124,6 +126,7 @@ class WJSCCodeGenerator {
     this.stringDec(bool)
   }
 
+  // Generates the code for string printing
   public printString = () => {
     this.postFunc.push(directive.label(this.PRINT_STRING),
       construct.pushPop(ARMOpcode.push, [this.lr]),
@@ -138,6 +141,7 @@ class WJSCCodeGenerator {
     )
   }
 
+  // Generates the code to print a new line
   public printLine = () => {
     this.postFunc.push(directive.label(this.PRINT_NEW_LINE),
       construct.pushPop(ARMOpcode.push, [this.lr]),
@@ -150,6 +154,7 @@ class WJSCCodeGenerator {
     )
   }
 
+  // Generates the code for int printing
   public printInt = () => {
     this.postFunc.push(directive.label(this.PRINT_INT),
       construct.pushPop(ARMOpcode.push, [this.lr]),
@@ -163,6 +168,7 @@ class WJSCCodeGenerator {
     )
   }
 
+  // Generates the code for read int printing
   public printReadInt = () => {
     this.postFunc.push(directive.label(this.PRINT_READ_INT),
       construct.pushPop(ARMOpcode.push, [this.lr]),
@@ -174,6 +180,7 @@ class WJSCCodeGenerator {
     )
   }
 
+  // Generates the code for read char printing
   public printReadChar = () => {
     this.postFunc.push(directive.label(this.PRINT_READ_CHAR),
       construct.pushPop(ARMOpcode.push, [this.lr]),
@@ -185,6 +192,7 @@ class WJSCCodeGenerator {
     )
   }
 
+  // Generates the code for reference printing
   public printReference = () => {
     this.postFunc.push(directive.label(this.PRINT_REFERENCE),
       construct.pushPop(ARMOpcode.push, [this.lr]),
@@ -229,14 +237,12 @@ class WJSCCodeGenerator {
     }
   }
 
+  // Obtains the next available register and if there isn't one it handles stack manipulation
   public nextRegister = (viableRegs: Register[], push: boolean): Register => {
-    // this.output.push(this.outOfRegScope)
     const regListWithoutR11andR12 = 2
     if (viableRegs.length > regListWithoutR11andR12) {
       return viableRegs[0]
     } else {
-      // Pushes contents of last reg to symbol table, returns result
-      // First we store
       if (push) {
         if (viableRegs[0]) {
           this.borrowReg.push(viableRegs[0])
@@ -250,11 +256,10 @@ class WJSCCodeGenerator {
         this.outOfRegScope--
         return Register.r11
       }
-      // code is this.output.push(construct.singleDataTransfer(ARMOpcode.store, Register.r12, directive.immAddr(this.memIndex)))
-      // this.memIndex = this.memIndex + this.getRegSize(Register.r12)
     }
   }
 
+  // Handles moving of registers by setting the reg size
   public move = (size: number, rd: Register, operand: ARMOperand, condition?: ARMCondition) => {
     this.setRegSize(rd, size)
     this.output.push(construct.move(ARMOpcode.move, rd, operand, condition))
@@ -288,9 +293,9 @@ class WJSCCodeGenerator {
     return typeSize
   }
 
+  // Generates code for Binary Operators
   public genBinOp = (atx: WJSCExpr, regList: Register[]) => {
     const [head, next, ...tail] = regList
-    // TODO check for running out of registers for expr 2
     this.genExpr(atx.expr1, regList)
     this.genExpr(atx.expr2, [next, ...tail])
     const regToUse = this.nextRegister(regList, false)
@@ -372,8 +377,10 @@ class WJSCCodeGenerator {
     }
   }
 
+
+  // Generates code for unary operators
   public genUnOp = (atx: WJSCExpr, regList: Register[]) => {
-    const [head, next] = regList
+    const [head, _] = regList
     this.genExpr(atx.expr1, regList)
     switch (atx.operator.token) {
       case '!':
@@ -399,7 +406,7 @@ class WJSCCodeGenerator {
     }
   }
 
-  // For genArray Literal
+  // Generates code for array literals
   public genArray = (atx: WJSCAst, list: Register[]) => {
     const children = atx.children
     const typeSize = (children.length !== 0) ? this.sizeGen(atx.children[0], true) : 0
@@ -452,6 +459,7 @@ class WJSCCodeGenerator {
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, `[${itemUsed}]`))
   }
 
+  // Generates code for array elems
   public genArrayElem = (atx: WJSCAst, list: Register[], isFromExpr: boolean) => {
     const size = this.sizeGen(atx, false)
     const arrElem = atx.children[0] as WJSCArrayElem
@@ -489,6 +497,7 @@ class WJSCCodeGenerator {
     }
   }
 
+  // Generates code for the whole program
   public genProgram = (atx: WJSCAst): string[] => {
     const regList = [Register.r4, Register.r5, Register.r6,
                      Register.r7, Register.r8, Register.r9,
@@ -675,7 +684,6 @@ class WJSCCodeGenerator {
           }
           this.load(8, head,
             params) // <- size 8 since we know its a pair
-          // this.load(head, )
           this.move(this.getRegSize(head), this.resultReg, head)
           this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
           this.pushCheck(Check.printNullRef)
@@ -821,6 +829,7 @@ class WJSCCodeGenerator {
     return stats
   }
 
+  // Generates code for the function
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
     this.output.push(directive.label(`f_${atx.identifier}`),
       construct.pushPop(ARMOpcode.push, [this.lr]))
@@ -843,11 +852,13 @@ class WJSCCodeGenerator {
     }
   }
 
+  // Generates code for the assignments
   public genAssignment = (atx: WJSCAssignment, registers: Register[]) => {
     this.genAssignRhs(atx.rhs, registers)
     this.genAssignLhs(atx.lhs, registers)
   }
 
+  // Generates code for the LHS of assignments
   public genAssignLhs = (atx: WJSCAssignLhs, [head, ...tail]: Register[]) => {
     switch (atx.parserRule) {
       case WJSCParserRules.Identifier: {
@@ -868,10 +879,9 @@ class WJSCCodeGenerator {
         const nextItem = this.nextRegister(present, true)
         let future: Register[] = []
         if (present.includes(nextItem)) {
-          const [heads, ...tails] = present
+          const [_, ...tails] = present
           future = tails
         }
-        const futureItem = this.nextRegister(future, true)
         this.genArrayElem(atx, [...tail], false)
         if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
@@ -895,6 +905,7 @@ class WJSCCodeGenerator {
     }
   }
 
+  // Generates code for declaration of variables
   public genDeclare = (atx: WJSCDeclare, regList: Register[]) => {
     const head = this.nextRegister(regList, true)
     const type = atx.type
@@ -921,6 +932,7 @@ class WJSCCodeGenerator {
     }
   }
 
+  // Generates code for the RHS of assignments
   public genAssignRhs = (atx: WJSCAssignRhs, regList: Register[]) => {
     const [head, next, ...tail] = regList
     switch (atx.parserRule) {
@@ -982,6 +994,7 @@ class WJSCCodeGenerator {
     }
   }
 
+  // Generates code for individual Pair Elems
   public genPairElem(pairElem: WJSCPairElem, regList: Register[]) {
     const [head] = regList
     this.genExpr(pairElem.expr, regList)
@@ -995,8 +1008,9 @@ class WJSCCodeGenerator {
     }
   }
 
+  // Generates code for Expressions
   public genExpr = (atx: WJSCExpr, regList: Register[], set: boolean = false) => {
-    const [head, next] = regList
+    const [head, _] = regList
     let value = atx.value
     switch (atx.parserRule) {
       case WJSCParserRules.IntLiteral:
@@ -1124,26 +1138,6 @@ class WJSCCodeGenerator {
     }
   }
 
-  /*
-    public checkNullPointer = () => {
-      this.errorPresent = true
-      // Setting up the message if not already set up
-      if (this.findTrueMessageIndex(RuntimeError.nullDeref) < 0) {
-        this.stringDec(RuntimeError.nullDeref)
-      }
-      // check in instruction body itself
-      this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
-      // appending function to postFunc
-      if (!this.isInPostFunc(this.CHECK_NULL_POINTER)) {
-        this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
-          construct.compareTest(ARMOpcode.compare, Register.r0, directive.immNum(0)),
-          construct.singleDataTransfer(ARMOpcode.load, Register.r0,
-            `=msg_${this.findTrueMessageIndex(RuntimeError.nullDeref)}`, ARMCondition.equal),
-          construct.branch(this.THROW_RUNTIME_ERROR, true, ARMCondition.equal),
-          construct.pushPop(ARMOpcode.pop, [this.pc]))
-      }
-    }
-  */
   // Remember to have put the pair/ array into r0!
   public checkFreeNullPair = () => {
     this.errorPresent = true
@@ -1236,6 +1230,7 @@ class WJSCCodeGenerator {
     return isInFunc
   }
 
+  // Appends the string labels to the top of the assembly file
   private stringDec = (symbol: string | number): number => this.data.push(
     'msg_' + this.msgCount++ + ':\n' + tabSpace +
     `.word ${directive.messageCharCount(symbol.toString() || '')}` +

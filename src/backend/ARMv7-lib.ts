@@ -93,6 +93,7 @@ enum RuntimeError {
   nullDeref = 'NullReferenceError: dereference a null reference\\n\\0',
 }
 
+// To check which print we need to do
 export enum Check {
   printlnString,
   printInt,
