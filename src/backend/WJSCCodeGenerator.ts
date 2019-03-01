@@ -932,6 +932,9 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Unop:
         this.genUnOp(atx, regList)
         break
+      default:
+        this.genExpr(atx.children[0] as WJSCExpr, regList)
+        break
     }
   }
 
