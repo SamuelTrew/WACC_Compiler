@@ -1,6 +1,6 @@
 import * as lodash from 'lodash'
-import { EOL } from 'os'
-import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
+import {EOL} from 'os'
+import {WJSCSymbolTable} from '../frontend/WJSCSymbolTable'
 import {
   WJSCArrayElem,
   WJSCAssignment,
@@ -11,6 +11,7 @@ import {
   WJSCFunction,
   WJSCIdentifier,
   WJSCParserRules,
+  WJSCPairElem,
   WJSCStatement,
 } from '../util/WJSCAst'
 import {
@@ -207,6 +208,8 @@ class WJSCCodeGenerator {
     if (this.findTrueMessageIndex(RuntimeError.nullDeref) < 0) {
       this.stringDec(RuntimeError.nullDeref)
     }
+    // instructions in body itself
+    this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
     // appending function to postFunc
     this.postFunc = this.postFunc.concat(directive.label(this.CHECK_NULL_POINTER),
       construct.pushPop(ARMOpcode.push, [this.lr]),
@@ -637,7 +640,25 @@ class WJSCCodeGenerator {
         this.switchToParentTable()
         break
       case WJSCParserRules.Read:
-        this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, '#0'))
+        // this.checkNullPointer()
+        if (atx.children[1].parserRule === WJSCParserRules.PairElem) {
+          const node = atx.children[1].children[0] as WJSCPairElem
+          let params
+          if (this.symbolTable.getVarMemAddr(node.ident) !== 0) {
+            params = `[${[this.sp]}, ${directive.immNum(this.symbolTable.getVarMemAddr(node.ident))}]`
+          } else {
+            params = `[${[this.sp]}]`
+          }
+          this.load(8, head,
+              params) // <- size 8 since we know its a pair
+          // this.load(head, )
+          this.move(this.getRegSize(head), this.resultReg, head)
+          this.output.push(construct.branch(this.CHECK_NULL_POINTER, true))
+          this.pushCheck(Check.printNullRef)
+          this.load(this.getRegSize(head), head, `[${head}, ${directive.immNum(4)}]`)
+        } else {
+          this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, '#0'))
+        }
         this.move(this.getRegSize(head), this.resultReg, head)
         if (atx.readType === BaseType.Integer) {
           this.output.push(construct.branch(this.PRINT_READ_INT, true))
@@ -783,7 +804,6 @@ class WJSCCodeGenerator {
       construct.pushPop(ARMOpcode.push, [this.lr]))
     this.switchToChildTable(atx.body.tableNumber)
     this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize)
-    console.log(atx.paramList.length)
     let offsetctr = 0
     atx.paramList.forEach((param, index) => {
       this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += getTypeSize(param.type))

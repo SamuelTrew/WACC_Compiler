@@ -1,7 +1,7 @@
-import { ParserRuleContext } from 'antlr4ts'
-import { AbstractParseTreeVisitor, TerminalNode } from 'antlr4ts/tree'
+import {ParserRuleContext} from 'antlr4ts'
+import {AbstractParseTreeVisitor, TerminalNode} from 'antlr4ts/tree'
 import _ from 'lodash'
-import { WJSCLexer } from '../grammar/WJSCLexer'
+import {WJSCLexer} from '../grammar/WJSCLexer'
 import {
   ArgListContext,
   ArithmeticOperator2Context,
@@ -33,7 +33,7 @@ import {
   TypeContext,
   UnaryOperatorContext,
 } from '../grammar/WJSCParser'
-import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
+import {WJSCParserVisitor} from '../grammar/WJSCParserVisitor'
 import {
   WJSCArrayElem,
   WJSCAssignment,
@@ -43,13 +43,14 @@ import {
   WJSCExpr,
   WJSCFunction,
   WJSCIdentifier,
-  WJSCOperators, WJSCPairElem,
+  WJSCOperators,
+  WJSCPairElem,
   WJSCParam,
   WJSCParserRules,
   WJSCStatement,
   WJSCTerminal,
 } from '../util/WJSCAst'
-import { SemError, SynError, WJSCErrorLog } from '../util/WJSCErrors'
+import {SemError, SynError, WJSCErrorLog} from '../util/WJSCErrors'
 import {
   BaseType,
   getFstInPair,
@@ -64,7 +65,7 @@ import {
   TerminalOperators,
   TypeName,
 } from '../util/WJSCType'
-import { WJSCSymbolTable } from './WJSCSymbolTable'
+import {WJSCSymbolTable} from './WJSCSymbolTable'
 
 /**
  * Class that represents a semantic checker.
@@ -808,6 +809,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       result.children.push(this.visitTerminal(order))
       const visitedExpr = this.visitExpression(expression)
       result.expr = visitedExpr
+      if (visitedExpr.parserRule === WJSCParserRules.Identifier) {
+        result.ident = visitedExpr.token
+      }
       /* Expression must be of type 'pair' */
       if (!isPairType(visitedExpr.type)) {
         this.errorLog.semErr(visitedExpr, SemError.Mismatch, BaseType.Pair)
