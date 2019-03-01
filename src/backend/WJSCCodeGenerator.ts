@@ -760,6 +760,12 @@ class WJSCCodeGenerator {
     this.output.push(directive.label(`f_${atx.identifier}`),
       construct.pushPop(ARMOpcode.push, [this.lr]))
     // We now deal with the children
+    // TODO: paramlist is undefined, we are not handling the parameters at all
+    // this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize)
+    // this.output.push(`${atx.identifier}`)
+    // atx.paramList.forEach((param) => {
+    //   this.genExpr(param as WJSCExpr, regList)
+    // })
     this.genStatBlock(atx.body, regList)
     this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]),
       construct.pushPop(ARMOpcode.pop, [this.pc]))
@@ -807,9 +813,9 @@ class WJSCCodeGenerator {
     // TODO add cases for pairs and arrays
 
     // Load rhs expression into 'head' register
-    this.genAssignRhs(rhs, regList)
     this.decStackSize -= typeSize
     this.symbolTable.setVarMemAddr(id, this.decStackSize)
+    this.genAssignRhs(rhs, regList)
     if (hasSameType(type, BaseType.String)) {
       this.symbolTable.setMsgNum(id, this.msgCount - 1)
     }
@@ -906,6 +912,7 @@ class WJSCCodeGenerator {
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
         const spOffset = this.symbolTable.getVarMemAddr(atx.value)
+
         const offsetString = spOffset ? `, #${spOffset}` : ''
         const identType = this.symbolTable.lookup(atx.value)
         if (identType === BaseType.Character || identType === BaseType.Boolean) {
@@ -1000,6 +1007,8 @@ class WJSCCodeGenerator {
     }
     // check in instruction body itself
     this.output.push(construct.branch(this.THROW_OVERFLOW_ERROR, true, condition))
+    // TODO: this is not meant to be resultReg but idk where to get the head of the tail from here
+    // this.output.push(construct.pushPop(ARMOpcode.pop, [this.resultReg]))
     // appending function to postFunc
     if (!this.isInPostFunc(this.THROW_OVERFLOW_ERROR)) {
       this.postFunc.push(directive.label(this.THROW_OVERFLOW_ERROR),
