@@ -1,6 +1,5 @@
-import * as lodash from 'lodash'
-import { EOL } from 'os'
-import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
+import {EOL} from 'os'
+import {WJSCSymbolTable} from '../frontend/WJSCSymbolTable'
 import {
   WJSCArrayElem,
   WJSCAssignLhs,
@@ -15,7 +14,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType } from '../util/WJSCType'
+import {BaseType, getTypeSize, hasSameType, isArrayType, isPairType} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -388,7 +387,7 @@ class WJSCCodeGenerator {
     const itemUsed = this.nextRegister(list)
     this.load(4, Register.r0, `=${size}`) // <- 4 refers to size of int type (for size)
     this.output = this.output.concat([directive.malloc(ARMOpcode.branchLink),
-    construct.move(ARMOpcode.move, itemUsed, Register.r0)])
+                                      construct.move(ARMOpcode.move, itemUsed, Register.r0)])
     let present: Register[] = []
     if (list.includes(itemUsed)) {
       const [head, ...tail] = list
@@ -432,7 +431,7 @@ class WJSCCodeGenerator {
     this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, `[${itemUsed}]`))
   }
 
-  public genArrayElem = (atx: WJSCAst, list: Register[]) => {
+  public genArrayElem = (atx: WJSCAst, list: Register[], isFromExpr: boolean) => {
     const size = this.sizeGen(atx, false)
     const arrElem = atx.children[0] as WJSCArrayElem
     const dimensions = (arrElem).specificInd
@@ -444,24 +443,70 @@ class WJSCCodeGenerator {
     }
     const nextItem = this.nextRegister(future)
     /* :(
-    if (list.includes(nextItem)) {
-      list.shift()
+        this.output.push(construct.arithmetic(ARMOpcode.add, head, head, directive.immNum(4)))
+        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
+          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next))
+          this.load(this.getRegSize(head), head, `[${head}]`, undefined, 'SB')
+        } else {
+          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, false,
+            ARMShiftname.logicalShiftLeft, directive.immNum(2)))
+          this.load(this.getRegSize(head), head, `[${head}]`)
+        }
     }*/
+
+    /*:)
+            this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, directive.immNum(4)))
+        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
+          this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, futureItem))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
+              `[${nextItem}]`, undefined, undefined, true))
+        } else {
+          this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, futureItem, undefined, false,
+              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
+              `[${nextItem}]`))
+        }
+     */
+    this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident))))
     dimensions.forEach((currDim, index) => {
       // index * size)
       // position = distance of variable from where you are
-      this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident))))
       this.genExpr(currDim, future)
       this.load(this.getRegSize(itemUsed), itemUsed, `[${itemUsed}]`)
       this.move(this.getRegSize(nextItem), Register.r0, nextItem)
       this.move(this.getRegSize(itemUsed), Register.r1, itemUsed)
+      this.checkArrayOutOfBounds()
+      this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, directive.immNum(4)))
+      if (isFromExpr) {
+        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
+          this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem))
+        } else {
+          this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem, undefined, false,
+              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
+        }
+      } else {
+        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
+          this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem))
+        } else {
+          this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem, undefined, false,
+              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
+        }
+      }
     })
+    if (isFromExpr) {
+      if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
+        this.load(this.getRegSize(itemUsed), itemUsed, `[${itemUsed}]`, undefined, 'SB')
+      } else {
+        this.load(this.getRegSize(itemUsed), itemUsed, `[${itemUsed}]`)
+      }
+    } else {
+    }
   }
 
   public genProgram = (atx: WJSCAst): string[] => {
     const regList = [Register.r4, Register.r5, Register.r6,
-    Register.r7, Register.r8, Register.r9,
-    Register.r10, Register.r11, Register.r12]
+                     Register.r7, Register.r8, Register.r9,
+                     Register.r10, Register.r11, Register.r12]
 
     this.output = this.output.concat(
       [directive.text],
@@ -846,16 +891,11 @@ class WJSCCodeGenerator {
           future = tails
         }
         const futureItem = this.nextRegister(future)
-        this.genArrayElem(atx, [...tail])
-        this.checkArrayOutOfBounds()
-        this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, directive.immNum(4)))
+        this.genArrayElem(atx, [...tail], false)
         if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
-          this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, futureItem))
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
               `[${nextItem}]`, undefined, undefined, true))
         } else {
-          this.output.push(construct.arithmetic(ARMOpcode.add, nextItem, nextItem, futureItem, undefined, false,
-              ARMShiftname.logicalShiftLeft, directive.immNum(2)))
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
               `[${nextItem}]`))
         }
@@ -1005,17 +1045,7 @@ class WJSCCodeGenerator {
         }
         break
       case WJSCParserRules.ArrayElem:
-        this.genArrayElem(atx, regList)
-        this.checkArrayOutOfBounds()
-        this.output.push(construct.arithmetic(ARMOpcode.add, head, head, directive.immNum(4)))
-        if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
-          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next))
-          this.load(this.getRegSize(head), head, `[${head}]`, undefined, 'SB')
-        } else {
-          this.output.push(construct.arithmetic(ARMOpcode.add, head, head, next, undefined, false,
-            ARMShiftname.logicalShiftLeft, directive.immNum(2)))
-          this.load(this.getRegSize(head), head, `[${head}]`)
-        }
+        this.genArrayElem(atx, regList, true)
         break
       case WJSCParserRules.BinOp:
         this.genBinOp(atx, regList)
