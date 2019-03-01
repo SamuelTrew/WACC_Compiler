@@ -1,4 +1,3 @@
-import * as lodash from 'lodash'
 import { EOL } from 'os'
 import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
 import {
@@ -62,6 +61,10 @@ class WJSCCodeGenerator {
   private spScopeOffset = 0
   private spFuncOffset = 0
   private ltorgCheck = true
+
+  private outOfRegScope = 0
+  private borrowReg: Register[] = []
+  private borrowDestroy = true
 
   // Print functions
   private readonly PRINT_BOOL = 'p_print_bool'
@@ -230,16 +233,25 @@ class WJSCCodeGenerator {
   }
 
   public nextRegister = (viableRegs: Register[], push: boolean): Register => {
-    if (viableRegs.length > 2) {
+    // this.output.push(this.outOfRegScope)
+    const regListWithoutR11andR12 = 2
+    if (viableRegs.length > regListWithoutR11andR12) {
       return viableRegs[0]
     } else {
       // Pushes contents of last reg to symbol table, returns result
       // First we store
       if (push) {
+        if (viableRegs[0]) {
+          this.output.push(viableRegs[0])
+          this.borrowReg.push(viableRegs[0])
+        }
         this.output.push(construct.pushPop(ARMOpcode.push, [Register.r10]))
+        this.outOfRegScope++
         return Register.r10
       } else {
+        this.borrowDestroy = false
         this.output.push(construct.pushPop(ARMOpcode.pop, [Register.r11]))
+        this.outOfRegScope--
         return Register.r11
       }
       // code is this.output.push(construct.singleDataTransfer(ARMOpcode.store, Register.r12, directive.immAddr(this.memIndex)))
@@ -285,6 +297,7 @@ class WJSCCodeGenerator {
     // TODO check for running out of registers for expr 2
     this.genExpr(atx.expr1, regList)
     this.genExpr(atx.expr2, [next, ...tail])
+    const regToUse = this.nextRegister(regList, false)
 
     switch (atx.operator.token) {
       case '*':
@@ -306,9 +319,19 @@ class WJSCCodeGenerator {
         this.move(getTypeSize(atx.type), head, Register.r1)
         break
       case '+':
-        const regToUse = this.nextRegister(regList, false)
-        this.output.push(construct.arithmetic(ARMOpcode.add, head, regToUse, next, undefined, true))
+        if (!this.borrowDestroy) {
+          this.output.push(construct.arithmetic(ARMOpcode.add, Register.r10, regToUse, Register.r10, undefined, true))
+        } else {
+          if (this.outOfRegScope === 1) {
+            this.output.push(construct.pushPop(ARMOpcode.pop, [Register.r11]))
+            this.output.push(construct.arithmetic(ARMOpcode.add, Register.r10, Register.r11, Register.r10, undefined, true))
+            this.outOfRegScope--
+          } else {
+            this.output.push(construct.arithmetic(ARMOpcode.add, head, regToUse, next, undefined, true))
+          }
+        }
         this.checkOverflow(ARMCondition.overflow)
+        this.borrowDestroy = true
         break
       case '-':
         this.output.push(construct.arithmetic(ARMOpcode.subtract, head, head, next, undefined, true))
