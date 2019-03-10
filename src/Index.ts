@@ -61,8 +61,14 @@ argp.addArgument(['--debug'], {
   help: 'Activate debugging superpowers',
 })
 
+argp.addArgument(['-j', '--javascript'], {
+  action: 'storeTrue',
+  help: 'Generate God\'s language.',
+})
+
 const args = argp.parseArgs()
-const output = path.resolve(args.output || (path.parse(args.src).name + '.s'))
+const javascript = args.javascript
+const output = path.resolve(args.output || (path.parse(args.src).name + (javascript ? '.js' : '.s')))
 const treeout = args.tree
 const errout = path.resolve(args.errors)
 const printErrors = args.print_errors
@@ -81,8 +87,12 @@ fs.readFile(args.src, 'utf8', (err, data) => {
     }
   }
 
+  if (javascript) {
+    console.log('generating god\'s language')
+  }
+
   /* Instantiate our compiler */
-  const compiler = new WJSCCompiler(data)
+  const compiler = new WJSCCompiler(data, javascript)
   let tree
   let asm
   /* Visit the tree */

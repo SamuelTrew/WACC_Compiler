@@ -1,4 +1,5 @@
 import { ANTLRInputStream, CommonTokenStream } from 'antlr4ts'
+import { JSCompiler } from './backend/JSCompiler'
 import { WJSCCodeGenerator } from './backend/WJSCCodeGenerator'
 import { WJSCSemanticChecker } from './frontend/WJSCSemanticChecker'
 import { WJSCSymbolTable } from './frontend/WJSCSymbolTable'
@@ -15,19 +16,19 @@ class WJSCCompiler {
   private readonly errorListener: WJSCErrorListener
   private readonly lexer: WJSCLexer
   private readonly parser: WJSCParser
-  private codeGenerator: WJSCCodeGenerator
+  private codeGenerator: WJSCCodeGenerator | JSCompiler
 
   private ast?: WJSCAst
   private asm?: string
 
-  constructor(data: string) {
+  constructor(data: string, js: boolean = false) {
     this.errorLog = new WJSCErrorLog()
     this.errorListener = new WJSCErrorListener(this.errorLog)
     this.symbolTable = new WJSCSymbolTable(0, undefined, false, this.errorLog)
     this.semanticChecker = new WJSCSemanticChecker(this.errorLog, this.symbolTable)
     this.lexer = new WJSCLexer(new ANTLRInputStream(data))
     this.parser = new WJSCParser(new CommonTokenStream(this.lexer))
-    this.codeGenerator = new WJSCCodeGenerator(this.semanticChecker.symbolTable)
+    this.codeGenerator = js ? new JSCompiler() : new WJSCCodeGenerator(this.semanticChecker.symbolTable)
     this.parser.removeErrorListeners()
     this.parser.addErrorListener(this.errorListener)
   }
@@ -49,7 +50,11 @@ class WJSCCompiler {
       if (this.errorLog.numErrors() > 0 || !this.ast) {
         throw new Error('Cannot generate code: encountered errors on parse')
       }
-      return this.asm = WJSCCodeGenerator.stringifyAsm(this.codeGenerator.genProgram(this.ast))
+      if (this.codeGenerator instanceof WJSCCodeGenerator) {
+        return this.asm = WJSCCodeGenerator.stringifyAsm(this.codeGenerator.genProgram(this.ast))
+      } else {
+        return this.asm = this.codeGenerator.generateProgram(this.ast)
+      }
     } else {
       return this.asm
     }
