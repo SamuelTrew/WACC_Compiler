@@ -57,6 +57,8 @@ class WJSCCodeGenerator {
   private currSpOffset = 0
   private stackPointer = 0
   private ltorgCheck = true
+  private oldCurrSpOffset = 0
+  private oldStackPointer = 0
 
   private outOfRegScope = 0
   private borrowReg: Register[] = []
@@ -654,13 +656,9 @@ class WJSCCodeGenerator {
         this.pushCheck(Check.printNewLn)
         break
       case WJSCParserRules.Scope:
-        const oldCurrSP = this.currSpOffset
-        const oldSP = this.stackPointer
         this.switchToChildTable(atx.stat.tableNumber)
         this.genStatBlock(atx.stat, reglist)
         this.switchToParentTable()
-        this.currSpOffset = oldCurrSP
-        this.stackPointer = oldSP
         break
       case WJSCParserRules.Read:
         // this.checkNullPointer()
@@ -1223,6 +1221,8 @@ class WJSCCodeGenerator {
 
   // Find child table with the given table number
   private switchToChildTable = (tableNumber: number) => {
+    this.oldCurrSpOffset = this.currSpOffset
+    this.oldStackPointer = this.stackPointer
     let result
     this.symbolTable.getChildrenTables().forEach((child) => {
       if (child.getTableNumber() === tableNumber) {
@@ -1238,7 +1238,8 @@ class WJSCCodeGenerator {
 
   private switchToParentTable = () => {
     this.symbolTable = this.symbolTable.exitScope()
-    this.stackPointer = this.symbolTable.getSpOffset()
+    this.stackPointer = this.oldStackPointer
+    this.currSpOffset = this.oldCurrSpOffset
   }
 }
 
