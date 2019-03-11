@@ -54,8 +54,8 @@ class WJSCCodeGenerator {
   private readonly pc = Register.r15
   private msgCount = 0
   private labelCount = 0
-  private decStackSize = 0
-  private spOffset = 0
+  private currSpOffset = 0
+  private stackPointer = 0
   private ltorgCheck = true
 
   private outOfRegScope = 0
@@ -456,7 +456,7 @@ class WJSCCodeGenerator {
       future = list.slice(1)
     }
     const nextItem = this.nextRegister(future, false)
-    this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident, this.spOffset))))
+    this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(arrElem.ident, this.stackPointer))))
     dimensions.forEach((currDim, index) => {
       // index * size)
       // position = distance of variable from where you are
@@ -583,9 +583,9 @@ class WJSCCodeGenerator {
         thisStackSize += getTypeSize(stat.declaration.type)
       }
     })
-    this.decStackSize = thisStackSize
-    this.spOffset += thisStackSize
-    this.symbolTable.setSpOffset(this.spOffset)
+    this.currSpOffset = thisStackSize
+    this.stackPointer += thisStackSize
+    this.symbolTable.setSpOffset(this.stackPointer)
     const numStackOffsets = Math.ceil(thisStackSize / this.MAX_SP_OFFSET)
     const stackOffsets: string[] = Array(numStackOffsets).fill('#' + this.MAX_SP_OFFSET)
     stackOffsets[numStackOffsets - 1] = '#' + thisStackSize % this.MAX_SP_OFFSET
@@ -654,9 +654,13 @@ class WJSCCodeGenerator {
         this.pushCheck(Check.printNewLn)
         break
       case WJSCParserRules.Scope:
+        const oldCurrSP = this.currSpOffset
+        const oldSP = this.stackPointer
         this.switchToChildTable(atx.stat.tableNumber)
         this.genStatBlock(atx.stat, reglist)
         this.switchToParentTable()
+        this.currSpOffset = oldCurrSP
+        this.stackPointer = oldSP
         break
       case WJSCParserRules.Read:
         // this.checkNullPointer()
@@ -664,7 +668,7 @@ class WJSCCodeGenerator {
           const node = atx.children[1].children[0] as WJSCPairElem
           let params
           if (this.symbolTable.getVarMemAddr(node.ident, this.symbolTable.getSpOffset()) !== 0) {
-            params = `[${[this.sp]}, ${directive.immNum(this.symbolTable.getVarMemAddr(node.ident, this.spOffset))}]`
+            params = `[${[this.sp]}, ${directive.immNum(this.symbolTable.getVarMemAddr(node.ident, this.stackPointer))}]`
           } else {
             params = `[${[this.sp]}]`
           }
@@ -675,7 +679,7 @@ class WJSCCodeGenerator {
           this.pushCheck(Check.printNullRef)
           this.load(this.getRegSize(head), head, `[${head}, ${directive.immNum(4)}]`)
         } else {
-          this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(atx.children[1].token, this.spOffset))))
+          this.output.push(construct.arithmetic(ARMOpcode.add, head, this.sp, directive.immNum(this.symbolTable.getVarMemAddr(atx.children[1].token, this.stackPointer))))
         }
         this.move(this.getRegSize(head), this.resultReg, head)
         if (atx.readType === BaseType.Integer) {
@@ -818,7 +822,7 @@ class WJSCCodeGenerator {
     this.output.push(directive.label(`f_${atx.identifier}`),
       construct.pushPop(ARMOpcode.push, [this.lr]))
     this.switchToChildTable(atx.body.tableNumber)
-    this.symbolTable.setVarMemAddr(atx.identifier, this.decStackSize)
+    this.symbolTable.setVarMemAddr(atx.identifier, this.currSpOffset)
     let offsetctr = 4
     let lastoffset = 0
     atx.paramList.forEach((param) => {
@@ -894,15 +898,15 @@ class WJSCCodeGenerator {
     const sizeIsByte = typeSize === 1
 
     // Load rhs expression into 'head' register
-    this.decStackSize -= typeSize
-    this.symbolTable.setVarMemAddr(id, this.decStackSize)
+    this.currSpOffset -= typeSize
+    this.symbolTable.setVarMemAddr(id, this.currSpOffset)
     this.genAssignRhs(rhs, regList)
     if (hasSameType(type, BaseType.String)) {
       this.symbolTable.setMsgNum(id, this.msgCount - 1)
     }
     // Save content of 'head' to memory
-    if (this.decStackSize > 0) {
-      this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, ${directive.immNum(this.decStackSize)}]`, undefined, undefined, sizeIsByte))
+    if (this.currSpOffset > 0) {
+      this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}, ${directive.immNum(this.currSpOffset)}]`, undefined, undefined, sizeIsByte))
     } else {
       this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}]`, undefined, undefined, sizeIsByte))
     }
@@ -953,7 +957,7 @@ class WJSCCodeGenerator {
         const argv = (atx.argList || [])
         const argc = argv.length
         let offsetctr = 0
-        const oldOffset = this.spOffset
+        const oldOffset = this.stackPointer
         /* Setup the stack */
         // tslint:disable-next-line
         argv.reverse().forEach((arg: WJSCExpr) => {
@@ -961,13 +965,13 @@ class WJSCCodeGenerator {
           const argsize = getTypeSize(arg.type)
           offsetctr += argsize
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-argsize)], undefined, undefined, argsize === 1, undefined, true))
-          this.spOffset += argsize
+          this.stackPointer += argsize
         })
         this.output.push(construct.branch(`f_${atx.ident}`, true))
         if (argc > 0) {
           this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(offsetctr)))
-          this.spOffset = oldOffset
         }
+        this.stackPointer = oldOffset
         this.move(this.getRegSize(Register.r0), head, Register.r0)
     }
   }
@@ -1021,7 +1025,7 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Identifier:
         const typeSize = getTypeSize(atx.type)
         const sizeIsByte = typeSize === 1
-        const spOffset = this.symbolTable.getVarMemAddr(atx.value, this.spOffset)
+        const spOffset = this.symbolTable.getVarMemAddr(atx.value, this.stackPointer)
         const offsetString = spOffset ? `, #${spOffset}` : ''
         const identType = this.symbolTable.lookup(atx.value)
         if (identType === BaseType.Character || identType === BaseType.Boolean) {
@@ -1234,7 +1238,7 @@ class WJSCCodeGenerator {
 
   private switchToParentTable = () => {
     this.symbolTable = this.symbolTable.exitScope()
-    this.spOffset = this.symbolTable.getSpOffset()
+    this.stackPointer = this.symbolTable.getSpOffset()
   }
 }
 

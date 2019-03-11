@@ -36,35 +36,14 @@ describe.skip('Environment is setup correctly', function () {
   })
 })
 
-const checkFile = (filename, done) => {
-  fs.readFile(filename, 'utf8', (readerr, data) => {
-    if (readerr) { throw readerr }
-    /* Instantiate the compiler */
-    const compiler = new WJSCCompiler.default(data)
-    const generated = compiler.generate()
-    assert(generated, 'No code generated')
-    done()
-    /*
-    const relativePath = path.relative('wacc_examples', filename)
-    const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
-    const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
-    fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
-      if (asmreaderr) { throw asmreaderr }
-      const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
-      assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
-      done()
-    }) */
-  })
-}
-
-const getdiff = (difference) => `Diff: ${difference.length} chunks:\n` + 
-  difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map((line, index) => 
-    (b.value.split(os.EOL).length === (index - 1)) ? '' : `+ ${line}` 
-  ).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map((line, index) => 
-    (b.value.split(os.EOL).length === (index - 1)) ? '' : `- ${line}` 
-  ).join(os.EOL) : b.value.split(os.EOL).map((line, index) => 
-    (b.value.split(os.EOL).length === (index - 1)) ? '' : `  ${line}` 
-  ).join(os.EOL))) + os.EOL, '')
+const getdiff = (difference) => `Diff: ${difference.length} chunks:\n` +
+    difference.reduce((a, b) => a + (b.added ? (b.value.split(os.EOL).map((line, index) =>
+        (b.value.split(os.EOL).length === (index - 1)) ? '' : `+ ${line}`
+    ).join(os.EOL)) : (b.removed ? b.value.split(os.EOL).map((line, index) =>
+        (b.value.split(os.EOL).length === (index - 1)) ? '' : `- ${line}`
+    ).join(os.EOL) : b.value.split(os.EOL).map((line, index) =>
+        (b.value.split(os.EOL).length === (index - 1)) ? '' : `  ${line}`
+    ).join(os.EOL))) + os.EOL, '')
 
 readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'], (err, files) => {
   if (err) {
@@ -89,91 +68,273 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
       describe('Advanced Files', function () {
         testFiles.advancedFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('Array Files', function () {
         testFiles.arrayFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('Basic Files', function () {
         testFiles.basicFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('Expression Files', function () {
         testFiles.expressionsFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('Function Files', function () {
         testFiles.functionFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('If Files', function () {
         testFiles.ifFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('IO Files', function () {
         testFiles.ioFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('Pairs Files', function () {
         testFiles.pairsFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('Runtime Error Files', function () {
         testFiles.runtimeErrFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('Scope Files', function () {
         testFiles.scopeFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('Sequence Files', function () {
         testFiles.sequenceFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('Variables Files', function () {
         testFiles.variablesFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
       describe('While Files', function () {
         testFiles.whileFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
-            checkFile(filename, done)
+            fs.readFile(filename, 'utf8', (readerr, data) => {
+              if (readerr) { throw readerr }
+              /* Instantiate the compiler */
+              const compiler = new WJSCCompiler.default(data)
+              const generated = compiler.generate()
+              const relativePath = path.relative('wacc_examples', filename)
+              const assemblyPath = path.dirname(path.resolve('wacc_examples', 'assembly', relativePath))
+              const assemblyFile = path.resolve(assemblyPath, path.parse(relativePath).name) + '.asm'
+              fs.readFile(assemblyFile, 'utf8', (asmreaderr, refasm) => {
+                if (asmreaderr) { throw asmreaderr }
+                const difference = diff.diffLines(eol.auto(refasm), eol.auto(generated), { ignoreCase: true, ignoreWhitespace: true })
+                assert(difference.length === 1 & !difference[0].added && !difference[0].removed, getdiff(difference))
+                done()
+              })
+            })
           })
         })
       })
