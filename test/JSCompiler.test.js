@@ -1,12 +1,8 @@
 const assert = require('assert')
-const eol = require('eol')
 const readdir = require('recursive-readdir')
 const path = require('path')
 const fs = require('fs')
 const WJSCCompiler = require('../build/WJSCCompiler')
-const diff = require('diff')
-const child = require('child_process')
-const os = require('os')
 
 
 const checkFile = (filename, done) => {
