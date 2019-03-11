@@ -1,0 +1,44 @@
+body {
+  font-family: 'IBM Plex Sans', sans-serif !important;
+  font-weight: 300;
+}
+
+h1 {
+  font-weight: 500;
+}
+
+h4 {
+  font-weight: 500;
+}
+
+.centerfold {
+  text-align: center;
+  margin: 30px;
+}
+
+.flex-container {
+  text-align: left;
+  display: flex;
+  justify-content: center;
+}
+
+.flex-container-left {
+  justify-content: left;
+}
+
+.flex-items {
+  margin: 30px;
+  width: 20vw;
+}
+
+.wacc-form {
+  min-height: 120px;
+}
+
+.repl {
+  color: white;
+  background: #222430;
+  height: 32ch;
+  max-width: 80ch;
+  width: 80ch;
+}

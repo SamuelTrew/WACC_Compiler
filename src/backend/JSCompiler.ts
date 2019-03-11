@@ -41,49 +41,58 @@ export class JSCompiler {
       } as JSLib.JSReturn
     }],
     [WJSCParserRules.Println, (stat: WJSCStatement): JSLib.JSStat => {
-      return {
-        stat1: {
+      if (this.outUsed) {
+        return {
           stat1: {
+            stat1: {
+              expr: {
+                expr1: {
+                  type: JSLib.JSExprTypes.Terminal,
+                  value: this.outbuf,
+                },
+                expr2: this.generateExpression(stat.stdlibExpr),
+                operator: JSLib.JSAssignmentOperators.AdditionAssignment,
+                type: JSLib.JSExprTypes.Binary,
+              } as JSLib.JSBinaryExpr,
+              type: JSLib.JSStatTypes.Void,
+            } as JSLib.JSVoidStatement,
+            stat2: {
+              expr: {
+                args: [{
+                  type: JSLib.JSExprTypes.Terminal,
+                  value: this.outbuf,
+                }],
+                iden: 'console.log',
+                type: JSLib.JSExprTypes.Call,
+              } as JSLib.JSFunctionCall,
+              type: JSLib.JSStatTypes.Void,
+            } as JSLib.JSVoidStatement,
+            type: JSLib.JSStatTypes.Sequential,
+          },
+          stat2: {
             expr: {
-              expr1: {
+              lhs: {
                 type: JSLib.JSExprTypes.Terminal,
                 value: this.outbuf,
               },
-              expr2: this.generateExpression(stat.stdlibExpr),
-              operator: JSLib.JSAssignmentOperators.AdditionAssignment,
-              type: JSLib.JSExprTypes.Binary,
-            } as JSLib.JSBinaryExpr,
-            type: JSLib.JSStatTypes.Void,
-          } as JSLib.JSVoidStatement,
-          stat2: {
-            expr: {
-              args: [{
+              rhs: {
                 type: JSLib.JSExprTypes.Terminal,
-                value: this.outbuf,
-              }],
-              iden: 'console.log',
-              type: JSLib.JSExprTypes.Call,
-            } as JSLib.JSFunctionCall,
+                value: `""`,
+              },
+              type: JSLib.JSExprTypes.Assignment,
+            } as JSLib.JSAssignment,
             type: JSLib.JSStatTypes.Void,
           } as JSLib.JSVoidStatement,
           type: JSLib.JSStatTypes.Sequential,
-        },
-        stat2: {
+        } as JSLib.JSSeqStat
+      } else {
+        return {
           expr: {
-            lhs: {
-              type: JSLib.JSExprTypes.Terminal,
-              value: this.outbuf,
-            },
-            rhs: {
-              type: JSLib.JSExprTypes.Terminal,
-              value: `''`,
-            },
-            type: JSLib.JSExprTypes.Assignment,
-          } as JSLib.JSAssignment,
-          type: JSLib.JSStatTypes.Void,
-        } as JSLib.JSVoidStatement,
-        type: JSLib.JSStatTypes.Sequential,
-      } as JSLib.JSSeqStat
+            args: [this.generateExpression(stat.stdlibExpr)],
+            iden: 'console.log',
+          } as JSLib.JSFunctionCall,
+        } as JSLib.JSVoidStatement
+      }
     }],
     [WJSCParserRules.Print, (stat: WJSCStatement): JSLib.JSStat => {
       this.outUsed = true
@@ -164,7 +173,8 @@ export class JSCompiler {
       + `${generatedFunctions.map(JSLib.stringify.func).join(';')}`
       + (generatedStatements ? `function ${this.main}(){${JSLib.stringify.stat(generatedStatements)}}` : '')
       + (this.polyfills.length > 0 ? `;${this.generatePolyfills()}` : '')
-      + `;${this.main}()` + (this.outUsed ? `;if(${this.outbuf}.length>0){console.log(${this.outbuf})}` : '')
+      + `;const __exit=${this.main}()` + (this.outUsed ? `;if(${this.outbuf}.length>0){console.log(${this.outbuf})}` : '')
+      + ';__exit'
   }
 
   private generatePolyfills = (): string => {
