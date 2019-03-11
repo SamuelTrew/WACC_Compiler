@@ -42,3 +42,7 @@ h4 {
   max-width: 80ch;
   width: 80ch;
 }
+
+.hidden {
+  display: none;
+}

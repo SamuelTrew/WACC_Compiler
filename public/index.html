@@ -33,6 +33,9 @@
                   </select>
                 </div>
               </div>
+              <div class="optimize-checkbox hidden" id="optimizebutton">
+                <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimizebutton">Optimize JS
+              </div>
               <input class="button button-outline" type="submit" value="Submit" id="submitbutton">
             </fieldset>
           </form>
@@ -90,6 +93,14 @@
         if (event.target.id === 'repl') return;
         autoExpand(event.target);
       }, false);
+      document.addEventListener('input', function (even) {
+        if (event.target.id !== 'targetlang') return;
+        if (event.target.value === 'js') {
+          document.getElementById('optimizebutton').classList.remove('hidden')
+        } else {
+          document.getElementById('optimizebutton').classList.add('hidden')
+        }
+      })
       var executeJs = function (event) {
         event.preventDefault()
         if (!isJs) return;
@@ -98,8 +109,13 @@
           repl.value += message + '\n'
           repl.scrollTop = repl.scrollHeight
         }
-        const exitCode = eval(document.getElementById('output').value)
-        console.log('> Exited with exit code ' + (exitCode === undefined ? 0 : exitCode))
+        try {
+          const exitCode = eval(document.getElementById('output').value)
+          console.log('> Exited with exit code ' + (exitCode === undefined ? 0 : exitCode))
+        } catch (runtimeError) {
+          console.log('Runtime Error: ' + runtimeError.message)
+          console.log('Please contact the maintainers with the code that generated this message.')
+        }
         console.log = oldlog
       }
       var clearRepl = function (event) {
