@@ -66,5 +66,5 @@ deploy:
   only:
   - master
   script:
-  - echo sike, no deployment
+  - dpl --provider=heroku --app=wjsc --api-key=19544f74-fc74-4835-b7f8-428428938a63
   
