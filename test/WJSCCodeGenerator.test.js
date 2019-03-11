@@ -64,7 +64,7 @@ readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'],
       variablesFiles: files.filter((filename) => /variables/.test(filename)),
       whileFiles: files.filter((filename) => /while/.test(filename))
     }
-    describe('Code generator', function () {
+    describe.skip('Code generator', function () {
       describe('Advanced Files', function () {
         testFiles.advancedFiles.forEach((filename) => {
           it(`should compile source code ${path.relative('wacc_examples', filename)} to assembly`, function (done) {
