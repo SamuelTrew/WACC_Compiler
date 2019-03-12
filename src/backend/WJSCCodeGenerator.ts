@@ -14,7 +14,13 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType } from '../util/WJSCType'
+import {
+  BaseType,
+  getTypeSize,
+  hasSameType,
+  isArrayType,
+  isPairType
+} from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -61,6 +67,8 @@ class WJSCCodeGenerator {
   private outOfRegScope = 0
   private borrowReg: Register[] = []
   private borrowDestroy = true
+
+  private returnOffsets: string[] = []
 
   // Print functions
   private readonly PRINT_BOOL = 'p_print_bool'
@@ -589,11 +597,14 @@ class WJSCCodeGenerator {
     const numStackOffsets = Math.ceil(thisStackSize / this.MAX_SP_OFFSET)
     const stackOffsets: string[] = Array(numStackOffsets).fill('#' + this.MAX_SP_OFFSET)
     stackOffsets[numStackOffsets - 1] = '#' + thisStackSize % this.MAX_SP_OFFSET
+    this.symbolTable.setStackOffsets(stackOffsets)
+
     // Decrement sp
     // tslint:disable-next-line
     if (thisStackSize) {
       stackOffsets.forEach((operand) => {
         this.output.push(construct.arithmetic(ARMOpcode.subtract, this.sp, this.sp, operand))
+        this.returnOffsets.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
       })
     }
     // Traverse body
@@ -601,7 +612,7 @@ class WJSCCodeGenerator {
 
     // Increment sp
     // tslint:disable-next-line
-    if (thisStackSize) {
+    if (this.symbolTable.getStackOffsets() && stats[stats.length - 1].parserRule !== WJSCParserRules.Return) {
       stackOffsets.forEach((operand) => {
         this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
       })
@@ -703,6 +714,10 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Return:
         this.genExpr(atx.stdlibExpr, reglist)
         this.move(this.getRegSize(head), Register.r0, head)
+        this.returnOffsets.forEach((operand) => {
+          this.output.push(operand)
+        })
+        this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
         break
     }
   }
@@ -839,8 +854,8 @@ class WJSCCodeGenerator {
     })
     this.genStatBlock(atx.body, regList)
     this.switchToParentTable()
-    this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]),
-      construct.pushPop(ARMOpcode.pop, [this.pc]))
+
+    this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
     if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || atx.body.parserRule === WJSCParserRules.ConditionalIf) {
       this.ltorgCheck = false
     } else {

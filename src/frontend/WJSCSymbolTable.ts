@@ -10,6 +10,7 @@ export class WJSCSymbolTable {
   private readonly errorLog: WJSCErrorLog
   private functionName?: string
   private parentLevel?: WJSCSymbolTable
+  private stackOffsets?: string[]
   private spOffset = 0
 
   constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, isInFunction: boolean, errorLog: WJSCErrorLog) {
@@ -28,8 +29,10 @@ export class WJSCSymbolTable {
   public getChildrenTables = (): WJSCSymbolTable[] => this.childrenTables
 
   public getSpOffset = (): number => this.spOffset
-
   public setSpOffset = (offset: number) => this.spOffset = offset
+
+  public setStackOffsets = (stackOffsets: string[]) => this.stackOffsets = stackOffsets
+  public getStackOffsets = (): string[] => this.stackOffsets || []
 
   // Return if this table is inside a function declaration
   public inFunction = (): boolean => this.isInFunction
