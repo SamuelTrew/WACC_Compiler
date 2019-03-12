@@ -132,7 +132,7 @@
           target: targetlang,
           code: sourcecode,
         }
-        request.open('POST', 'http://localhost:8080/compile', true)
+        request.open('POST', 'wjsc.herokuapp.com/compile', true)
         request.setRequestHeader('Content-type', 'application/json');
         request.send(JSON.stringify(payload))
         request.onload = function () {

@@ -4,7 +4,7 @@ import express, { Response } from 'express'
 import { ConsoleColors as Color } from '../util/Colors'
 import WJSCCompiler from '../WJSCCompiler'
 const app = express()
-const port = 8080
+const port = process.env.PORT
 
 const info = `${Color.Dim}[info]${Color.Reset}`
 
