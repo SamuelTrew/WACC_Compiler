@@ -31,7 +31,7 @@
   },
   "author": "csh4017",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "@types/express": "^4.16.1",
     "@types/lodash": "^4.14.120",
     "@types/node": "^10.12.18",
@@ -53,9 +53,7 @@
     "uglifyjs-webpack-plugin": "^2.1.1",
     "webpack": "^4.28.4",
     "webpack-cli": "^3.2.1",
-    "webpack-dev-server": "^3.1.14"
-  },
-  "dependencies": {
+    "webpack-dev-server": "^3.1.14",
     "@types/argparse": "^1.0.35",
     "@types/cors": "^2.8.4",
     "antlr4ts": "^0.5.0-alpha.1",
