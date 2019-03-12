@@ -1,0 +1,6 @@
+begin
+  int[] a = [1,2,3];
+  int[] b = a;
+  b[1] = 4;
+  print a[1]
+end

@@ -18,7 +18,9 @@ export class JSCompiler {
       }
     }],
     [WJSCParserRules.Declare, ({ declaration }: WJSCStatement): JSLib.JSStat => {
-      const { rhs, identifier } = declaration
+      const { rhs } = declaration
+      let { identifier } = declaration
+      if (JSLib.reservedKeywords.includes(identifier)) { identifier += '_' }
       return {
         decl: JSLib.JSDeclarationKeywords.let,
         expr: this.generateRhs(rhs),
@@ -90,7 +92,7 @@ export class JSCompiler {
     [WJSCParserRules.CharLiter, ({ value }: WJSCExpr): JSLib.JSExpr => ({ value: `"${value}"`, type: JSLib.JSExprTypes.Terminal })],
     [WJSCParserRules.StringLiter, ({ value }: WJSCExpr): JSLib.JSExpr => ({ value: `"${value}"`, type: JSLib.JSExprTypes.Terminal })],
     [WJSCParserRules.PairLiter, (): JSLib.JSExpr => ({ value: [undefined, undefined], type: JSLib.JSExprTypes.Terminal })],
-    [WJSCParserRules.Identifier, ({ value }: WJSCExpr): JSLib.JSExpr => ({ value, type: JSLib.JSExprTypes.Terminal })],
+    [WJSCParserRules.Identifier, ({ value }: WJSCExpr): JSLib.JSExpr => ({ value: JSLib.reservedKeywords.includes(value) ? value + '_' : value, type: JSLib.JSExprTypes.Terminal })],
     [WJSCParserRules.BinOp, (expr: WJSCExpr): JSLib.JSExpr => ({
       expr1: this.generateExpression(expr.expr1),
       expr2: this.generateExpression(expr.expr2),
@@ -121,7 +123,7 @@ export class JSCompiler {
   ])
 
   private presetPolyfill = {
-    stdout: `var __buf="";function __write(){for(var _=[],o=0;o<arguments.length;o++)_[o]=arguments[o];void 0===_&&(console.log(__buf),__buf=""),_.forEach(function(_){String(_).split("").forEach(function(_){"\\n"===_?(console.log(__buf),__buf=""):__buf+=_})})}`,
+    stdout: `var __buf="";function __write(){for(var _=[],f=0;f<arguments.length;f++)_[f]=arguments[f];0===_.length&&(console.log(__buf),__buf=""),_.forEach(function(_){String(_).split("").forEach(function(_){"\\n"===_?(console.log(__buf),__buf=""):__buf+=_})})}`,
   }
 
   private readonly main = '__main'
@@ -135,7 +137,7 @@ export class JSCompiler {
       + `${generatedFunctions.map(JSLib.stringify.func).join(';')}`
       + (generatedStatements ? `function ${this.main}(){${JSLib.stringify.stat(generatedStatements)}}` : '')
       + (this.polyfills.length > 0 ? `;${this.generatePolyfills()}` : '')
-      + `;const __exit=${this.main}()` + (this.outUsed ? `;if(__buf.length>0){__write()}` : '')
+      + `;var __exit=${this.main}()` + (this.outUsed ? `;if(__buf.length>0){__write()}` : '')
       + ';__exit'
   }
 
@@ -151,7 +153,9 @@ export class JSCompiler {
   }
 
   private generateFunctions = (functions: WJSCFunction[]): JSLib.JSFunction[] => functions.map((func: WJSCFunction) => {
-    const { identifier, paramList, body } = func
+    const { paramList, body } = func
+    let identifier = func.identifier
+    if (JSLib.reservedKeywords.includes(identifier)) { identifier += '_' }
     return {
       body: this.generateStatement(body),
       name: identifier,
@@ -188,7 +192,7 @@ export class JSCompiler {
       } as JSLib.JSTerminalExpr
     } else if (parserRule === WJSCParserRules.ArrayElem) {
       return {
-        arr: lhs.ident,
+        arr: (lhs.children[0] as WJSCArrayElem).ident,
         indx: (lhs.children[0] as WJSCArrayElem).specificInd.map(this.generateExpression),
         type: JSLib.JSExprTypes.ArrayElem,
       } as JSLib.JSArrayElem
@@ -213,9 +217,11 @@ export class JSCompiler {
 
         } as JSLib.JSPairExpr
       case WJSCParserRules.FunctionCall:
+        let identifier = rhs.ident
+        if (JSLib.reservedKeywords.includes(identifier)) { identifier += '_' }
         return {
           args: (rhs.argList || []).map(this.generateExpression),
-          iden: rhs.ident,
+          iden: identifier,
           type: JSLib.JSExprTypes.Call,
         } as JSLib.JSFunctionCall
       default:

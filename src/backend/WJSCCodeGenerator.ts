@@ -19,7 +19,7 @@ import {
   getTypeSize,
   hasSameType,
   isArrayType,
-  isPairType
+  isPairType,
 } from '../util/WJSCType'
 import {
   ARMAddress,

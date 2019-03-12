@@ -233,6 +233,20 @@ const stringify = Object.freeze({
   stat: (stat: JSStat): string => (statMap.get(stat.type) || (() => { throw new TypeError(`unknown statement ${stat.type}`) }))(stat),
 })
 
+const reservedKeywords = Object.freeze(['break', 'case', 'catch', 'class',
+                                        'const', 'continue', 'debugger',
+                                        'default', 'delete', 'do', 'else',
+                                        'export', 'extends', 'finally', 'for',
+                                        'function', 'if', 'import', 'in',
+                                        'instanceof', 'new', 'return', 'super',
+                                        'switch', 'this', 'throw', 'try',
+                                        'typeof', 'var', 'void', 'while',
+                                        'with', 'yield', 'enum', 'implements',
+                                        'interface', 'let', 'package',
+                                        'private', 'protected', 'public',
+                                        'static', 'await', 'null', 'true',
+                                        'false'])
+
 export {
   JSStat,
   JSExpr,
@@ -258,4 +272,5 @@ export {
   JSUnaryExpr,
   JSAssignmentOperators,
   stringify,
+  reservedKeywords,
 }
