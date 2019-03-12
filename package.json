@@ -22,7 +22,7 @@
     "test:watch": "mocha -w --reporter mochawesome --reporter-options reportDir=test/report",
     "test:serve": "live-server --port=9000 --mount=/:test/report/ --entry-file=test/report/mochawesome.html",
     "start:test": "concurrently --kill-others \"npm run test:watch\" \"npm run test:serve\" \"npm run build:tscw\"",
-    "start": "node ./build/server/app.js",
+    "start": "node ./build/server/App.js",
     "serve": "live-server --port=8081 --mount=/:public/ --entry-file=public/index.html"
   },
   "repository": {
