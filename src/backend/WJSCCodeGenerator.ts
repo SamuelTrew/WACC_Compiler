@@ -612,9 +612,10 @@ class WJSCCodeGenerator {
 
     // Increment sp
     // tslint:disable-next-line
-    if (this.symbolTable.getStackOffsets() && stats[stats.length - 1].parserRule !== WJSCParserRules.Return) {
+    if (thisStackSize && stats[stats.length - 1].parserRule !== WJSCParserRules.Return) {
       stackOffsets.forEach((operand) => {
         this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, operand))
+        this.returnOffsets.pop()
       })
     }
   }
@@ -842,6 +843,7 @@ class WJSCCodeGenerator {
 
   // Generates code for the function
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
+    this.returnOffsets = []
     this.output.push(directive.label(`f_${atx.identifier}`),
       construct.pushPop(ARMOpcode.push, [this.lr]))
     this.switchToChildTable(atx.body.tableNumber)
