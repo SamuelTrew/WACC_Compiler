@@ -1,5 +1,4 @@
 import { WJSCArrayElem, WJSCAssignLhs, WJSCAssignRhs, WJSCAst, WJSCExpr, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCStatement } from '../util/WJSCAst'
-import { BaseType } from '../util/WJSCType'
 import * as JSLib from './JS-lib'
 
 /**
@@ -41,73 +40,28 @@ export class JSCompiler {
       } as JSLib.JSReturn
     }],
     [WJSCParserRules.Println, (stat: WJSCStatement): JSLib.JSStat => {
-      if (this.outUsed) {
-        return {
-          stat1: {
-            stat1: {
-              expr: {
-                expr1: {
-                  type: JSLib.JSExprTypes.Terminal,
-                  value: this.outbuf,
-                },
-                expr2: this.generateExpression(stat.stdlibExpr),
-                operator: JSLib.JSAssignmentOperators.AdditionAssignment,
-                type: JSLib.JSExprTypes.Binary,
-              } as JSLib.JSBinaryExpr,
-              type: JSLib.JSStatTypes.Void,
-            } as JSLib.JSVoidStatement,
-            stat2: {
-              expr: {
-                args: [{
-                  type: JSLib.JSExprTypes.Terminal,
-                  value: this.outbuf,
-                }],
-                iden: 'console.log',
-                type: JSLib.JSExprTypes.Call,
-              } as JSLib.JSFunctionCall,
-              type: JSLib.JSStatTypes.Void,
-            } as JSLib.JSVoidStatement,
-            type: JSLib.JSStatTypes.Sequential,
-          },
-          stat2: {
-            expr: {
-              lhs: {
-                type: JSLib.JSExprTypes.Terminal,
-                value: this.outbuf,
-              },
-              rhs: {
-                type: JSLib.JSExprTypes.Terminal,
-                value: `""`,
-              },
-              type: JSLib.JSExprTypes.Assignment,
-            } as JSLib.JSAssignment,
-            type: JSLib.JSStatTypes.Void,
-          } as JSLib.JSVoidStatement,
-          type: JSLib.JSStatTypes.Sequential,
-        } as JSLib.JSSeqStat
-      } else {
-        return {
-          expr: {
-            args: [this.generateExpression(stat.stdlibExpr)],
-            iden: 'console.log',
-          } as JSLib.JSFunctionCall,
-        } as JSLib.JSVoidStatement
-      }
+      return {
+        expr: {
+          args: [this.generateExpression(stat.stdlibExpr), {
+            type: JSLib.JSExprTypes.Terminal,
+            value: '"\\n"',
+          } as JSLib.JSTerminalExpr],
+          iden: (this.outUsed ? `__write` : 'console.log'),
+          type: JSLib.JSExprTypes.Call,
+        } as JSLib.JSFunctionCall,
+        type: JSLib.JSStatTypes.Void,
+      } as JSLib.JSVoidStatement
     }],
     [WJSCParserRules.Print, (stat: WJSCStatement): JSLib.JSStat => {
       this.outUsed = true
       return {
         expr: {
-          expr1: {
-            type: JSLib.JSExprTypes.Terminal,
-            value: this.outbuf,
-          },
-          expr2: this.generateExpression(stat.stdlibExpr),
-          operator: JSLib.JSAssignmentOperators.AdditionAssignment,
-          type: JSLib.JSExprTypes.Binary,
-        } as JSLib.JSBinaryExpr,
+          args: [this.generateExpression(stat.stdlibExpr)],
+          iden: `__write`,
+          type: JSLib.JSExprTypes.Call,
+        } as JSLib.JSFunctionCall,
         type: JSLib.JSStatTypes.Void,
-      }
+      } as JSLib.JSVoidStatement
     }],
     [WJSCParserRules.ConditionalWhile, (stat: WJSCStatement): JSLib.JSStat => ({
       body: this.generateStatement(stat.trueBranch),
@@ -159,21 +113,29 @@ export class JSCompiler {
         } as JSLib.JSUnaryExpr
       }
     }],
+    [WJSCParserRules.ArrayElem, (expr: WJSCExpr): JSLib.JSExpr => ({
+      arr: (expr.children[0] as WJSCArrayElem).ident,
+      indx: (expr.children[0] as WJSCArrayElem).specificInd.map(this.generateExpression),
+      type: JSLib.JSExprTypes.ArrayElem,
+    }) as JSLib.JSArrayElem],
   ])
 
+  private presetPolyfill = {
+    stdout: `var __buf="";function __write(){for(var _=[],o=0;o<arguments.length;o++)_[o]=arguments[o];void 0===_&&(console.log(__buf),__buf=""),_.forEach(function(_){String(_).split("").forEach(function(_){"\\n"===_?(console.log(__buf),__buf=""):__buf+=_})})}`,
+  }
+
   private readonly main = '__main'
-  private readonly outbuf = '__outbuf'
   private outUsed = false
 
   public generateProgram = (ast: WJSCAst) => {
     const { functions, body } = ast
     const generatedFunctions = this.generateFunctions(functions)
     const generatedStatements = body ? this.generateStatement(body) : undefined
-    return `"use strict";` + (this.outUsed ? `var ${this.outbuf}='';` : '')
+    return `"use strict";` + (this.outUsed ? `${this.presetPolyfill.stdout}` : '')
       + `${generatedFunctions.map(JSLib.stringify.func).join(';')}`
       + (generatedStatements ? `function ${this.main}(){${JSLib.stringify.stat(generatedStatements)}}` : '')
       + (this.polyfills.length > 0 ? `;${this.generatePolyfills()}` : '')
-      + `;const __exit=${this.main}()` + (this.outUsed ? `;if(${this.outbuf}.length>0){console.log(${this.outbuf})}` : '')
+      + `;const __exit=${this.main}()` + (this.outUsed ? `;if(__buf.length>0){__write()}` : '')
       + ';__exit'
   }
 
