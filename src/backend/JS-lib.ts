@@ -90,6 +90,7 @@ enum JSExprTypes {
   Call,
   ArrayElem,
   PairElem,
+  Nested,
 }
 
 type JSBinaryOperators = JSComparisonOperators | JSArithmeticOperators | JSBitwiseOperators | JSLogicalOperators
@@ -135,6 +136,10 @@ interface JSVoidStatement extends JSStatBase {
 
 interface JSExprBase {
   type: JSExprTypes
+}
+
+interface JSNestedExpr extends JSExprBase {
+  expr: JSExpr
 }
 
 interface JSFunctionCall extends JSExprBase {
@@ -187,7 +192,7 @@ interface JSFunction {
 }
 
 type JSStat = JSDeclaration | JSBlock | JSSeqStat | JSIfElse | JSWhile | JSReturn | JSStatBase | JSVoidStatement
-type JSExpr = JSTerminalExpr | JSBinaryExpr | JSUnaryExpr | JSArrayExpr | JSPairExpr | JSFunctionCall | JSAssignment | JSArrayElem | JSPairElem
+type JSExpr = JSTerminalExpr | JSBinaryExpr | JSUnaryExpr | JSArrayExpr | JSPairExpr | JSFunctionCall | JSAssignment | JSArrayElem | JSPairElem | JSNestedExpr
 
 const statMap = new Map<JSStatTypes, (stat: JSStat) => string>([
   [JSStatTypes.Empty, () => ';'],
@@ -218,13 +223,14 @@ const statMap = new Map<JSStatTypes, (stat: JSStat) => string>([
 const exprMap = new Map<JSExprTypes, (expr: JSExpr) => string>([
   [JSExprTypes.Terminal, (expr) => (expr = expr as JSTerminalExpr, expr.value)],
   [JSExprTypes.Binary, (expr) => (expr = expr as JSBinaryExpr, stringify.expr(expr.expr1) + expr.operator + stringify.expr(expr.expr2))],
-  [JSExprTypes.Unary, (expr) => (expr = expr as JSUnaryExpr, expr.operator + stringify.expr(expr.expr))],
+  [JSExprTypes.Unary, (expr) => (expr = expr as JSUnaryExpr, (expr as JSUnaryExpr).operator + stringify.expr(expr.expr))],
   [JSExprTypes.Pair, (expr) => (expr = expr as JSPairExpr, `[${stringify.expr(expr.pairValues[0])},${stringify.expr(expr.pairValues[1])}]`)],
   [JSExprTypes.Array, (expr) => (expr = expr as JSArrayExpr, `[${expr.values.map(stringify.expr).join()}]`)],
   [JSExprTypes.Call, (expr) => (expr = expr as JSFunctionCall, `${expr.iden}(${expr.args.map(stringify.expr).join()})`)],
   [JSExprTypes.ArrayElem, (expr) => (expr = expr as JSArrayElem, `${expr.arr}[${expr.indx.map(stringify.expr).join('][')}]`)],
   [JSExprTypes.PairElem, (expr) => (expr = expr as JSPairElem, `${stringify.expr(expr.pair)}[${expr.indx}]`)],
   [JSExprTypes.Assignment, (expr) => (expr = expr as JSAssignment, stringify.expr(expr.lhs) + '=' + stringify.expr(expr.rhs))],
+  [JSExprTypes.Nested, (expr) => (expr = expr as JSNestedExpr, `(${stringify.expr(expr.expr)})`)],
 ])
 
 const stringify = Object.freeze({
@@ -271,6 +277,7 @@ export {
   JSBinaryExpr,
   JSUnaryExpr,
   JSAssignmentOperators,
+  JSNestedExpr,
   stringify,
   reservedKeywords,
 }

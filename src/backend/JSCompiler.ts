@@ -120,6 +120,10 @@ export class JSCompiler {
       indx: (expr.children[0] as WJSCArrayElem).specificInd.map(this.generateExpression),
       type: JSLib.JSExprTypes.ArrayElem,
     }) as JSLib.JSArrayElem],
+    [WJSCParserRules.Expression, (expr: WJSCExpr): JSLib.JSExpr => ({
+      expr: this.generateExpression(expr.children[0] as WJSCExpr),
+      type: JSLib.JSExprTypes.Nested,
+    }) as JSLib.JSNestedExpr],
   ])
 
   private presetPolyfill = {

@@ -1,0 +1,12 @@
+begin
+ int n = 0;
+ while n < 1000 do
+  if (n % 2) == 0 then
+   print n;
+   print " "
+  else
+    skip
+  fi;
+  n = n + 1
+ done
+end
