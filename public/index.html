@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+
+  <head>
+    <title>WJSC Web Compiler</title>
+    <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,500" rel="stylesheet">
+    <link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
+    <link href="style.css" rel="stylesheet">
+  </head>
+
+  <body>
+    <div class="centerfold">
+      <img src="wjsc_512.png" style="width:20vw;margin:30px">
+      <h1>
+        WJSC Web Compiler
+      </h1>
+      <p>
+        I heard you like WACC.
+      </p>
+      <div class="flex-container">
+        <div class="flex-items">
+          <h4>Input WACC</h4>
+          <form id="inputform">
+            <fieldset>
+              <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
+                id="sourcecode"></textarea>
+              <div class="flex-container flex-container-left">
+                <div>
+                  Target Language
+                  <select name="target" id="targetlang">
+                    <option value="arm">ARM7TDMI</option>
+                    <option value="js">ES5</option>
+                  </select>
+                </div>
+              </div>
+              <div class="optimize-checkbox hidden" id="optimizebutton">
+                <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimizebutton">Optimize JS
+              </div>
+              <input class="button button-outline" type="submit" value="Submit" id="submitbutton">
+            </fieldset>
+          </form>
+        </div>
+        <div class="flex-items">
+          <h4>Output</h4>
+          <form>
+            <fieldset>
+              <textarea class="wacc-form autoExpand" id="output" rows="20" placeholder="Output" style="resize: none;"
+                disabled></textarea>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+      <div>
+        <h4>WJSC REPL</h4>
+        <p>Try compiled JS code!</p>
+        <textarea class="repl" id="repl" rows="20" cols="80" style="resize: none;" disabled></textarea>
+        <div class="flex-container">
+          <button id="repl-run" class="repl-buttons button button-outline" onclick="executeJs(event)">Run</button>
+          <button id="repl-clear" class="repl-buttons button button-clear" onclick="clearRepl(event)">Clear</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.getElementById('repl-run').disabled = true
+      document.getElementById('repl-clear').disabled = true
+      const repl = document.getElementById('repl')
+      repl.value += '> Generate JS code and run it.\n'
+      var isJs = false
+      var textareas = document.getElementsByTagName('textarea');
+      var count = textareas.length;
+      for (var i = 0; i < count; i++) {
+        textareas[i].onkeydown = function (e) {
+          if (e.keyCode == 9 || e.which == 9) {
+            e.preventDefault();
+            var s = this.selectionStart;
+            this.value = this.value.substring(0, this.selectionStart) + '  ' + this.value.substring(this.selectionEnd);
+            this.selectionEnd = s + 1;
+          }
+        }
+      }
+      var autoExpand = function (field) {
+        field.style.height = '120px';
+        var computed = window.getComputedStyle(field);
+        var height = parseInt(computed.getPropertyValue('border-top-width'), 10)
+          + parseInt(computed.getPropertyValue('padding-top'), 10)
+          + field.scrollHeight
+          + parseInt(computed.getPropertyValue('padding-bottom'), 10)
+          + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
+        field.style.height = height - 12 + 'px';
+      };
+      document.addEventListener('input', function (event) {
+        if (event.target.tagName.toLowerCase() !== 'textarea') return;
+        if (event.target.id === 'repl') return;
+        autoExpand(event.target);
+      }, false);
+      document.addEventListener('input', function (even) {
+        if (event.target.id !== 'targetlang') return;
+        if (event.target.value === 'js') {
+          document.getElementById('optimizebutton').classList.remove('hidden')
+        } else {
+          document.getElementById('optimizebutton').classList.add('hidden')
+        }
+      })
+      var executeJs = function (event) {
+        event.preventDefault()
+        if (!isJs) return;
+        var oldlog = console.log
+        console.log = function (message) {
+          repl.value += message + '\n'
+          repl.scrollTop = repl.scrollHeight
+        }
+        try {
+          const exitCode = eval(document.getElementById('output').value)
+          console.log('> Exited with exit code ' + (exitCode === undefined ? 0 : exitCode))
+        } catch (runtimeError) {
+          console.log('Runtime Error: ' + runtimeError.message)
+          console.log('Please contact the maintainers with the code that generated this message.')
+        }
+        console.log = oldlog
+      }
+      var clearRepl = function (event) {
+        event.preventDefault()
+        repl.value = '> Generate JS code and run it.\n'
+      }
+      var getCode = function (code) {
+        document.getElementById('submitbutton').disabled = true;
+        document.getElementById('submitbutton').value = 'Loading';
+        const targetlang = document.getElementById('targetlang').value;
+        const sourcecode = document.getElementById('sourcecode').value;
+        var request = new XMLHttpRequest();
+        const payload = {
+          target: targetlang,
+          code: sourcecode,
+        }
+        request.open('POST', '/compile', true)
+        request.setRequestHeader('Content-type', 'application/json');
+        request.send(JSON.stringify(payload))
+        request.onload = function () {
+          var data = JSON.parse(this.response)
+          var output
+          switch (this.status) {
+            case 200:
+              output = data.code
+              break
+            case 400:
+              output = 'Client Error: ' + data.error + '\nContact the maintainers for more info.'
+              break
+            case 500:
+              output = 'Compile Error:\n' + data.error
+              break
+          }
+          document.getElementById('output').value = output
+          autoExpand(document.getElementById('output'))
+          document.getElementById('submitbutton').disabled = false;
+          document.getElementById('submitbutton').value = 'Submit';
+          isJs = targetlang === 'js'
+          document.getElementById('repl-run').disabled = !isJs
+          document.getElementById('repl-clear').disabled = !isJs
+        }
+        request.onerror = function () {
+          document.getElementById('output').value = 'Error fetching from server!\nContact the maintainers for more info.'
+          document.getElementById('submitbutton').disabled = false;
+          document.getElementById('submitbutton').value = 'Submit';
+        }
+      }
+      document.getElementById("inputform").addEventListener("submit", function (event) {
+        event.preventDefault()
+        getCode()
+      });
+    </script>
+  </body>
+
+</html>
