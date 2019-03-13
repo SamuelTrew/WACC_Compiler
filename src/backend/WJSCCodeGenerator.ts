@@ -438,6 +438,8 @@ class WJSCCodeGenerator {
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params, undefined, undefined, true))
           break
         case BaseType.String:
+          params = `[${itemUsed}, ${directive.immNum(4 + typeSize * (index))}]`
+          this.output.push(construct.singleDataTransfer(ARMOpcode.store, nextItem, params))
           break
         default:
           if (isArrayType(child.type) || isPairType(child.type)) {
