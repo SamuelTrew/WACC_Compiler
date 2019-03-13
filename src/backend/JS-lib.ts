@@ -156,6 +156,7 @@ interface JSArrayExpr extends JSExprBase {
 }
 
 interface JSArrayElem extends JSExprBase {
+  typeName: 'array' | 'string'
   arr: string
   indx: JSExpr[]
 }
@@ -221,7 +222,7 @@ const statMap = new Map<JSStatTypes, (stat: JSStat) => string>([
 ])
 
 const exprMap = new Map<JSExprTypes, (expr: JSExpr) => string>([
-  [JSExprTypes.Terminal, (expr) => (expr = expr as JSTerminalExpr, expr.value)],
+  [JSExprTypes.Terminal, (expr) => (expr = expr as JSTerminalExpr, (((typeof expr.value === 'number') && (expr.value < 0)) ? `(${expr.value})` : expr.value ))],
   [JSExprTypes.Binary, (expr) => (expr = expr as JSBinaryExpr, stringify.expr(expr.expr1) + expr.operator + stringify.expr(expr.expr2))],
   [JSExprTypes.Unary, (expr) => (expr = expr as JSUnaryExpr, (expr as JSUnaryExpr).operator + stringify.expr(expr.expr))],
   [JSExprTypes.Pair, (expr) => (expr = expr as JSPairExpr, `[${stringify.expr(expr.pairValues[0])},${stringify.expr(expr.pairValues[1])}]`)],
@@ -251,7 +252,7 @@ const reservedKeywords = Object.freeze(['break', 'case', 'catch', 'class',
                                         'interface', 'let', 'package',
                                         'private', 'protected', 'public',
                                         'static', 'await', 'null', 'true',
-                                        'false'])
+                                        'false', 'strrpl'])
 
 export {
   JSStat,

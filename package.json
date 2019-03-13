@@ -10,7 +10,7 @@
   "scripts": {
     "all": "npm run lint && npm run build:antlr && npm run build && npm test",
     "clean": "rimraf build",
-    "build": "npm run build:compile",
+    "build": "webpack",
     "build:antlr": "cd antlr_config && java -jar \"../lib/antlr-4.7-complete.jar\" WJSCLexer.g4 WJSCParser.g4 -o antlr && cd antlr && javac -cp \"../../lib/antlr-4.7-complete.jar\" *.java",
     "build:tsc": "npm run build:grammar && tsc",
     "build:tscw": "tsc --watch",

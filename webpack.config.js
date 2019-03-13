@@ -11,11 +11,11 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js', '.jsx']
   },
 
-  entry: './src/Index.ts',
+  entry: './src/server/App.ts',
 
   output: {
     path: path.resolve(__dirname, 'build'),
-    filename: 'index.js',
+    filename: 'app.js',
   },
 
   optimization: {
