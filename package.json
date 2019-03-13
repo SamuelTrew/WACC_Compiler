@@ -61,6 +61,7 @@
     "mochawesome": "^3.1.1",
     "node-fetch": "^2.3.0",
     "npm": "^6.8.0",
+    "readline-sync": "^1.4.9",
     "recursive-readdir": "^2.2.2",
     "rimraf": "^2.6.3",
     "script-loader": "^0.7.2",

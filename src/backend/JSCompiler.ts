@@ -41,24 +41,20 @@ export class JSCompiler {
       } as JSLib.JSReturn
     }],
     [WJSCParserRules.Println, (stat: WJSCStatement): JSLib.JSStat => {
-      const args = [this.generateExpression(stat.stdlibExpr)]
-      if (this.outUsed) {
-        args.concat({
-          type: JSLib.JSExprTypes.Terminal,
-          value: '"\\n"',
-        } as JSLib.JSTerminalExpr)
-      }
+      const args = [this.generateExpression(stat.stdlibExpr), {
+        type: JSLib.JSExprTypes.Terminal,
+        value: '"\\n"',
+      }]
       return {
         expr: {
           args,
-          iden: (this.outUsed ? `_write` : 'console.log'),
+          iden: `_write`,
           type: JSLib.JSExprTypes.Call,
         } as JSLib.JSFunctionCall,
         type: JSLib.JSStatTypes.Void,
       } as JSLib.JSVoidStatement
     }],
     [WJSCParserRules.Print, (stat: WJSCStatement): JSLib.JSStat => {
-      this.outUsed = true
       return {
         expr: {
           args: [this.generateExpression(stat.stdlibExpr)],
@@ -144,6 +140,24 @@ export class JSCompiler {
       this.exitScope()
       return result
     }],
+    [WJSCParserRules.Read, (stat: WJSCStatement): JSLib.JSStat => {
+      this.polyfills.push('read')
+      return {
+        expr: {
+          lhs: {
+            type: JSLib.JSExprTypes.Terminal,
+            value: stat.children[1].token,
+          } as JSLib.JSTerminalExpr,
+          rhs: {
+            args: [],
+            iden: 'read',
+            type: JSLib.JSExprTypes.Call,
+          } as JSLib.JSFunctionCall,
+          type: JSLib.JSExprTypes.Assignment,
+        } as JSLib.JSAssignment,
+        type: JSLib.JSStatTypes.Void,
+      } as JSLib.JSVoidStatement
+    }],
   ])
 
   private readonly exprMap: Map<WJSCParserRules, (expr: WJSCExpr) => JSLib.JSExpr> = new Map([
@@ -190,7 +204,6 @@ export class JSCompiler {
     stdout: `var _buf="";function _write(){for(var _=[],f=0;f<arguments.length;f++)_[f]=arguments[f];0===_.length&&(console.log(_buf),_buf=""),_.forEach(function(_){String(_).split("").forEach(function(_){"\\n"===_?(console.log(_buf),_buf=""):_buf+=_})})}`,
   }
   private readonly main = '_main'
-  private outUsed = false
   private symboltable: Array<Map<string, string>> = []
 
   public generateProgram = (ast: WJSCAst) => {
@@ -198,11 +211,11 @@ export class JSCompiler {
     const { functions, body } = ast
     const generatedFunctions = this.generateFunctions(functions)
     const generatedStatements = body ? this.generateStatement(body) : undefined
-    return `"use strict";` + (this.outUsed ? `${this.presetPolyfill.stdout}` : '')
+    return `"use strict";` + this.presetPolyfill.stdout
       + `${generatedFunctions.map(JSLib.stringify.func).join(';')}`
       + (generatedStatements ? `function ${this.main}(){${JSLib.stringify.stat(generatedStatements)}}` : '')
       + (this.polyfills.length > 0 ? `;${this.generatePolyfills()}` : '')
-      + `;var _exit=${this.main}()` + (this.outUsed ? `;if(_buf.length>0){_write()}` : '')
+      + `;var _exit=${this.main}()` + `;if(_buf.length>0){_write()}`
       + ';_exit'
   }
 
@@ -247,6 +260,9 @@ export class JSCompiler {
     }
     if (this.polyfills.includes('strrpl')) {
       output.push('function strrpl(s,i,v){var a=s.split("");a[i]=v;return a.join("")}')
+    }
+    if (this.polyfills.includes('read')) {
+      output.push('function read(){if(void 0!==typeof _buf&&_write(),"undefined"==typeof process||"node"!==process.release.name)return prompt("stdin:");try{return require("readline-sync").prompt()}catch(e){console.error("Readline Sync not installed!")}}')
     }
     return output.join(';')
   }
