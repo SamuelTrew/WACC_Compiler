@@ -748,8 +748,15 @@ class WJSCCodeGenerator {
           this.output.push(construct.branch(`putchar`, true))
           break
         default:
-          this.output.push(construct.branch(this.PRINT_REFERENCE, true))
-          this.pushCheck(Check.printRef)
+          // Catch char[] as string
+          if (hasSameType(atx.type, BaseType.String)) {
+            this.output.push(construct.branch(this.PRINT_STRING, true))
+            this.pushCheck(Check.printString)
+            break
+          } else {
+            this.output.push(construct.branch(this.PRINT_REFERENCE, true))
+            this.pushCheck(Check.printRef)
+          }
       }
     }
   }
@@ -774,9 +781,14 @@ class WJSCCodeGenerator {
         this.pushCheck(Check.printBool)
         break
       default:
-        if (isArrayType(type) || isPairType(type)) {
+        if (hasSameType(type, BaseType.String)) {
+          this.output.push(construct.branch(this.PRINT_STRING, true))
+          this.pushCheck(Check.printString)
+          break
+        } else if (isArrayType(type) || isPairType(type)) {
           this.output.push(construct.branch(this.PRINT_REFERENCE, true))
           this.pushCheck(Check.printRef)
+          break
         }
     }
   }
