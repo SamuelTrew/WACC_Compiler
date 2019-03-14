@@ -144,10 +144,7 @@ export class JSCompiler {
       this.polyfills.push('read')
       return {
         expr: {
-          lhs: {
-            type: JSLib.JSExprTypes.Terminal,
-            value: stat.children[1].token,
-          } as JSLib.JSTerminalExpr,
+          lhs: this.generateLhs(stat.children[1] as WJSCAssignLhs),
           rhs: {
             args: [],
             iden: 'read',
@@ -309,7 +306,7 @@ export class JSCompiler {
     if (parserRule === WJSCParserRules.Identifier) {
       return {
         type: JSLib.JSExprTypes.Terminal,
-        value: lhs.token,
+        value: this.getIdentName(lhs.token),
       } as JSLib.JSTerminalExpr
     } else if (parserRule === WJSCParserRules.ArrayElem) {
       return {

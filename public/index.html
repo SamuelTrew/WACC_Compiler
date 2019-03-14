@@ -101,22 +101,25 @@
           document.getElementById('optimizebutton').classList.add('hidden')
         }
       })
-      var executeJs = function (event) {
+      var executeJs = async function (event) {
         event.preventDefault()
         if (!isJs) return;
-        var oldlog = console.log
+        const oldlog = console.log
         console.log = function (message) {
           repl.value += message + '\n'
           repl.scrollTop = repl.scrollHeight
+          document.getElementById('parentOfElementToBeRedrawn').style.display = 'none';
+          document.getElementById('parentOfElementToBeRedrawn').style.display = 'block';
         }
         try {
           const exitCode = eval(document.getElementById('output').value)
           console.log('> Exited with exit code ' + (exitCode === undefined ? 0 : exitCode))
         } catch (runtimeError) {
-          console.log('Runtime Error: ' + runtimeError.message)
+          console.log('Runtime Error: ' + runtimeError)
           console.log('Please contact the maintainers with the code that generated this message.')
+        } finally {
+          console.log = oldlog
         }
-        console.log = oldlog
       }
       var clearRepl = function (event) {
         event.preventDefault()
