@@ -35,7 +35,8 @@ import {
 } from '../grammar/WJSCParser'
 import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
-  WJSCArrayElem, WJSCAssignLhs,
+  WJSCArrayElem,
+  WJSCAssignLhs,
   WJSCAssignment,
   WJSCAssignRhs,
   WJSCAst,
@@ -462,8 +463,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCStatement => {
     const ifB = ctx.IF()
     const whileB = ctx.WHILE()
-    const childExp = ctx.expression()
-    const childStat = ctx.statement()
+    const forB = ctx.FOR()
+    const keyWord = ctx.IF() || ctx.WHILE() || ctx.FOR()
+    const expr = ctx.expression()
+    const visitedExpr = this.visitExpression(expr)
+    const statements = ctx.statement()
     const result = this.initWJSCAst(
       ctx,
       ifB
@@ -472,53 +476,98 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           ? WJSCParserRules.ConditionalWhile
           : WJSCParserRules.Undefined,
     ) as WJSCStatement
-    if (ifB && childStat.length !== 2) {
-      this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
-    } else if (whileB && childStat.length !== 1) {
-      this.errorLog.semErr(result, SemError.IncorrectArgNo, [1, 1])
-    } else {
-      const childExpVisited = this.visitExpression(childExp)
-      if (!hasSameType(childExpVisited.type, BaseType.Boolean)) {
-        this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
-      }
-      result.condition = childExpVisited
-      this.pushChild(result, childExpVisited)
-      if (ifB) {
-        // If Condition
-        const [trueBranch, falseBranch] = childStat
-        /* Ensure that children[0] = true, children[1] = false */
-        const trueTableNo = this.getTableNumber()
-        this.symbolTable = this.symbolTable.enterScope(trueTableNo)
-        const visitedTrueBranch = this.visitStatement(trueBranch)
-        this.symbolTable = this.symbolTable.exitScope()
-        visitedTrueBranch.tableNumber = trueTableNo
 
-        const falseTableNo = this.getTableNumber()
-        this.symbolTable = this.symbolTable.enterScope(falseTableNo)
-        const visitedFalseBranch = this.visitStatement(falseBranch)
-        this.symbolTable = this.symbolTable.exitScope()
-        visitedFalseBranch.tableNumber = falseTableNo
-
-        this.pushChild(result, visitedTrueBranch, true)
-        this.pushChild(result, visitedFalseBranch, true)
-        result.trueBranch = visitedTrueBranch
-        result.falseBranch = visitedFalseBranch
-      } else if (whileB) {
-        // While Condition
-        this.symbolTable = this.symbolTable.enterScope(this.getTableNumber())
-        const visitedTrueBranch = this.visitStatement(childStat[0])
-        this.symbolTable = this.symbolTable.exitScope()
-        visitedTrueBranch.tableNumber = this.tableCounter
-
-        this.pushChild(result, visitedTrueBranch)
-        result.trueBranch = visitedTrueBranch
-        if (!visitedTrueBranch) {
-          this.errorLog.semErr(result, SemError.Undefined)
-        }
-      }
+    // Check expression evaluates to type bool
+    if (!hasSameType(visitedExpr.type, BaseType.Boolean)) {
+      this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
     }
+    result.condition = visitedExpr
+    this.pushChild(result, visitedExpr)
+
+    switch (keyWord) {
+      case ctx.IF():
+        this.visitCondIf(result, statements)
+        break
+      case ctx.WHILE():
+        this.visitCondWhile(result, statements)
+        break
+      case ctx.FOR():
+        this.visitCondFor(result, statements)
+        break
+    }
+
     result.type = BaseType.Boolean
     return result
+  }
+
+  public visitCondIf(result: WJSCStatement, statements: StatementContext[]) {
+    result.parserRule = WJSCParserRules.ConditionalIf
+    if (statements.length !== 2) {
+      this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
+    }
+    const [trueBranch, falseBranch] = statements
+
+    // Visit true branch
+    const trueTableNo = this.getTableNumber()
+    this.symbolTable = this.symbolTable.enterScope(trueTableNo)
+    const visitedTrueBranch = this.visitStatement(trueBranch)
+    this.symbolTable = this.symbolTable.exitScope()
+    visitedTrueBranch.tableNumber = trueTableNo
+
+    // Visit false branch
+    const falseTableNo = this.getTableNumber()
+    this.symbolTable = this.symbolTable.enterScope(falseTableNo)
+    const visitedFalseBranch = this.visitStatement(falseBranch)
+    this.symbolTable = this.symbolTable.exitScope()
+    visitedFalseBranch.tableNumber = falseTableNo
+
+    // Store into result
+    this.pushChild(result, visitedTrueBranch, true)
+    this.pushChild(result, visitedFalseBranch, true)
+    result.trueBranch = visitedTrueBranch
+    result.falseBranch = visitedFalseBranch
+  }
+
+  public visitCondWhile(result: WJSCStatement, statements: StatementContext[]) {
+    result.parserRule = WJSCParserRules.ConditionalWhile
+    if (statements.length !== 1) {
+      this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
+    }
+    const [trueBranch] = statements
+
+    // Visit true branch
+    const trueTableNo = this.getTableNumber()
+    this.symbolTable = this.symbolTable.enterScope(trueTableNo)
+    const visitedTrueBranch = this.visitStatement(trueBranch)
+    this.symbolTable = this.symbolTable.exitScope()
+    visitedTrueBranch.tableNumber = trueTableNo
+
+    // Store into result
+    this.pushChild(result, visitedTrueBranch)
+    result.trueBranch = visitedTrueBranch
+  }
+
+  public visitCondFor(result: WJSCStatement, statements: StatementContext[]) {
+    result.parserRule = WJSCParserRules.ConditionalFor
+    if (statements.length !== 3) {
+      this.errorLog.semErr(result, SemError.IncorrectArgNo, [3, 3])
+    }
+    const [init, increment, trueBranch] = statements
+
+    // Visit all three statements
+    const tableNo = this.getTableNumber()
+    this.symbolTable = this.symbolTable.enterScope(tableNo)
+    const visitedInit = this.visitStatement(init)
+    const visitedTrueBranch = this.visitStatement(trueBranch)
+    const visitedIncrement = this.visitStatement(increment)
+    this.symbolTable = this.symbolTable.exitScope()
+    visitedTrueBranch.tableNumber = tableNo
+
+    // Store into result
+    this.pushChild(result, visitedInit)
+    this.pushChild(result, visitedTrueBranch)
+    this.pushChild(result, visitedIncrement)
+    result.trueBranch = visitedTrueBranch
   }
 
   public visitBooleanAndOperator = (

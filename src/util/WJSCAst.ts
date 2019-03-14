@@ -20,6 +20,7 @@ enum WJSCParserRules {
   Conditional = 'conditional',
   ConditionalIf = 'condif',
   ConditionalWhile = 'condwhile',
+  ConditionalFor = 'condfor',
   Expression = 'expr',
   IntLiteral = 'int literal',
   Literal = 'literal',
