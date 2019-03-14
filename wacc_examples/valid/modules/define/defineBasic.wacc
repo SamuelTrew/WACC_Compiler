@@ -1,0 +1,4 @@
+begin
+  define int f(int x)
+  int x = call f(1)
+end

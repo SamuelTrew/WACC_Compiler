@@ -33,70 +33,71 @@ export class WJSCParser extends Parser {
 	public static readonly EXPORT = 3;
 	public static readonly IMPORT = 4;
 	public static readonly DEFINE = 5;
-	public static readonly BEGIN = 6;
-	public static readonly END = 7;
-	public static readonly IS = 8;
-	public static readonly WSKIP = 9;
-	public static readonly READ = 10;
-	public static readonly FREE = 11;
-	public static readonly RETURN = 12;
-	public static readonly EXIT = 13;
-	public static readonly PRINT = 14;
-	public static readonly PRINTLN = 15;
-	public static readonly IF = 16;
-	public static readonly THEN = 17;
-	public static readonly ELSE = 18;
-	public static readonly FI = 19;
-	public static readonly WHILE = 20;
-	public static readonly DO = 21;
-	public static readonly DONE = 22;
-	public static readonly CALL = 23;
-	public static readonly FIRST = 24;
-	public static readonly SECOND = 25;
-	public static readonly MULTIPLY = 26;
-	public static readonly DIVIDE = 27;
-	public static readonly MODULO = 28;
-	public static readonly PLUS = 29;
-	public static readonly MINUS = 30;
-	public static readonly GREATER_THAN = 31;
-	public static readonly GREATER_EQUAL = 32;
-	public static readonly LESS_THAN = 33;
-	public static readonly LESS_EQUAL = 34;
-	public static readonly EQUALS = 35;
-	public static readonly STRICT_EQUALS = 36;
-	public static readonly NEQUALS = 37;
-	public static readonly NSTRICT_EQUALS = 38;
-	public static readonly LOGICAL_AND = 39;
-	public static readonly LOGICAL_OR = 40;
-	public static readonly ASSIGNMENT = 41;
-	public static readonly LOGICAL_NEGATION = 42;
-	public static readonly NEW_PAIR = 43;
-	public static readonly LENGTH = 44;
-	public static readonly ORDER_OF = 45;
-	public static readonly CHARACTER_OF = 46;
-	public static readonly DIGIT = 47;
-	public static readonly BOOLEAN_LITERAL = 48;
-	public static readonly CHARACTER_LITERAL = 49;
-	public static readonly PAIR_LITERAL = 50;
-	public static readonly STRING_LITERAL = 51;
-	public static readonly INTEGER = 52;
-	public static readonly BOOLEAN = 53;
-	public static readonly CHARACTER = 54;
-	public static readonly STRING = 55;
-	public static readonly PAIR = 56;
-	public static readonly LPAREN = 57;
-	public static readonly RPAREN = 58;
-	public static readonly LBRACK = 59;
-	public static readonly RBRACK = 60;
-	public static readonly COMMA = 61;
-	public static readonly SEMICOLON = 62;
-	public static readonly APOS = 63;
-	public static readonly DBLQ = 64;
-	public static readonly COMMENT = 65;
-	public static readonly IDENTIFIER = 66;
-	public static readonly FILENAME = 67;
+	public static readonly EXTERN = 6;
+	public static readonly BEGIN = 7;
+	public static readonly END = 8;
+	public static readonly IS = 9;
+	public static readonly WSKIP = 10;
+	public static readonly READ = 11;
+	public static readonly FREE = 12;
+	public static readonly RETURN = 13;
+	public static readonly EXIT = 14;
+	public static readonly PRINT = 15;
+	public static readonly PRINTLN = 16;
+	public static readonly IF = 17;
+	public static readonly THEN = 18;
+	public static readonly ELSE = 19;
+	public static readonly FI = 20;
+	public static readonly WHILE = 21;
+	public static readonly DO = 22;
+	public static readonly DONE = 23;
+	public static readonly CALL = 24;
+	public static readonly FIRST = 25;
+	public static readonly SECOND = 26;
+	public static readonly MULTIPLY = 27;
+	public static readonly DIVIDE = 28;
+	public static readonly MODULO = 29;
+	public static readonly PLUS = 30;
+	public static readonly MINUS = 31;
+	public static readonly GREATER_THAN = 32;
+	public static readonly GREATER_EQUAL = 33;
+	public static readonly LESS_THAN = 34;
+	public static readonly LESS_EQUAL = 35;
+	public static readonly EQUALS = 36;
+	public static readonly STRICT_EQUALS = 37;
+	public static readonly NEQUALS = 38;
+	public static readonly NSTRICT_EQUALS = 39;
+	public static readonly LOGICAL_AND = 40;
+	public static readonly LOGICAL_OR = 41;
+	public static readonly ASSIGNMENT = 42;
+	public static readonly LOGICAL_NEGATION = 43;
+	public static readonly NEW_PAIR = 44;
+	public static readonly LENGTH = 45;
+	public static readonly ORDER_OF = 46;
+	public static readonly CHARACTER_OF = 47;
+	public static readonly DIGIT = 48;
+	public static readonly BOOLEAN_LITERAL = 49;
+	public static readonly CHARACTER_LITERAL = 50;
+	public static readonly PAIR_LITERAL = 51;
+	public static readonly STRING_LITERAL = 52;
+	public static readonly INTEGER = 53;
+	public static readonly BOOLEAN = 54;
+	public static readonly CHARACTER = 55;
+	public static readonly STRING = 56;
+	public static readonly PAIR = 57;
+	public static readonly VOID = 58;
+	public static readonly LPAREN = 59;
+	public static readonly RPAREN = 60;
+	public static readonly LBRACK = 61;
+	public static readonly RBRACK = 62;
+	public static readonly COMMA = 63;
+	public static readonly SEMICOLON = 64;
+	public static readonly APOS = 65;
+	public static readonly DBLQ = 66;
+	public static readonly COMMENT = 67;
+	public static readonly IDENTIFIER = 68;
 	public static readonly RULE_program = 0;
-	public static readonly RULE_imp = 1;
+	public static readonly RULE_imports = 1;
 	public static readonly RULE_func = 2;
 	public static readonly RULE_paramList = 3;
 	public static readonly RULE_param = 4;
@@ -127,7 +128,7 @@ export class WJSCParser extends Parser {
 	public static readonly RULE_stdlib = 29;
 	// tslint:disable:no-trailing-whitespace
 	public static readonly ruleNames: string[] = [
-		"program", "imp", "func", "paramList", "param", "statement", "conditionalBlocks", 
+		"program", "imports", "func", "paramList", "param", "statement", "conditionalBlocks", 
 		"assignment", "declare", "assignLhs", "assignRhs", "argList", "pairElement", 
 		"type", "baseType", "arrayType", "pairType", "pairElementType", "expression", 
 		"integerLiteral", "arrayElement", "arrayLiteral", "arithmeticOperator", 
@@ -136,26 +137,28 @@ export class WJSCParser extends Parser {
 	];
 
 	private static readonly _LITERAL_NAMES: Array<string | undefined> = [
-		undefined, undefined, undefined, "'export'", "'import'", "'define'", "'begin'", 
-		"'end'", "'is'", "'skip'", "'read'", "'free'", "'return'", "'exit'", "'print'", 
-		"'println'", "'if'", "'then'", "'else'", "'fi'", "'while'", "'do'", "'done'", 
-		"'call'", "'fst'", "'snd'", "'*'", "'/'", "'%'", "'+'", "'-'", "'>'", 
-		"'>='", "'<'", "'<='", "'=='", "'==='", "'!='", "'!=='", "'&&'", "'||'", 
-		"'='", "'!'", "'newpair'", "'len'", "'ord'", "'chr'", undefined, undefined, 
-		undefined, "'null'", undefined, "'int'", "'bool'", "'char'", "'string'", 
-		"'pair'", "'('", "')'", "'['", "']'", "','", "';'", "'''", "'\"'",
+		undefined, undefined, undefined, "'export'", "'import'", "'define'", "'extern'", 
+		"'begin'", "'end'", "'is'", "'skip'", "'read'", "'free'", "'return'", 
+		"'exit'", "'print'", "'println'", "'if'", "'then'", "'else'", "'fi'", 
+		"'while'", "'do'", "'done'", "'call'", "'fst'", "'snd'", "'*'", "'/'", 
+		"'%'", "'+'", "'-'", "'>'", "'>='", "'<'", "'<='", "'=='", "'==='", "'!='", 
+		"'!=='", "'&&'", "'||'", "'='", "'!'", "'newpair'", "'len'", "'ord'", 
+		"'chr'", undefined, undefined, undefined, "'null'", undefined, "'int'", 
+		"'bool'", "'char'", "'string'", "'pair'", "'void'", "'('", "')'", "'['", 
+		"']'", "','", "';'", "'''", "'\"'",
 	];
 	private static readonly _SYMBOLIC_NAMES: Array<string | undefined> = [
-		undefined, "EOL", "WHITESPACE", "EXPORT", "IMPORT", "DEFINE", "BEGIN", 
-		"END", "IS", "WSKIP", "READ", "FREE", "RETURN", "EXIT", "PRINT", "PRINTLN", 
-		"IF", "THEN", "ELSE", "FI", "WHILE", "DO", "DONE", "CALL", "FIRST", "SECOND", 
-		"MULTIPLY", "DIVIDE", "MODULO", "PLUS", "MINUS", "GREATER_THAN", "GREATER_EQUAL", 
-		"LESS_THAN", "LESS_EQUAL", "EQUALS", "STRICT_EQUALS", "NEQUALS", "NSTRICT_EQUALS", 
-		"LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", "LOGICAL_NEGATION", "NEW_PAIR", 
-		"LENGTH", "ORDER_OF", "CHARACTER_OF", "DIGIT", "BOOLEAN_LITERAL", "CHARACTER_LITERAL", 
-		"PAIR_LITERAL", "STRING_LITERAL", "INTEGER", "BOOLEAN", "CHARACTER", "STRING", 
-		"PAIR", "LPAREN", "RPAREN", "LBRACK", "RBRACK", "COMMA", "SEMICOLON", 
-		"APOS", "DBLQ", "COMMENT", "IDENTIFIER", "FILENAME",
+		undefined, "EOL", "WHITESPACE", "EXPORT", "IMPORT", "DEFINE", "EXTERN", 
+		"BEGIN", "END", "IS", "WSKIP", "READ", "FREE", "RETURN", "EXIT", "PRINT", 
+		"PRINTLN", "IF", "THEN", "ELSE", "FI", "WHILE", "DO", "DONE", "CALL", 
+		"FIRST", "SECOND", "MULTIPLY", "DIVIDE", "MODULO", "PLUS", "MINUS", "GREATER_THAN", 
+		"GREATER_EQUAL", "LESS_THAN", "LESS_EQUAL", "EQUALS", "STRICT_EQUALS", 
+		"NEQUALS", "NSTRICT_EQUALS", "LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", 
+		"LOGICAL_NEGATION", "NEW_PAIR", "LENGTH", "ORDER_OF", "CHARACTER_OF", 
+		"DIGIT", "BOOLEAN_LITERAL", "CHARACTER_LITERAL", "PAIR_LITERAL", "STRING_LITERAL", 
+		"INTEGER", "BOOLEAN", "CHARACTER", "STRING", "PAIR", "VOID", "LPAREN", 
+		"RPAREN", "LBRACK", "RBRACK", "COMMA", "SEMICOLON", "APOS", "DBLQ", "COMMENT", 
+		"IDENTIFIER",
 	];
 	public static readonly VOCABULARY: Vocabulary = new VocabularyImpl(WJSCParser._LITERAL_NAMES, WJSCParser._SYMBOLIC_NAMES, []);
 
@@ -197,7 +200,7 @@ export class WJSCParser extends Parser {
 				{
 				{
 				this.state = 61;
-				this.imp();
+				this.imports();
 				}
 				}
 				this.state = 66;
@@ -243,16 +246,16 @@ export class WJSCParser extends Parser {
 		return _localctx;
 	}
 	// @RuleVersion(0)
-	public imp(): ImpContext {
-		let _localctx: ImpContext = new ImpContext(this._ctx, this.state);
-		this.enterRule(_localctx, 2, WJSCParser.RULE_imp);
+	public imports(): ImportsContext {
+		let _localctx: ImportsContext = new ImportsContext(this._ctx, this.state);
+		this.enterRule(_localctx, 2, WJSCParser.RULE_imports);
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
 			this.state = 77;
 			this.match(WJSCParser.IMPORT);
 			this.state = 78;
-			this.match(WJSCParser.FILENAME);
+			this.match(WJSCParser.STRING_LITERAL);
 			}
 		}
 		catch (re) {
@@ -275,15 +278,10 @@ export class WJSCParser extends Parser {
 		this.enterRule(_localctx, 4, WJSCParser.RULE_func);
 		let _la: number;
 		try {
-			this.state = 103;
+			this.state = 115;
 			this._errHandler.sync(this);
-			switch (this._input.LA(1)) {
-			case WJSCParser.EXPORT:
-			case WJSCParser.INTEGER:
-			case WJSCParser.BOOLEAN:
-			case WJSCParser.CHARACTER:
-			case WJSCParser.STRING:
-			case WJSCParser.PAIR:
+			switch ( this.interpreter.adaptivePredict(this._input, 7, this._ctx) ) {
+			case 1:
 				this.enterOuterAlt(_localctx, 1);
 				{
 				this.state = 81;
@@ -305,7 +303,7 @@ export class WJSCParser extends Parser {
 				this.state = 87;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 52)) & ~0x1F) === 0 && ((1 << (_la - 52)) & ((1 << (WJSCParser.INTEGER - 52)) | (1 << (WJSCParser.BOOLEAN - 52)) | (1 << (WJSCParser.CHARACTER - 52)) | (1 << (WJSCParser.STRING - 52)) | (1 << (WJSCParser.PAIR - 52)))) !== 0)) {
+				if (((((_la - 53)) & ~0x1F) === 0 && ((1 << (_la - 53)) & ((1 << (WJSCParser.INTEGER - 53)) | (1 << (WJSCParser.BOOLEAN - 53)) | (1 << (WJSCParser.CHARACTER - 53)) | (1 << (WJSCParser.STRING - 53)) | (1 << (WJSCParser.PAIR - 53)) | (1 << (WJSCParser.VOID - 53)))) !== 0)) {
 					{
 					this.state = 86;
 					this.paramList();
@@ -322,33 +320,68 @@ export class WJSCParser extends Parser {
 				this.match(WJSCParser.END);
 				}
 				break;
-			case WJSCParser.DEFINE:
+
+			case 2:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 94;
-				this.match(WJSCParser.DEFINE);
 				this.state = 95;
-				this.type();
-				this.state = 96;
-				this.match(WJSCParser.IDENTIFIER);
-				this.state = 97;
-				this.match(WJSCParser.LPAREN);
-				this.state = 99;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 52)) & ~0x1F) === 0 && ((1 << (_la - 52)) & ((1 << (WJSCParser.INTEGER - 52)) | (1 << (WJSCParser.BOOLEAN - 52)) | (1 << (WJSCParser.CHARACTER - 52)) | (1 << (WJSCParser.STRING - 52)) | (1 << (WJSCParser.PAIR - 52)))) !== 0)) {
+				if (_la === WJSCParser.EXPORT) {
 					{
-					this.state = 98;
+					this.state = 94;
+					this.match(WJSCParser.EXPORT);
+					}
+				}
+
+				this.state = 97;
+				this.match(WJSCParser.DEFINE);
+				this.state = 98;
+				this.type();
+				this.state = 99;
+				this.match(WJSCParser.IDENTIFIER);
+				this.state = 100;
+				this.match(WJSCParser.LPAREN);
+				this.state = 102;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				if (((((_la - 53)) & ~0x1F) === 0 && ((1 << (_la - 53)) & ((1 << (WJSCParser.INTEGER - 53)) | (1 << (WJSCParser.BOOLEAN - 53)) | (1 << (WJSCParser.CHARACTER - 53)) | (1 << (WJSCParser.STRING - 53)) | (1 << (WJSCParser.PAIR - 53)) | (1 << (WJSCParser.VOID - 53)))) !== 0)) {
+					{
+					this.state = 101;
 					this.paramList();
 					}
 				}
 
-				this.state = 101;
+				this.state = 104;
 				this.match(WJSCParser.RPAREN);
 				}
 				break;
-			default:
-				throw new NoViableAltException(this);
+
+			case 3:
+				this.enterOuterAlt(_localctx, 3);
+				{
+				this.state = 106;
+				this.match(WJSCParser.EXTERN);
+				this.state = 107;
+				this.type();
+				this.state = 108;
+				this.match(WJSCParser.IDENTIFIER);
+				this.state = 109;
+				this.match(WJSCParser.LPAREN);
+				this.state = 111;
+				this._errHandler.sync(this);
+				_la = this._input.LA(1);
+				if (((((_la - 53)) & ~0x1F) === 0 && ((1 << (_la - 53)) & ((1 << (WJSCParser.INTEGER - 53)) | (1 << (WJSCParser.BOOLEAN - 53)) | (1 << (WJSCParser.CHARACTER - 53)) | (1 << (WJSCParser.STRING - 53)) | (1 << (WJSCParser.PAIR - 53)) | (1 << (WJSCParser.VOID - 53)))) !== 0)) {
+					{
+					this.state = 110;
+					this.paramList();
+					}
+				}
+
+				this.state = 113;
+				this.match(WJSCParser.RPAREN);
+				}
+				break;
 			}
 		}
 		catch (re) {
@@ -373,21 +406,21 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 105;
+			this.state = 117;
 			this.param();
-			this.state = 110;
+			this.state = 122;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			while (_la === WJSCParser.COMMA) {
 				{
 				{
-				this.state = 106;
+				this.state = 118;
 				this.match(WJSCParser.COMMA);
-				this.state = 107;
+				this.state = 119;
 				this.param();
 				}
 				}
-				this.state = 112;
+				this.state = 124;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -414,9 +447,9 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 113;
+			this.state = 125;
 			this.type();
-			this.state = 114;
+			this.state = 126;
 			this.match(WJSCParser.IDENTIFIER);
 			}
 		}
@@ -453,77 +486,77 @@ export class WJSCParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 131;
+			this.state = 143;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 7, this._ctx) ) {
+			switch ( this.interpreter.adaptivePredict(this._input, 9, this._ctx) ) {
 			case 1:
 				{
-				this.state = 117;
+				this.state = 129;
 				this.match(WJSCParser.WSKIP);
 				}
 				break;
 
 			case 2:
 				{
-				this.state = 118;
+				this.state = 130;
 				this.conditionalBlocks();
 				}
 				break;
 
 			case 3:
 				{
-				this.state = 119;
+				this.state = 131;
 				this.assignment();
 				}
 				break;
 
 			case 4:
 				{
-				this.state = 120;
+				this.state = 132;
 				this.declare();
 				}
 				break;
 
 			case 5:
 				{
-				this.state = 121;
+				this.state = 133;
 				this.match(WJSCParser.READ);
-				this.state = 122;
+				this.state = 134;
 				this.assignLhs();
 				}
 				break;
 
 			case 6:
 				{
-				this.state = 123;
+				this.state = 135;
 				this.stdlib();
-				this.state = 124;
+				this.state = 136;
 				this.expression(0);
 				}
 				break;
 
 			case 7:
 				{
-				this.state = 126;
+				this.state = 138;
 				this.conditionalBlocks();
 				}
 				break;
 
 			case 8:
 				{
-				this.state = 127;
+				this.state = 139;
 				this.match(WJSCParser.BEGIN);
-				this.state = 128;
+				this.state = 140;
 				this.statement(0);
-				this.state = 129;
+				this.state = 141;
 				this.match(WJSCParser.END);
 				}
 				break;
 			}
 			this._ctx._stop = this._input.tryLT(-1);
-			this.state = 138;
+			this.state = 150;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 8, this._ctx);
+			_alt = this.interpreter.adaptivePredict(this._input, 10, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					if (this._parseListeners != null) {
@@ -534,20 +567,20 @@ export class WJSCParser extends Parser {
 					{
 					_localctx = new StatementContext(_parentctx, _parentState);
 					this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_statement);
-					this.state = 133;
+					this.state = 145;
 					if (!(this.precpred(this._ctx, 1))) {
 						throw new FailedPredicateException(this, "this.precpred(this._ctx, 1)");
 					}
-					this.state = 134;
+					this.state = 146;
 					this.match(WJSCParser.SEMICOLON);
-					this.state = 135;
+					this.state = 147;
 					this.statement(2);
 					}
 					}
 				}
-				this.state = 140;
+				this.state = 152;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 8, this._ctx);
+				_alt = this.interpreter.adaptivePredict(this._input, 10, this._ctx);
 			}
 			}
 		}
@@ -570,40 +603,40 @@ export class WJSCParser extends Parser {
 		let _localctx: ConditionalBlocksContext = new ConditionalBlocksContext(this._ctx, this.state);
 		this.enterRule(_localctx, 12, WJSCParser.RULE_conditionalBlocks);
 		try {
-			this.state = 155;
+			this.state = 167;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case WJSCParser.IF:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 141;
+				this.state = 153;
 				this.match(WJSCParser.IF);
-				this.state = 142;
+				this.state = 154;
 				this.expression(0);
-				this.state = 143;
+				this.state = 155;
 				this.match(WJSCParser.THEN);
-				this.state = 144;
+				this.state = 156;
 				this.statement(0);
-				this.state = 145;
+				this.state = 157;
 				this.match(WJSCParser.ELSE);
-				this.state = 146;
+				this.state = 158;
 				this.statement(0);
-				this.state = 147;
+				this.state = 159;
 				this.match(WJSCParser.FI);
 				}
 				break;
 			case WJSCParser.WHILE:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 149;
+				this.state = 161;
 				this.match(WJSCParser.WHILE);
-				this.state = 150;
+				this.state = 162;
 				this.expression(0);
-				this.state = 151;
+				this.state = 163;
 				this.match(WJSCParser.DO);
-				this.state = 152;
+				this.state = 164;
 				this.statement(0);
-				this.state = 153;
+				this.state = 165;
 				this.match(WJSCParser.DONE);
 				}
 				break;
@@ -632,11 +665,11 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 157;
+			this.state = 169;
 			this.assignLhs();
-			this.state = 158;
+			this.state = 170;
 			this.match(WJSCParser.ASSIGNMENT);
-			this.state = 159;
+			this.state = 171;
 			this.assignRhs();
 			}
 		}
@@ -661,13 +694,13 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 161;
+			this.state = 173;
 			this.type();
-			this.state = 162;
+			this.state = 174;
 			this.match(WJSCParser.IDENTIFIER);
-			this.state = 163;
+			this.state = 175;
 			this.match(WJSCParser.ASSIGNMENT);
-			this.state = 164;
+			this.state = 176;
 			this.assignRhs();
 			}
 		}
@@ -690,13 +723,13 @@ export class WJSCParser extends Parser {
 		let _localctx: AssignLhsContext = new AssignLhsContext(this._ctx, this.state);
 		this.enterRule(_localctx, 18, WJSCParser.RULE_assignLhs);
 		try {
-			this.state = 169;
+			this.state = 181;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 10, this._ctx) ) {
+			switch ( this.interpreter.adaptivePredict(this._input, 12, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 166;
+				this.state = 178;
 				this.match(WJSCParser.IDENTIFIER);
 				}
 				break;
@@ -704,7 +737,7 @@ export class WJSCParser extends Parser {
 			case 2:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 167;
+				this.state = 179;
 				this.arrayElement();
 				}
 				break;
@@ -712,7 +745,7 @@ export class WJSCParser extends Parser {
 			case 3:
 				this.enterOuterAlt(_localctx, 3);
 				{
-				this.state = 168;
+				this.state = 180;
 				this.pairElement();
 				}
 				break;
@@ -738,7 +771,7 @@ export class WJSCParser extends Parser {
 		this.enterRule(_localctx, 20, WJSCParser.RULE_assignRhs);
 		let _la: number;
 		try {
-			this.state = 188;
+			this.state = 200;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case WJSCParser.PLUS:
@@ -756,31 +789,31 @@ export class WJSCParser extends Parser {
 			case WJSCParser.IDENTIFIER:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 171;
+				this.state = 183;
 				this.expression(0);
 				}
 				break;
 			case WJSCParser.LBRACK:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 172;
+				this.state = 184;
 				this.arrayLiteral();
 				}
 				break;
 			case WJSCParser.NEW_PAIR:
 				this.enterOuterAlt(_localctx, 3);
 				{
-				this.state = 173;
+				this.state = 185;
 				this.match(WJSCParser.NEW_PAIR);
-				this.state = 174;
+				this.state = 186;
 				this.match(WJSCParser.LPAREN);
-				this.state = 175;
+				this.state = 187;
 				this.expression(0);
-				this.state = 176;
+				this.state = 188;
 				this.match(WJSCParser.COMMA);
-				this.state = 177;
+				this.state = 189;
 				this.expression(0);
-				this.state = 178;
+				this.state = 190;
 				this.match(WJSCParser.RPAREN);
 				}
 				break;
@@ -788,30 +821,30 @@ export class WJSCParser extends Parser {
 			case WJSCParser.SECOND:
 				this.enterOuterAlt(_localctx, 4);
 				{
-				this.state = 180;
+				this.state = 192;
 				this.pairElement();
 				}
 				break;
 			case WJSCParser.CALL:
 				this.enterOuterAlt(_localctx, 5);
 				{
-				this.state = 181;
+				this.state = 193;
 				this.match(WJSCParser.CALL);
-				this.state = 182;
+				this.state = 194;
 				this.match(WJSCParser.IDENTIFIER);
-				this.state = 183;
+				this.state = 195;
 				this.match(WJSCParser.LPAREN);
-				this.state = 185;
+				this.state = 197;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS || ((((_la - 42)) & ~0x1F) === 0 && ((1 << (_la - 42)) & ((1 << (WJSCParser.LOGICAL_NEGATION - 42)) | (1 << (WJSCParser.LENGTH - 42)) | (1 << (WJSCParser.ORDER_OF - 42)) | (1 << (WJSCParser.CHARACTER_OF - 42)) | (1 << (WJSCParser.DIGIT - 42)) | (1 << (WJSCParser.BOOLEAN_LITERAL - 42)) | (1 << (WJSCParser.CHARACTER_LITERAL - 42)) | (1 << (WJSCParser.PAIR_LITERAL - 42)) | (1 << (WJSCParser.STRING_LITERAL - 42)) | (1 << (WJSCParser.LPAREN - 42)) | (1 << (WJSCParser.IDENTIFIER - 42)))) !== 0)) {
+				if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS || ((((_la - 43)) & ~0x1F) === 0 && ((1 << (_la - 43)) & ((1 << (WJSCParser.LOGICAL_NEGATION - 43)) | (1 << (WJSCParser.LENGTH - 43)) | (1 << (WJSCParser.ORDER_OF - 43)) | (1 << (WJSCParser.CHARACTER_OF - 43)) | (1 << (WJSCParser.DIGIT - 43)) | (1 << (WJSCParser.BOOLEAN_LITERAL - 43)) | (1 << (WJSCParser.CHARACTER_LITERAL - 43)) | (1 << (WJSCParser.PAIR_LITERAL - 43)) | (1 << (WJSCParser.STRING_LITERAL - 43)) | (1 << (WJSCParser.LPAREN - 43)) | (1 << (WJSCParser.IDENTIFIER - 43)))) !== 0)) {
 					{
-					this.state = 184;
+					this.state = 196;
 					this.argList();
 					}
 				}
 
-				this.state = 187;
+				this.state = 199;
 				this.match(WJSCParser.RPAREN);
 				}
 				break;
@@ -841,21 +874,21 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 190;
+			this.state = 202;
 			this.expression(0);
-			this.state = 195;
+			this.state = 207;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			while (_la === WJSCParser.COMMA) {
 				{
 				{
-				this.state = 191;
+				this.state = 203;
 				this.match(WJSCParser.COMMA);
-				this.state = 192;
+				this.state = 204;
 				this.expression(0);
 				}
 				}
-				this.state = 197;
+				this.state = 209;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -880,24 +913,24 @@ export class WJSCParser extends Parser {
 		let _localctx: PairElementContext = new PairElementContext(this._ctx, this.state);
 		this.enterRule(_localctx, 24, WJSCParser.RULE_pairElement);
 		try {
-			this.state = 202;
+			this.state = 214;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case WJSCParser.FIRST:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 198;
+				this.state = 210;
 				this.match(WJSCParser.FIRST);
-				this.state = 199;
+				this.state = 211;
 				this.expression(0);
 				}
 				break;
 			case WJSCParser.SECOND:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 200;
+				this.state = 212;
 				this.match(WJSCParser.SECOND);
-				this.state = 201;
+				this.state = 213;
 				this.expression(0);
 				}
 				break;
@@ -924,13 +957,13 @@ export class WJSCParser extends Parser {
 		let _localctx: TypeContext = new TypeContext(this._ctx, this.state);
 		this.enterRule(_localctx, 26, WJSCParser.RULE_type);
 		try {
-			this.state = 207;
+			this.state = 219;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 15, this._ctx) ) {
+			switch ( this.interpreter.adaptivePredict(this._input, 17, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 204;
+				this.state = 216;
 				this.baseType();
 				}
 				break;
@@ -938,7 +971,7 @@ export class WJSCParser extends Parser {
 			case 2:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 205;
+				this.state = 217;
 				this.arrayType(0);
 				}
 				break;
@@ -946,7 +979,7 @@ export class WJSCParser extends Parser {
 			case 3:
 				this.enterOuterAlt(_localctx, 3);
 				{
-				this.state = 206;
+				this.state = 218;
 				this.pairType();
 				}
 				break;
@@ -974,9 +1007,9 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 209;
+			this.state = 221;
 			_la = this._input.LA(1);
-			if (!(((((_la - 52)) & ~0x1F) === 0 && ((1 << (_la - 52)) & ((1 << (WJSCParser.INTEGER - 52)) | (1 << (WJSCParser.BOOLEAN - 52)) | (1 << (WJSCParser.CHARACTER - 52)) | (1 << (WJSCParser.STRING - 52)))) !== 0))) {
+			if (!(((((_la - 53)) & ~0x1F) === 0 && ((1 << (_la - 53)) & ((1 << (WJSCParser.INTEGER - 53)) | (1 << (WJSCParser.BOOLEAN - 53)) | (1 << (WJSCParser.CHARACTER - 53)) | (1 << (WJSCParser.STRING - 53)) | (1 << (WJSCParser.VOID - 53)))) !== 0))) {
 			this._errHandler.recoverInline(this);
 			} else {
 				if (this._input.LA(1) === Token.EOF) {
@@ -1021,29 +1054,30 @@ export class WJSCParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 220;
+			this.state = 232;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case WJSCParser.INTEGER:
 			case WJSCParser.BOOLEAN:
 			case WJSCParser.CHARACTER:
 			case WJSCParser.STRING:
+			case WJSCParser.VOID:
 				{
-				this.state = 212;
+				this.state = 224;
 				this.baseType();
-				this.state = 213;
+				this.state = 225;
 				this.match(WJSCParser.LBRACK);
-				this.state = 214;
+				this.state = 226;
 				this.match(WJSCParser.RBRACK);
 				}
 				break;
 			case WJSCParser.PAIR:
 				{
-				this.state = 216;
+				this.state = 228;
 				this.pairType();
-				this.state = 217;
+				this.state = 229;
 				this.match(WJSCParser.LBRACK);
-				this.state = 218;
+				this.state = 230;
 				this.match(WJSCParser.RBRACK);
 				}
 				break;
@@ -1051,9 +1085,9 @@ export class WJSCParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			this._ctx._stop = this._input.tryLT(-1);
-			this.state = 227;
+			this.state = 239;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 17, this._ctx);
+			_alt = this.interpreter.adaptivePredict(this._input, 19, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					if (this._parseListeners != null) {
@@ -1064,20 +1098,20 @@ export class WJSCParser extends Parser {
 					{
 					_localctx = new ArrayTypeContext(_parentctx, _parentState);
 					this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_arrayType);
-					this.state = 222;
+					this.state = 234;
 					if (!(this.precpred(this._ctx, 2))) {
 						throw new FailedPredicateException(this, "this.precpred(this._ctx, 2)");
 					}
-					this.state = 223;
+					this.state = 235;
 					this.match(WJSCParser.LBRACK);
-					this.state = 224;
+					this.state = 236;
 					this.match(WJSCParser.RBRACK);
 					}
 					}
 				}
-				this.state = 229;
+				this.state = 241;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 17, this._ctx);
+				_alt = this.interpreter.adaptivePredict(this._input, 19, this._ctx);
 			}
 			}
 		}
@@ -1102,17 +1136,17 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 230;
+			this.state = 242;
 			this.match(WJSCParser.PAIR);
-			this.state = 231;
+			this.state = 243;
 			this.match(WJSCParser.LPAREN);
-			this.state = 232;
+			this.state = 244;
 			this.pairElementType();
-			this.state = 233;
+			this.state = 245;
 			this.match(WJSCParser.COMMA);
-			this.state = 234;
+			this.state = 246;
 			this.pairElementType();
-			this.state = 235;
+			this.state = 247;
 			this.match(WJSCParser.RPAREN);
 			}
 		}
@@ -1135,13 +1169,13 @@ export class WJSCParser extends Parser {
 		let _localctx: PairElementTypeContext = new PairElementTypeContext(this._ctx, this.state);
 		this.enterRule(_localctx, 34, WJSCParser.RULE_pairElementType);
 		try {
-			this.state = 240;
+			this.state = 252;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 18, this._ctx) ) {
+			switch ( this.interpreter.adaptivePredict(this._input, 20, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 237;
+				this.state = 249;
 				this.baseType();
 				}
 				break;
@@ -1149,7 +1183,7 @@ export class WJSCParser extends Parser {
 			case 2:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 238;
+				this.state = 250;
 				this.arrayType(0);
 				}
 				break;
@@ -1157,7 +1191,7 @@ export class WJSCParser extends Parser {
 			case 3:
 				this.enterOuterAlt(_localctx, 3);
 				{
-				this.state = 239;
+				this.state = 251;
 				this.match(WJSCParser.PAIR);
 				}
 				break;
@@ -1196,82 +1230,82 @@ export class WJSCParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 257;
+			this.state = 269;
 			this._errHandler.sync(this);
-			switch ( this.interpreter.adaptivePredict(this._input, 19, this._ctx) ) {
+			switch ( this.interpreter.adaptivePredict(this._input, 21, this._ctx) ) {
 			case 1:
 				{
-				this.state = 243;
+				this.state = 255;
 				this.integerLiteral();
 				}
 				break;
 
 			case 2:
 				{
-				this.state = 244;
+				this.state = 256;
 				this.arrayElement();
 				}
 				break;
 
 			case 3:
 				{
-				this.state = 245;
+				this.state = 257;
 				this.unaryOperator();
-				this.state = 246;
+				this.state = 258;
 				this.expression(7);
 				}
 				break;
 
 			case 4:
 				{
-				this.state = 248;
+				this.state = 260;
 				this.match(WJSCParser.LPAREN);
-				this.state = 249;
+				this.state = 261;
 				this.expression(0);
-				this.state = 250;
+				this.state = 262;
 				this.match(WJSCParser.RPAREN);
 				}
 				break;
 
 			case 5:
 				{
-				this.state = 252;
+				this.state = 264;
 				this.match(WJSCParser.IDENTIFIER);
 				}
 				break;
 
 			case 6:
 				{
-				this.state = 253;
+				this.state = 265;
 				this.match(WJSCParser.BOOLEAN_LITERAL);
 				}
 				break;
 
 			case 7:
 				{
-				this.state = 254;
+				this.state = 266;
 				this.match(WJSCParser.CHARACTER_LITERAL);
 				}
 				break;
 
 			case 8:
 				{
-				this.state = 255;
+				this.state = 267;
 				this.match(WJSCParser.STRING_LITERAL);
 				}
 				break;
 
 			case 9:
 				{
-				this.state = 256;
+				this.state = 268;
 				this.match(WJSCParser.PAIR_LITERAL);
 				}
 				break;
 			}
 			this._ctx._stop = this._input.tryLT(-1);
-			this.state = 285;
+			this.state = 297;
 			this._errHandler.sync(this);
-			_alt = this.interpreter.adaptivePredict(this._input, 21, this._ctx);
+			_alt = this.interpreter.adaptivePredict(this._input, 23, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
 				if (_alt === 1) {
 					if (this._parseListeners != null) {
@@ -1279,20 +1313,20 @@ export class WJSCParser extends Parser {
 					}
 					_prevctx = _localctx;
 					{
-					this.state = 283;
+					this.state = 295;
 					this._errHandler.sync(this);
-					switch ( this.interpreter.adaptivePredict(this._input, 20, this._ctx) ) {
+					switch ( this.interpreter.adaptivePredict(this._input, 22, this._ctx) ) {
 					case 1:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 259;
+						this.state = 271;
 						if (!(this.precpred(this._ctx, 14))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 14)");
 						}
-						this.state = 260;
+						this.state = 272;
 						this.arithmeticOperator();
-						this.state = 261;
+						this.state = 273;
 						this.expression(15);
 						}
 						break;
@@ -1301,13 +1335,13 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 263;
+						this.state = 275;
 						if (!(this.precpred(this._ctx, 13))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 13)");
 						}
-						this.state = 264;
+						this.state = 276;
 						this.arithmeticOperator2();
-						this.state = 265;
+						this.state = 277;
 						this.expression(14);
 						}
 						break;
@@ -1316,13 +1350,13 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 267;
+						this.state = 279;
 						if (!(this.precpred(this._ctx, 12))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 12)");
 						}
-						this.state = 268;
+						this.state = 280;
 						this.comparisonOperator();
-						this.state = 269;
+						this.state = 281;
 						this.expression(13);
 						}
 						break;
@@ -1331,13 +1365,13 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 271;
+						this.state = 283;
 						if (!(this.precpred(this._ctx, 11))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 11)");
 						}
-						this.state = 272;
+						this.state = 284;
 						this.equalityOperator();
-						this.state = 273;
+						this.state = 285;
 						this.expression(12);
 						}
 						break;
@@ -1346,13 +1380,13 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 275;
+						this.state = 287;
 						if (!(this.precpred(this._ctx, 10))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 10)");
 						}
-						this.state = 276;
+						this.state = 288;
 						this.booleanAndOperator();
-						this.state = 277;
+						this.state = 289;
 						this.expression(11);
 						}
 						break;
@@ -1361,22 +1395,22 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 279;
+						this.state = 291;
 						if (!(this.precpred(this._ctx, 9))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 9)");
 						}
-						this.state = 280;
+						this.state = 292;
 						this.booleanOrOperator();
-						this.state = 281;
+						this.state = 293;
 						this.expression(10);
 						}
 						break;
 					}
 					}
 				}
-				this.state = 287;
+				this.state = 299;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 21, this._ctx);
+				_alt = this.interpreter.adaptivePredict(this._input, 23, this._ctx);
 			}
 			}
 		}
@@ -1403,12 +1437,12 @@ export class WJSCParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 289;
+			this.state = 301;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS) {
 				{
-				this.state = 288;
+				this.state = 300;
 				_la = this._input.LA(1);
 				if (!(_la === WJSCParser.PLUS || _la === WJSCParser.MINUS)) {
 				this._errHandler.recoverInline(this);
@@ -1423,7 +1457,7 @@ export class WJSCParser extends Parser {
 				}
 			}
 
-			this.state = 292;
+			this.state = 304;
 			this._errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -1431,7 +1465,7 @@ export class WJSCParser extends Parser {
 				case 1:
 					{
 					{
-					this.state = 291;
+					this.state = 303;
 					this.match(WJSCParser.DIGIT);
 					}
 					}
@@ -1439,9 +1473,9 @@ export class WJSCParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				this.state = 294;
+				this.state = 306;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 23, this._ctx);
+				_alt = this.interpreter.adaptivePredict(this._input, 25, this._ctx);
 			} while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER);
 			}
 		}
@@ -1467,9 +1501,9 @@ export class WJSCParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 296;
+			this.state = 308;
 			this.match(WJSCParser.IDENTIFIER);
-			this.state = 301;
+			this.state = 313;
 			this._errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -1477,11 +1511,11 @@ export class WJSCParser extends Parser {
 				case 1:
 					{
 					{
-					this.state = 297;
+					this.state = 309;
 					this.match(WJSCParser.LBRACK);
-					this.state = 298;
+					this.state = 310;
 					this.expression(0);
-					this.state = 299;
+					this.state = 311;
 					this.match(WJSCParser.RBRACK);
 					}
 					}
@@ -1489,9 +1523,9 @@ export class WJSCParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				this.state = 303;
+				this.state = 315;
 				this._errHandler.sync(this);
-				_alt = this.interpreter.adaptivePredict(this._input, 24, this._ctx);
+				_alt = this.interpreter.adaptivePredict(this._input, 26, this._ctx);
 			} while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER);
 			}
 		}
@@ -1517,35 +1551,35 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 305;
+			this.state = 317;
 			this.match(WJSCParser.LBRACK);
-			this.state = 314;
+			this.state = 326;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS || ((((_la - 42)) & ~0x1F) === 0 && ((1 << (_la - 42)) & ((1 << (WJSCParser.LOGICAL_NEGATION - 42)) | (1 << (WJSCParser.LENGTH - 42)) | (1 << (WJSCParser.ORDER_OF - 42)) | (1 << (WJSCParser.CHARACTER_OF - 42)) | (1 << (WJSCParser.DIGIT - 42)) | (1 << (WJSCParser.BOOLEAN_LITERAL - 42)) | (1 << (WJSCParser.CHARACTER_LITERAL - 42)) | (1 << (WJSCParser.PAIR_LITERAL - 42)) | (1 << (WJSCParser.STRING_LITERAL - 42)) | (1 << (WJSCParser.LPAREN - 42)) | (1 << (WJSCParser.IDENTIFIER - 42)))) !== 0)) {
+			if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS || ((((_la - 43)) & ~0x1F) === 0 && ((1 << (_la - 43)) & ((1 << (WJSCParser.LOGICAL_NEGATION - 43)) | (1 << (WJSCParser.LENGTH - 43)) | (1 << (WJSCParser.ORDER_OF - 43)) | (1 << (WJSCParser.CHARACTER_OF - 43)) | (1 << (WJSCParser.DIGIT - 43)) | (1 << (WJSCParser.BOOLEAN_LITERAL - 43)) | (1 << (WJSCParser.CHARACTER_LITERAL - 43)) | (1 << (WJSCParser.PAIR_LITERAL - 43)) | (1 << (WJSCParser.STRING_LITERAL - 43)) | (1 << (WJSCParser.LPAREN - 43)) | (1 << (WJSCParser.IDENTIFIER - 43)))) !== 0)) {
 				{
-				this.state = 306;
+				this.state = 318;
 				this.expression(0);
-				this.state = 311;
+				this.state = 323;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 				while (_la === WJSCParser.COMMA) {
 					{
 					{
-					this.state = 307;
+					this.state = 319;
 					this.match(WJSCParser.COMMA);
-					this.state = 308;
+					this.state = 320;
 					this.expression(0);
 					}
 					}
-					this.state = 313;
+					this.state = 325;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
 				}
 				}
 			}
 
-			this.state = 316;
+			this.state = 328;
 			this.match(WJSCParser.RBRACK);
 			}
 		}
@@ -1571,7 +1605,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 318;
+			this.state = 330;
 			_la = this._input.LA(1);
 			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << WJSCParser.MULTIPLY) | (1 << WJSCParser.DIVIDE) | (1 << WJSCParser.MODULO))) !== 0))) {
 			this._errHandler.recoverInline(this);
@@ -1607,7 +1641,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 320;
+			this.state = 332;
 			_la = this._input.LA(1);
 			if (!(_la === WJSCParser.PLUS || _la === WJSCParser.MINUS)) {
 			this._errHandler.recoverInline(this);
@@ -1643,9 +1677,9 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 322;
+			this.state = 334;
 			_la = this._input.LA(1);
-			if (!(((((_la - 31)) & ~0x1F) === 0 && ((1 << (_la - 31)) & ((1 << (WJSCParser.GREATER_THAN - 31)) | (1 << (WJSCParser.GREATER_EQUAL - 31)) | (1 << (WJSCParser.LESS_THAN - 31)) | (1 << (WJSCParser.LESS_EQUAL - 31)))) !== 0))) {
+			if (!(((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & ((1 << (WJSCParser.GREATER_THAN - 32)) | (1 << (WJSCParser.GREATER_EQUAL - 32)) | (1 << (WJSCParser.LESS_THAN - 32)) | (1 << (WJSCParser.LESS_EQUAL - 32)))) !== 0))) {
 			this._errHandler.recoverInline(this);
 			} else {
 				if (this._input.LA(1) === Token.EOF) {
@@ -1679,7 +1713,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 324;
+			this.state = 336;
 			_la = this._input.LA(1);
 			if (!(_la === WJSCParser.EQUALS || _la === WJSCParser.NEQUALS)) {
 			this._errHandler.recoverInline(this);
@@ -1714,7 +1748,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 326;
+			this.state = 338;
 			this.match(WJSCParser.LOGICAL_AND);
 			}
 		}
@@ -1739,7 +1773,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 328;
+			this.state = 340;
 			this.match(WJSCParser.LOGICAL_OR);
 			}
 		}
@@ -1765,9 +1799,9 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 330;
+			this.state = 342;
 			_la = this._input.LA(1);
-			if (!(((((_la - 30)) & ~0x1F) === 0 && ((1 << (_la - 30)) & ((1 << (WJSCParser.MINUS - 30)) | (1 << (WJSCParser.LOGICAL_NEGATION - 30)) | (1 << (WJSCParser.LENGTH - 30)) | (1 << (WJSCParser.ORDER_OF - 30)) | (1 << (WJSCParser.CHARACTER_OF - 30)))) !== 0))) {
+			if (!(((((_la - 31)) & ~0x1F) === 0 && ((1 << (_la - 31)) & ((1 << (WJSCParser.MINUS - 31)) | (1 << (WJSCParser.LOGICAL_NEGATION - 31)) | (1 << (WJSCParser.LENGTH - 31)) | (1 << (WJSCParser.ORDER_OF - 31)) | (1 << (WJSCParser.CHARACTER_OF - 31)))) !== 0))) {
 			this._errHandler.recoverInline(this);
 			} else {
 				if (this._input.LA(1) === Token.EOF) {
@@ -1801,7 +1835,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 332;
+			this.state = 344;
 			_la = this._input.LA(1);
 			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << WJSCParser.FREE) | (1 << WJSCParser.RETURN) | (1 << WJSCParser.EXIT) | (1 << WJSCParser.PRINT) | (1 << WJSCParser.PRINTLN))) !== 0))) {
 			this._errHandler.recoverInline(this);
@@ -1881,7 +1915,7 @@ export class WJSCParser extends Parser {
 	}
 
 	public static readonly _serializedATN: string =
-		"\x03\uAF6F\u8320\u479D\uB75C\u4880\u1605\u191C\uAB37\x03E\u0151\x04\x02" +
+		"\x03\uAF6F\u8320\u479D\uB75C\u4880\u1605\u191C\uAB37\x03F\u015D\x04\x02" +
 		"\t\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x04\x06\t\x06\x04\x07" +
 		"\t\x07\x04\b\t\b\x04\t\t\t\x04\n\t\n\x04\v\t\v\x04\f\t\f\x04\r\t\r\x04" +
 		"\x0E\t\x0E\x04\x0F\t\x0F\x04\x10\t\x10\x04\x11\t\x11\x04\x12\t\x12\x04" +
@@ -1891,152 +1925,159 @@ export class WJSCParser extends Parser {
 		"\f\x02\x0E\x02D\v\x02\x03\x02\x07\x02G\n\x02\f\x02\x0E\x02J\v\x02\x03" +
 		"\x02\x03\x02\x03\x02\x03\x02\x03\x03\x03\x03\x03\x03\x03\x04\x05\x04T" +
 		"\n\x04\x03\x04\x03\x04\x03\x04\x03\x04\x05\x04Z\n\x04\x03\x04\x03\x04" +
-		"\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x05\x04" +
-		"f\n\x04\x03\x04\x03\x04\x05\x04j\n\x04\x03\x05\x03\x05\x03\x05\x07\x05" +
-		"o\n\x05\f\x05\x0E\x05r\v\x05\x03\x06\x03\x06\x03\x06\x03\x07\x03\x07\x03" +
-		"\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03" +
-		"\x07\x03\x07\x03\x07\x03\x07\x05\x07\x86\n\x07\x03\x07\x03\x07\x03\x07" +
-		"\x07\x07\x8B\n\x07\f\x07\x0E\x07\x8E\v\x07\x03\b\x03\b\x03\b\x03\b\x03" +
-		"\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x05\b\x9E\n\b" +
-		"\x03\t\x03\t\x03\t\x03\t\x03\n\x03\n\x03\n\x03\n\x03\n\x03\v\x03\v\x03" +
-		"\v\x05\v\xAC\n\v\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f" +
-		"\x03\f\x03\f\x03\f\x03\f\x03\f\x05\f\xBC\n\f\x03\f\x05\f\xBF\n\f\x03\r" +
-		"\x03\r\x03\r\x07\r\xC4\n\r\f\r\x0E\r\xC7\v\r\x03\x0E\x03\x0E\x03\x0E\x03" +
-		"\x0E\x05\x0E\xCD\n\x0E\x03\x0F\x03\x0F\x03\x0F\x05\x0F\xD2\n\x0F\x03\x10" +
-		"\x03\x10\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11" +
-		"\x03\x11\x05\x11\xDF\n\x11\x03\x11\x03\x11\x03\x11\x07\x11\xE4\n\x11\f" +
-		"\x11\x0E\x11\xE7\v\x11\x03\x12\x03\x12\x03\x12\x03\x12\x03\x12\x03\x12" +
-		"\x03\x12\x03\x13\x03\x13\x03\x13\x05\x13\xF3\n\x13\x03\x14\x03\x14\x03" +
-		"\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03" +
-		"\x14\x03\x14\x03\x14\x03\x14\x05\x14\u0104\n\x14\x03\x14\x03\x14\x03\x14" +
+		"\x03\x04\x03\x04\x03\x04\x03\x04\x05\x04b\n\x04\x03\x04\x03\x04\x03\x04" +
+		"\x03\x04\x03\x04\x05\x04i\n\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04" +
+		"\x03\x04\x03\x04\x05\x04r\n\x04\x03\x04\x03\x04\x05\x04v\n\x04\x03\x05" +
+		"\x03\x05\x03\x05\x07\x05{\n\x05\f\x05\x0E\x05~\v\x05\x03\x06\x03\x06\x03" +
+		"\x06\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03" +
+		"\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x05\x07\x92\n\x07" +
+		"\x03\x07\x03\x07\x03\x07\x07\x07\x97\n\x07\f\x07\x0E\x07\x9A\v\x07\x03" +
+		"\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03\b\x03" +
+		"\b\x03\b\x05\b\xAA\n\b\x03\t\x03\t\x03\t\x03\t\x03\n\x03\n\x03\n\x03\n" +
+		"\x03\n\x03\v\x03\v\x03\v\x05\v\xB8\n\v\x03\f\x03\f\x03\f\x03\f\x03\f\x03" +
+		"\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x03\f\x05\f\xC8\n\f\x03\f" +
+		"\x05\f\xCB\n\f\x03\r\x03\r\x03\r\x07\r\xD0\n\r\f\r\x0E\r\xD3\v\r\x03\x0E" +
+		"\x03\x0E\x03\x0E\x03\x0E\x05\x0E\xD9\n\x0E\x03\x0F\x03\x0F\x03\x0F\x05" +
+		"\x0F\xDE\n\x0F\x03\x10\x03\x10\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11" +
+		"\x03\x11\x03\x11\x03\x11\x03\x11\x05\x11\xEB\n\x11\x03\x11\x03\x11\x03" +
+		"\x11\x07\x11\xF0\n\x11\f\x11\x0E\x11\xF3\v\x11\x03\x12\x03\x12\x03\x12" +
+		"\x03\x12\x03\x12\x03\x12\x03\x12\x03\x13\x03\x13\x03\x13\x05\x13\xFF\n" +
+		"\x13\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03" +
+		"\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x05\x14\u0110\n\x14" +
 		"\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14" +
 		"\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14" +
-		"\x03\x14\x03\x14\x03\x14\x07\x14\u011E\n\x14\f\x14\x0E\x14\u0121\v\x14" +
-		"\x03\x15\x05\x15\u0124\n\x15\x03\x15\x06\x15\u0127\n\x15\r\x15\x0E\x15" +
-		"\u0128\x03\x16\x03\x16\x03\x16\x03\x16\x03\x16\x06\x16\u0130\n\x16\r\x16" +
-		"\x0E\x16\u0131\x03\x17\x03\x17\x03\x17\x03\x17\x07\x17\u0138\n\x17\f\x17" +
-		"\x0E\x17\u013B\v\x17\x05\x17\u013D\n\x17\x03\x17\x03\x17\x03\x18\x03\x18" +
-		"\x03\x19\x03\x19\x03\x1A\x03\x1A\x03\x1B\x03\x1B\x03\x1C\x03\x1C\x03\x1D" +
-		"\x03\x1D\x03\x1E\x03\x1E\x03\x1F\x03\x1F\x03\x1F\x02\x02\x05\f & \x02" +
-		"\x02\x04\x02\x06\x02\b\x02\n\x02\f\x02\x0E\x02\x10\x02\x12\x02\x14\x02" +
-		"\x16\x02\x18\x02\x1A\x02\x1C\x02\x1E\x02 \x02\"\x02$\x02&\x02(\x02*\x02" +
-		",\x02.\x020\x022\x024\x026\x028\x02:\x02<\x02\x02\t\x03\x0269\x03\x02" +
-		"\x1F \x03\x02\x1C\x1E\x03\x02!$\x04\x02%%\'\'\x05\x02  ,,.0\x03\x02\r" +
-		"\x11\u0164\x02>\x03\x02\x02\x02\x04O\x03\x02\x02\x02\x06i\x03\x02\x02" +
-		"\x02\bk\x03\x02\x02\x02\ns\x03\x02\x02\x02\f\x85\x03\x02\x02\x02\x0E\x9D" +
-		"\x03\x02\x02\x02\x10\x9F\x03\x02\x02\x02\x12\xA3\x03\x02\x02\x02\x14\xAB" +
-		"\x03\x02\x02\x02\x16\xBE\x03\x02\x02\x02\x18\xC0\x03\x02\x02\x02\x1A\xCC" +
-		"\x03\x02\x02\x02\x1C\xD1\x03\x02\x02\x02\x1E\xD3\x03\x02\x02\x02 \xDE" +
-		"\x03\x02\x02\x02\"\xE8\x03\x02\x02\x02$\xF2\x03\x02\x02\x02&\u0103\x03" +
-		"\x02\x02\x02(\u0123\x03\x02\x02\x02*\u012A\x03\x02\x02\x02,\u0133\x03" +
-		"\x02\x02\x02.\u0140\x03\x02\x02\x020\u0142\x03\x02\x02\x022\u0144\x03" +
-		"\x02\x02\x024\u0146\x03\x02\x02\x026\u0148\x03\x02\x02\x028\u014A\x03" +
-		"\x02\x02\x02:\u014C\x03\x02\x02\x02<\u014E\x03\x02\x02\x02>B\x07\b\x02" +
-		"\x02?A\x05\x04\x03\x02@?\x03\x02\x02\x02AD\x03\x02\x02\x02B@\x03\x02\x02" +
-		"\x02BC\x03\x02\x02\x02CH\x03\x02\x02\x02DB\x03\x02\x02\x02EG\x05\x06\x04" +
-		"\x02FE\x03\x02\x02\x02GJ\x03\x02\x02\x02HF\x03\x02\x02\x02HI\x03\x02\x02" +
-		"\x02IK\x03\x02\x02\x02JH\x03\x02\x02\x02KL\x05\f\x07\x02LM\x07\t\x02\x02" +
-		"MN\x07\x02\x02\x03N\x03\x03\x02\x02\x02OP\x07\x06\x02\x02PQ\x07E\x02\x02" +
-		"Q\x05\x03\x02\x02\x02RT\x07\x05\x02\x02SR\x03\x02\x02\x02ST\x03\x02\x02" +
-		"\x02TU\x03\x02\x02\x02UV\x05\x1C\x0F\x02VW\x07D\x02\x02WY\x07;\x02\x02" +
-		"XZ\x05\b\x05\x02YX\x03\x02\x02\x02YZ\x03\x02\x02\x02Z[\x03\x02\x02\x02" +
-		"[\\\x07<\x02\x02\\]\x07\n\x02\x02]^\x05\f\x07\x02^_\x07\t\x02\x02_j\x03" +
-		"\x02\x02\x02`a\x07\x07\x02\x02ab\x05\x1C\x0F\x02bc\x07D\x02\x02ce\x07" +
-		";\x02\x02df\x05\b\x05\x02ed\x03\x02\x02\x02ef\x03\x02\x02\x02fg\x03\x02" +
-		"\x02\x02gh\x07<\x02\x02hj\x03\x02\x02\x02iS\x03\x02\x02\x02i`\x03\x02" +
-		"\x02\x02j\x07\x03\x02\x02\x02kp\x05\n\x06\x02lm\x07?\x02\x02mo\x05\n\x06" +
-		"\x02nl\x03\x02\x02\x02or\x03\x02\x02\x02pn\x03\x02\x02\x02pq\x03\x02\x02" +
-		"\x02q\t\x03\x02\x02\x02rp\x03\x02\x02\x02st\x05\x1C\x0F\x02tu\x07D\x02" +
-		"\x02u\v\x03\x02\x02\x02vw\b\x07\x01\x02w\x86\x07\v\x02\x02x\x86\x05\x0E" +
-		"\b\x02y\x86\x05\x10\t\x02z\x86\x05\x12\n\x02{|\x07\f\x02\x02|\x86\x05" +
-		"\x14\v\x02}~\x05<\x1F\x02~\x7F\x05&\x14\x02\x7F\x86\x03\x02\x02\x02\x80" +
-		"\x86\x05\x0E\b\x02\x81\x82\x07\b\x02\x02\x82\x83\x05\f\x07\x02\x83\x84" +
-		"\x07\t\x02\x02\x84\x86\x03\x02\x02\x02\x85v\x03\x02\x02\x02\x85x\x03\x02" +
-		"\x02\x02\x85y\x03\x02\x02\x02\x85z\x03\x02\x02\x02\x85{\x03\x02\x02\x02" +
-		"\x85}\x03\x02\x02\x02\x85\x80\x03\x02\x02\x02\x85\x81\x03\x02\x02\x02" +
-		"\x86\x8C\x03\x02\x02\x02\x87\x88\f\x03\x02\x02\x88\x89\x07@\x02\x02\x89" +
-		"\x8B\x05\f\x07\x04\x8A\x87\x03\x02\x02\x02\x8B\x8E\x03\x02\x02\x02\x8C" +
-		"\x8A\x03\x02\x02\x02\x8C\x8D\x03\x02\x02\x02\x8D\r\x03\x02\x02\x02\x8E" +
-		"\x8C\x03\x02\x02\x02\x8F\x90\x07\x12\x02\x02\x90\x91\x05&\x14\x02\x91" +
-		"\x92\x07\x13\x02\x02\x92\x93\x05\f\x07\x02\x93\x94\x07\x14\x02\x02\x94" +
-		"\x95\x05\f\x07\x02\x95\x96\x07\x15\x02\x02\x96\x9E\x03\x02\x02\x02\x97" +
-		"\x98\x07\x16\x02\x02\x98\x99\x05&\x14\x02\x99\x9A\x07\x17\x02\x02\x9A" +
-		"\x9B\x05\f\x07\x02\x9B\x9C\x07\x18\x02\x02\x9C\x9E\x03\x02\x02\x02\x9D" +
-		"\x8F\x03\x02\x02\x02\x9D\x97\x03\x02\x02\x02\x9E\x0F\x03\x02\x02\x02\x9F" +
-		"\xA0\x05\x14\v\x02\xA0\xA1\x07+\x02\x02\xA1\xA2\x05\x16\f\x02\xA2\x11" +
-		"\x03\x02\x02\x02\xA3\xA4\x05\x1C\x0F\x02\xA4\xA5\x07D\x02\x02\xA5\xA6" +
-		"\x07+\x02\x02\xA6\xA7\x05\x16\f\x02\xA7\x13\x03\x02\x02\x02\xA8\xAC\x07" +
-		"D\x02\x02\xA9\xAC\x05*\x16\x02\xAA\xAC\x05\x1A\x0E\x02\xAB\xA8\x03\x02" +
-		"\x02\x02\xAB\xA9\x03\x02\x02\x02\xAB\xAA\x03\x02\x02\x02\xAC\x15\x03\x02" +
-		"\x02\x02\xAD\xBF\x05&\x14\x02\xAE\xBF\x05,\x17\x02\xAF\xB0\x07-\x02\x02" +
-		"\xB0\xB1\x07;\x02\x02\xB1\xB2\x05&\x14\x02\xB2\xB3\x07?\x02\x02\xB3\xB4" +
-		"\x05&\x14\x02\xB4\xB5\x07<\x02\x02\xB5\xBF\x03\x02\x02\x02\xB6\xBF\x05" +
-		"\x1A\x0E\x02\xB7\xB8\x07\x19\x02\x02\xB8\xB9\x07D\x02\x02\xB9\xBB\x07" +
-		";\x02\x02\xBA\xBC\x05\x18\r\x02\xBB\xBA\x03\x02\x02\x02\xBB\xBC\x03\x02" +
-		"\x02\x02\xBC\xBD\x03\x02\x02\x02\xBD\xBF\x07<\x02\x02\xBE\xAD\x03\x02" +
-		"\x02\x02\xBE\xAE\x03\x02\x02\x02\xBE\xAF\x03\x02\x02\x02\xBE\xB6\x03\x02" +
-		"\x02\x02\xBE\xB7\x03\x02\x02\x02\xBF\x17\x03\x02\x02\x02\xC0\xC5\x05&" +
-		"\x14\x02\xC1\xC2\x07?\x02\x02\xC2\xC4\x05&\x14\x02\xC3\xC1\x03\x02\x02" +
-		"\x02\xC4\xC7\x03\x02\x02\x02\xC5\xC3\x03\x02\x02\x02\xC5\xC6\x03\x02\x02" +
-		"\x02\xC6\x19\x03\x02\x02\x02\xC7\xC5\x03\x02\x02\x02\xC8\xC9\x07\x1A\x02" +
-		"\x02\xC9\xCD\x05&\x14\x02\xCA\xCB\x07\x1B\x02\x02\xCB\xCD\x05&\x14\x02" +
-		"\xCC\xC8\x03\x02\x02\x02\xCC\xCA\x03\x02\x02\x02\xCD\x1B\x03\x02\x02\x02" +
-		"\xCE\xD2\x05\x1E\x10\x02\xCF\xD2\x05 \x11\x02\xD0\xD2\x05\"\x12\x02\xD1" +
-		"\xCE\x03\x02\x02\x02\xD1\xCF\x03\x02\x02\x02\xD1\xD0\x03\x02\x02\x02\xD2" +
-		"\x1D\x03\x02\x02\x02\xD3\xD4\t\x02\x02\x02\xD4\x1F\x03\x02\x02\x02\xD5" +
-		"\xD6\b\x11\x01\x02\xD6\xD7\x05\x1E\x10\x02\xD7\xD8\x07=\x02\x02\xD8\xD9" +
-		"\x07>\x02\x02\xD9\xDF\x03\x02\x02\x02\xDA\xDB\x05\"\x12\x02\xDB\xDC\x07" +
-		"=\x02\x02\xDC\xDD\x07>\x02\x02\xDD\xDF\x03\x02\x02\x02\xDE\xD5\x03\x02" +
-		"\x02\x02\xDE\xDA\x03\x02\x02\x02\xDF\xE5\x03\x02\x02\x02\xE0\xE1\f\x04" +
-		"\x02\x02\xE1\xE2\x07=\x02\x02\xE2\xE4\x07>\x02\x02\xE3\xE0\x03\x02\x02" +
-		"\x02\xE4\xE7\x03\x02\x02\x02\xE5\xE3\x03\x02\x02\x02\xE5\xE6\x03\x02\x02" +
-		"\x02\xE6!\x03\x02\x02\x02\xE7\xE5\x03\x02\x02\x02\xE8\xE9\x07:\x02\x02" +
-		"\xE9\xEA\x07;\x02\x02\xEA\xEB\x05$\x13\x02\xEB\xEC\x07?\x02\x02\xEC\xED" +
-		"\x05$\x13\x02\xED\xEE\x07<\x02\x02\xEE#\x03\x02\x02\x02\xEF\xF3\x05\x1E" +
-		"\x10\x02\xF0\xF3\x05 \x11\x02\xF1\xF3\x07:\x02\x02\xF2\xEF\x03\x02\x02" +
-		"\x02\xF2\xF0\x03\x02\x02\x02\xF2\xF1\x03\x02\x02\x02\xF3%\x03\x02\x02" +
-		"\x02\xF4\xF5\b\x14\x01\x02\xF5\u0104\x05(\x15\x02\xF6\u0104\x05*\x16\x02" +
-		"\xF7\xF8\x05:\x1E\x02\xF8\xF9\x05&\x14\t\xF9\u0104\x03\x02\x02\x02\xFA" +
-		"\xFB\x07;\x02\x02\xFB\xFC\x05&\x14\x02\xFC\xFD\x07<\x02\x02\xFD\u0104" +
-		"\x03\x02\x02\x02\xFE\u0104\x07D\x02\x02\xFF\u0104\x072\x02\x02\u0100\u0104" +
-		"\x073\x02\x02\u0101\u0104\x075\x02\x02\u0102\u0104\x074\x02\x02\u0103" +
-		"\xF4\x03\x02\x02\x02\u0103\xF6\x03\x02\x02\x02\u0103\xF7\x03\x02\x02\x02" +
-		"\u0103\xFA\x03\x02\x02\x02\u0103\xFE\x03\x02\x02\x02\u0103\xFF\x03\x02" +
-		"\x02\x02\u0103\u0100\x03\x02\x02\x02\u0103\u0101\x03\x02\x02\x02\u0103" +
-		"\u0102\x03\x02\x02\x02\u0104\u011F\x03\x02\x02\x02\u0105\u0106\f\x10\x02" +
-		"\x02\u0106\u0107\x05.\x18\x02\u0107\u0108\x05&\x14\x11\u0108\u011E\x03" +
-		"\x02\x02\x02\u0109\u010A\f\x0F\x02\x02\u010A\u010B\x050\x19\x02\u010B" +
-		"\u010C\x05&\x14\x10\u010C\u011E\x03\x02\x02\x02\u010D\u010E\f\x0E\x02" +
-		"\x02\u010E\u010F\x052\x1A\x02\u010F\u0110\x05&\x14\x0F\u0110\u011E\x03" +
-		"\x02\x02\x02\u0111\u0112\f\r\x02\x02\u0112\u0113\x054\x1B\x02\u0113\u0114" +
-		"\x05&\x14\x0E\u0114\u011E\x03\x02\x02\x02\u0115\u0116\f\f\x02\x02\u0116" +
-		"\u0117\x056\x1C\x02\u0117\u0118\x05&\x14\r\u0118\u011E\x03\x02\x02\x02" +
-		"\u0119\u011A\f\v\x02\x02\u011A\u011B\x058\x1D\x02\u011B\u011C\x05&\x14" +
-		"\f\u011C\u011E\x03\x02\x02\x02\u011D\u0105\x03\x02\x02\x02\u011D\u0109" +
-		"\x03\x02\x02\x02\u011D\u010D\x03\x02\x02\x02\u011D\u0111\x03\x02\x02\x02" +
-		"\u011D\u0115\x03\x02\x02\x02\u011D\u0119\x03\x02\x02\x02\u011E\u0121\x03" +
-		"\x02\x02\x02\u011F\u011D\x03\x02\x02\x02\u011F\u0120\x03\x02\x02\x02\u0120" +
-		"\'\x03\x02\x02\x02\u0121\u011F\x03\x02\x02\x02\u0122\u0124\t\x03\x02\x02" +
-		"\u0123\u0122\x03\x02\x02\x02\u0123\u0124\x03\x02\x02\x02\u0124\u0126\x03" +
-		"\x02\x02\x02\u0125\u0127\x071\x02\x02\u0126\u0125\x03\x02\x02\x02\u0127" +
-		"\u0128\x03\x02\x02\x02\u0128\u0126\x03\x02\x02\x02\u0128\u0129\x03\x02" +
-		"\x02\x02\u0129)\x03\x02\x02\x02\u012A\u012F\x07D\x02\x02\u012B\u012C\x07" +
-		"=\x02\x02\u012C\u012D\x05&\x14\x02\u012D\u012E\x07>\x02\x02\u012E\u0130" +
-		"\x03\x02\x02\x02\u012F\u012B\x03\x02\x02\x02\u0130\u0131\x03\x02\x02\x02" +
-		"\u0131\u012F\x03\x02\x02\x02\u0131\u0132\x03\x02\x02\x02\u0132+\x03\x02" +
-		"\x02\x02\u0133\u013C\x07=\x02\x02\u0134\u0139\x05&\x14\x02\u0135\u0136" +
-		"\x07?\x02\x02\u0136\u0138\x05&\x14\x02\u0137\u0135\x03\x02\x02\x02\u0138" +
-		"\u013B\x03\x02\x02\x02\u0139\u0137\x03\x02\x02\x02\u0139\u013A\x03\x02" +
-		"\x02\x02\u013A\u013D\x03\x02\x02\x02\u013B\u0139\x03\x02\x02\x02\u013C" +
-		"\u0134\x03\x02\x02\x02\u013C\u013D\x03\x02\x02\x02\u013D\u013E\x03\x02" +
-		"\x02\x02\u013E\u013F\x07>\x02\x02\u013F-\x03\x02\x02\x02\u0140\u0141\t" +
-		"\x04\x02\x02\u0141/\x03\x02\x02\x02\u0142\u0143\t\x03\x02\x02\u01431\x03" +
-		"\x02\x02\x02\u0144\u0145\t\x05\x02\x02\u01453\x03\x02\x02\x02\u0146\u0147" +
-		"\t\x06\x02\x02\u01475\x03\x02\x02\x02\u0148\u0149\x07)\x02\x02\u01497" +
-		"\x03\x02\x02\x02\u014A\u014B\x07*\x02\x02\u014B9\x03\x02\x02\x02\u014C" +
-		"\u014D\t\x07\x02\x02\u014D;\x03\x02\x02\x02\u014E\u014F\t\b\x02\x02\u014F" +
-		"=\x03\x02\x02\x02\x1DBHSYeip\x85\x8C\x9D\xAB\xBB\xBE\xC5\xCC\xD1\xDE\xE5" +
-		"\xF2\u0103\u011D\u011F\u0123\u0128\u0131\u0139\u013C";
+		"\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x03\x14\x07\x14\u012A\n\x14\f" +
+		"\x14\x0E\x14\u012D\v\x14\x03\x15\x05\x15\u0130\n\x15\x03\x15\x06\x15\u0133" +
+		"\n\x15\r\x15\x0E\x15\u0134\x03\x16\x03\x16\x03\x16\x03\x16\x03\x16\x06" +
+		"\x16\u013C\n\x16\r\x16\x0E\x16\u013D\x03\x17\x03\x17\x03\x17\x03\x17\x07" +
+		"\x17\u0144\n\x17\f\x17\x0E\x17\u0147\v\x17\x05\x17\u0149\n\x17\x03\x17" +
+		"\x03\x17\x03\x18\x03\x18\x03\x19\x03\x19\x03\x1A\x03\x1A\x03\x1B\x03\x1B" +
+		"\x03\x1C\x03\x1C\x03\x1D\x03\x1D\x03\x1E\x03\x1E\x03\x1F\x03\x1F\x03\x1F" +
+		"\x02\x02\x05\f & \x02\x02\x04\x02\x06\x02\b\x02\n\x02\f\x02\x0E\x02\x10" +
+		"\x02\x12\x02\x14\x02\x16\x02\x18\x02\x1A\x02\x1C\x02\x1E\x02 \x02\"\x02" +
+		"$\x02&\x02(\x02*\x02,\x02.\x020\x022\x024\x026\x028\x02:\x02<\x02\x02" +
+		"\t\x04\x027:<<\x03\x02 !\x03\x02\x1D\x1F\x03\x02\"%\x04\x02&&((\x05\x02" +
+		"!!--/1\x03\x02\x0E\x12\u0173\x02>\x03\x02\x02\x02\x04O\x03\x02\x02\x02" +
+		"\x06u\x03\x02\x02\x02\bw\x03\x02\x02\x02\n\x7F\x03\x02\x02\x02\f\x91\x03" +
+		"\x02\x02\x02\x0E\xA9\x03\x02\x02\x02\x10\xAB\x03\x02\x02\x02\x12\xAF\x03" +
+		"\x02\x02\x02\x14\xB7\x03\x02\x02\x02\x16\xCA\x03\x02\x02\x02\x18\xCC\x03" +
+		"\x02\x02\x02\x1A\xD8\x03\x02\x02\x02\x1C\xDD\x03\x02\x02\x02\x1E\xDF\x03" +
+		"\x02\x02\x02 \xEA\x03\x02\x02\x02\"\xF4\x03\x02\x02\x02$\xFE\x03\x02\x02" +
+		"\x02&\u010F\x03\x02\x02\x02(\u012F\x03\x02\x02\x02*\u0136\x03\x02\x02" +
+		"\x02,\u013F\x03\x02\x02\x02.\u014C\x03\x02\x02\x020\u014E\x03\x02\x02" +
+		"\x022\u0150\x03\x02\x02\x024\u0152\x03\x02\x02\x026\u0154\x03\x02\x02" +
+		"\x028\u0156\x03\x02\x02\x02:\u0158\x03\x02\x02\x02<\u015A\x03\x02\x02" +
+		"\x02>B\x07\t\x02\x02?A\x05\x04\x03\x02@?\x03\x02\x02\x02AD\x03\x02\x02" +
+		"\x02B@\x03\x02\x02\x02BC\x03\x02\x02\x02CH\x03\x02\x02\x02DB\x03\x02\x02" +
+		"\x02EG\x05\x06\x04\x02FE\x03\x02\x02\x02GJ\x03\x02\x02\x02HF\x03\x02\x02" +
+		"\x02HI\x03\x02\x02\x02IK\x03\x02\x02\x02JH\x03\x02\x02\x02KL\x05\f\x07" +
+		"\x02LM\x07\n\x02\x02MN\x07\x02\x02\x03N\x03\x03\x02\x02\x02OP\x07\x06" +
+		"\x02\x02PQ\x076\x02\x02Q\x05\x03\x02\x02\x02RT\x07\x05\x02\x02SR\x03\x02" +
+		"\x02\x02ST\x03\x02\x02\x02TU\x03\x02\x02\x02UV\x05\x1C\x0F\x02VW\x07F" +
+		"\x02\x02WY\x07=\x02\x02XZ\x05\b\x05\x02YX\x03\x02\x02\x02YZ\x03\x02\x02" +
+		"\x02Z[\x03\x02\x02\x02[\\\x07>\x02\x02\\]\x07\v\x02\x02]^\x05\f\x07\x02" +
+		"^_\x07\n\x02\x02_v\x03\x02\x02\x02`b\x07\x05\x02\x02a`\x03\x02\x02\x02" +
+		"ab\x03\x02\x02\x02bc\x03\x02\x02\x02cd\x07\x07\x02\x02de\x05\x1C\x0F\x02" +
+		"ef\x07F\x02\x02fh\x07=\x02\x02gi\x05\b\x05\x02hg\x03\x02\x02\x02hi\x03" +
+		"\x02\x02\x02ij\x03\x02\x02\x02jk\x07>\x02\x02kv\x03\x02\x02\x02lm\x07" +
+		"\b\x02\x02mn\x05\x1C\x0F\x02no\x07F\x02\x02oq\x07=\x02\x02pr\x05\b\x05" +
+		"\x02qp\x03\x02\x02\x02qr\x03\x02\x02\x02rs\x03\x02\x02\x02st\x07>\x02" +
+		"\x02tv\x03\x02\x02\x02uS\x03\x02\x02\x02ua\x03\x02\x02\x02ul\x03\x02\x02" +
+		"\x02v\x07\x03\x02\x02\x02w|\x05\n\x06\x02xy\x07A\x02\x02y{\x05\n\x06\x02" +
+		"zx\x03\x02\x02\x02{~\x03\x02\x02\x02|z\x03\x02\x02\x02|}\x03\x02\x02\x02" +
+		"}\t\x03\x02\x02\x02~|\x03\x02\x02\x02\x7F\x80\x05\x1C\x0F\x02\x80\x81" +
+		"\x07F\x02\x02\x81\v\x03\x02\x02\x02\x82\x83\b\x07\x01\x02\x83\x92\x07" +
+		"\f\x02\x02\x84\x92\x05\x0E\b\x02\x85\x92\x05\x10\t\x02\x86\x92\x05\x12" +
+		"\n\x02\x87\x88\x07\r\x02\x02\x88\x92\x05\x14\v\x02\x89\x8A\x05<\x1F\x02" +
+		"\x8A\x8B\x05&\x14\x02\x8B\x92\x03\x02\x02\x02\x8C\x92\x05\x0E\b\x02\x8D" +
+		"\x8E\x07\t\x02\x02\x8E\x8F\x05\f\x07\x02\x8F\x90\x07\n\x02\x02\x90\x92" +
+		"\x03\x02\x02\x02\x91\x82\x03\x02\x02\x02\x91\x84\x03\x02\x02\x02\x91\x85" +
+		"\x03\x02\x02\x02\x91\x86\x03\x02\x02\x02\x91\x87\x03\x02\x02\x02\x91\x89" +
+		"\x03\x02\x02\x02\x91\x8C\x03\x02\x02\x02\x91\x8D\x03\x02\x02\x02\x92\x98" +
+		"\x03\x02\x02\x02\x93\x94\f\x03\x02\x02\x94\x95\x07B\x02\x02\x95\x97\x05" +
+		"\f\x07\x04\x96\x93\x03\x02\x02\x02\x97\x9A\x03\x02\x02\x02\x98\x96\x03" +
+		"\x02\x02\x02\x98\x99\x03\x02\x02\x02\x99\r\x03\x02\x02\x02\x9A\x98\x03" +
+		"\x02\x02\x02\x9B\x9C\x07\x13\x02\x02\x9C\x9D\x05&\x14\x02\x9D\x9E\x07" +
+		"\x14\x02\x02\x9E\x9F\x05\f\x07\x02\x9F\xA0\x07\x15\x02\x02\xA0\xA1\x05" +
+		"\f\x07\x02\xA1\xA2\x07\x16\x02\x02\xA2\xAA\x03\x02\x02\x02\xA3\xA4\x07" +
+		"\x17\x02\x02\xA4\xA5\x05&\x14\x02\xA5\xA6\x07\x18\x02\x02\xA6\xA7\x05" +
+		"\f\x07\x02\xA7\xA8\x07\x19\x02\x02\xA8\xAA\x03\x02\x02\x02\xA9\x9B\x03" +
+		"\x02\x02\x02\xA9\xA3\x03\x02\x02\x02\xAA\x0F\x03\x02\x02\x02\xAB\xAC\x05" +
+		"\x14\v\x02\xAC\xAD\x07,\x02\x02\xAD\xAE\x05\x16\f\x02\xAE\x11\x03\x02" +
+		"\x02\x02\xAF\xB0\x05\x1C\x0F\x02\xB0\xB1\x07F\x02\x02\xB1\xB2\x07,\x02" +
+		"\x02\xB2\xB3\x05\x16\f\x02\xB3\x13\x03\x02\x02\x02\xB4\xB8\x07F\x02\x02" +
+		"\xB5\xB8\x05*\x16\x02\xB6\xB8\x05\x1A\x0E\x02\xB7\xB4\x03\x02\x02\x02" +
+		"\xB7\xB5\x03\x02\x02\x02\xB7\xB6\x03\x02\x02\x02\xB8\x15\x03\x02\x02\x02" +
+		"\xB9\xCB\x05&\x14\x02\xBA\xCB\x05,\x17\x02\xBB\xBC\x07.\x02\x02\xBC\xBD" +
+		"\x07=\x02\x02\xBD\xBE\x05&\x14\x02\xBE\xBF\x07A\x02\x02\xBF\xC0\x05&\x14" +
+		"\x02\xC0\xC1\x07>\x02\x02\xC1\xCB\x03\x02\x02\x02\xC2\xCB\x05\x1A\x0E" +
+		"\x02\xC3\xC4\x07\x1A\x02\x02\xC4\xC5\x07F\x02\x02\xC5\xC7\x07=\x02\x02" +
+		"\xC6\xC8\x05\x18\r\x02\xC7\xC6\x03\x02\x02\x02\xC7\xC8\x03\x02\x02\x02" +
+		"\xC8\xC9\x03\x02\x02\x02\xC9\xCB\x07>\x02\x02\xCA\xB9\x03\x02\x02\x02" +
+		"\xCA\xBA\x03\x02\x02\x02\xCA\xBB\x03\x02\x02\x02\xCA\xC2\x03\x02\x02\x02" +
+		"\xCA\xC3\x03\x02\x02\x02\xCB\x17\x03\x02\x02\x02\xCC\xD1\x05&\x14\x02" +
+		"\xCD\xCE\x07A\x02\x02\xCE\xD0\x05&\x14\x02\xCF\xCD\x03\x02\x02\x02\xD0" +
+		"\xD3\x03\x02\x02\x02\xD1\xCF\x03\x02\x02\x02\xD1\xD2\x03\x02\x02\x02\xD2" +
+		"\x19\x03\x02\x02\x02\xD3\xD1\x03\x02\x02\x02\xD4\xD5\x07\x1B\x02\x02\xD5" +
+		"\xD9\x05&\x14\x02\xD6\xD7\x07\x1C\x02\x02\xD7\xD9\x05&\x14\x02\xD8\xD4" +
+		"\x03\x02\x02\x02\xD8\xD6\x03\x02\x02\x02\xD9\x1B\x03\x02\x02\x02\xDA\xDE" +
+		"\x05\x1E\x10\x02\xDB\xDE\x05 \x11\x02\xDC\xDE\x05\"\x12\x02\xDD\xDA\x03" +
+		"\x02\x02\x02\xDD\xDB\x03\x02\x02\x02\xDD\xDC\x03\x02\x02\x02\xDE\x1D\x03" +
+		"\x02\x02\x02\xDF\xE0\t\x02\x02\x02\xE0\x1F\x03\x02\x02\x02\xE1\xE2\b\x11" +
+		"\x01\x02\xE2\xE3\x05\x1E\x10\x02\xE3\xE4\x07?\x02\x02\xE4\xE5\x07@\x02" +
+		"\x02\xE5\xEB\x03\x02\x02\x02\xE6\xE7\x05\"\x12\x02\xE7\xE8\x07?\x02\x02" +
+		"\xE8\xE9\x07@\x02\x02\xE9\xEB\x03\x02\x02\x02\xEA\xE1\x03\x02\x02\x02" +
+		"\xEA\xE6\x03\x02\x02\x02\xEB\xF1\x03\x02\x02\x02\xEC\xED\f\x04\x02\x02" +
+		"\xED\xEE\x07?\x02\x02\xEE\xF0\x07@\x02\x02\xEF\xEC\x03\x02\x02\x02\xF0" +
+		"\xF3\x03\x02\x02\x02\xF1\xEF\x03\x02\x02\x02\xF1\xF2\x03\x02\x02\x02\xF2" +
+		"!\x03\x02\x02\x02\xF3\xF1\x03\x02\x02\x02\xF4\xF5\x07;\x02\x02\xF5\xF6" +
+		"\x07=\x02\x02\xF6\xF7\x05$\x13\x02\xF7\xF8\x07A\x02\x02\xF8\xF9\x05$\x13" +
+		"\x02\xF9\xFA\x07>\x02\x02\xFA#\x03\x02\x02\x02\xFB\xFF\x05\x1E\x10\x02" +
+		"\xFC\xFF\x05 \x11\x02\xFD\xFF\x07;\x02\x02\xFE\xFB\x03\x02\x02\x02\xFE" +
+		"\xFC\x03\x02\x02\x02\xFE\xFD\x03\x02\x02\x02\xFF%\x03\x02\x02\x02\u0100" +
+		"\u0101\b\x14\x01\x02\u0101\u0110\x05(\x15\x02\u0102\u0110\x05*\x16\x02" +
+		"\u0103\u0104\x05:\x1E\x02\u0104\u0105\x05&\x14\t\u0105\u0110\x03\x02\x02" +
+		"\x02\u0106\u0107\x07=\x02\x02\u0107\u0108\x05&\x14\x02\u0108\u0109\x07" +
+		">\x02\x02\u0109\u0110\x03\x02\x02\x02\u010A\u0110\x07F\x02\x02\u010B\u0110" +
+		"\x073\x02\x02\u010C\u0110\x074\x02\x02\u010D\u0110\x076\x02\x02\u010E" +
+		"\u0110\x075\x02\x02\u010F\u0100\x03\x02\x02\x02\u010F\u0102\x03\x02\x02" +
+		"\x02\u010F\u0103\x03\x02\x02\x02\u010F\u0106\x03\x02\x02\x02\u010F\u010A" +
+		"\x03\x02\x02\x02\u010F\u010B\x03\x02\x02\x02\u010F\u010C\x03\x02\x02\x02" +
+		"\u010F\u010D\x03\x02\x02\x02\u010F\u010E\x03\x02\x02\x02\u0110\u012B\x03" +
+		"\x02\x02\x02\u0111\u0112\f\x10\x02\x02\u0112\u0113\x05.\x18\x02\u0113" +
+		"\u0114\x05&\x14\x11\u0114\u012A\x03\x02\x02\x02\u0115\u0116\f\x0F\x02" +
+		"\x02\u0116\u0117\x050\x19\x02\u0117\u0118\x05&\x14\x10\u0118\u012A\x03" +
+		"\x02\x02\x02\u0119\u011A\f\x0E\x02\x02\u011A\u011B\x052\x1A\x02\u011B" +
+		"\u011C\x05&\x14\x0F\u011C\u012A\x03\x02\x02\x02\u011D\u011E\f\r\x02\x02" +
+		"\u011E\u011F\x054\x1B\x02\u011F\u0120\x05&\x14\x0E\u0120\u012A\x03\x02" +
+		"\x02\x02\u0121\u0122\f\f\x02\x02\u0122\u0123\x056\x1C\x02\u0123\u0124" +
+		"\x05&\x14\r\u0124\u012A\x03\x02\x02\x02\u0125\u0126\f\v\x02\x02\u0126" +
+		"\u0127\x058\x1D\x02\u0127\u0128\x05&\x14\f\u0128\u012A\x03\x02\x02\x02" +
+		"\u0129\u0111\x03\x02\x02\x02\u0129\u0115\x03\x02\x02\x02\u0129\u0119\x03" +
+		"\x02\x02\x02\u0129\u011D\x03\x02\x02\x02\u0129\u0121\x03\x02\x02\x02\u0129" +
+		"\u0125\x03\x02\x02\x02\u012A\u012D\x03\x02\x02\x02\u012B\u0129\x03\x02" +
+		"\x02\x02\u012B\u012C\x03\x02\x02\x02\u012C\'\x03\x02\x02\x02\u012D\u012B" +
+		"\x03\x02\x02\x02\u012E\u0130\t\x03\x02\x02\u012F\u012E\x03\x02\x02\x02" +
+		"\u012F\u0130\x03\x02\x02\x02\u0130\u0132\x03\x02\x02\x02\u0131\u0133\x07" +
+		"2\x02\x02\u0132\u0131\x03\x02\x02\x02\u0133\u0134\x03\x02\x02\x02\u0134" +
+		"\u0132\x03\x02\x02\x02\u0134\u0135\x03\x02\x02\x02\u0135)\x03\x02\x02" +
+		"\x02\u0136\u013B\x07F\x02\x02\u0137\u0138\x07?\x02\x02\u0138\u0139\x05" +
+		"&\x14\x02\u0139\u013A\x07@\x02\x02\u013A\u013C\x03\x02\x02\x02\u013B\u0137" +
+		"\x03\x02\x02\x02\u013C\u013D\x03\x02\x02\x02\u013D\u013B\x03\x02\x02\x02" +
+		"\u013D\u013E\x03\x02\x02\x02\u013E+\x03\x02\x02\x02\u013F\u0148\x07?\x02" +
+		"\x02\u0140\u0145\x05&\x14\x02\u0141\u0142\x07A\x02\x02\u0142\u0144\x05" +
+		"&\x14\x02\u0143\u0141\x03\x02\x02\x02\u0144\u0147\x03\x02\x02\x02\u0145" +
+		"\u0143\x03\x02\x02\x02\u0145\u0146\x03\x02\x02\x02\u0146\u0149\x03\x02" +
+		"\x02\x02\u0147\u0145\x03\x02\x02\x02\u0148\u0140\x03\x02\x02\x02\u0148" +
+		"\u0149\x03\x02\x02\x02\u0149\u014A\x03\x02\x02\x02\u014A\u014B\x07@\x02" +
+		"\x02\u014B-\x03\x02\x02\x02\u014C\u014D\t\x04\x02\x02\u014D/\x03\x02\x02" +
+		"\x02\u014E\u014F\t\x03\x02\x02\u014F1\x03\x02\x02\x02\u0150\u0151\t\x05" +
+		"\x02\x02\u01513\x03\x02\x02\x02\u0152\u0153\t\x06\x02\x02\u01535\x03\x02" +
+		"\x02\x02\u0154\u0155\x07*\x02\x02\u01557\x03\x02\x02\x02\u0156\u0157\x07" +
+		"+\x02\x02\u01579\x03\x02\x02\x02\u0158\u0159\t\x07\x02\x02\u0159;\x03" +
+		"\x02\x02\x02\u015A\u015B\t\b\x02\x02\u015B=\x03\x02\x02\x02\x1FBHSYah" +
+		"qu|\x91\x98\xA9\xB7\xC7\xCA\xD1\xD8\xDD\xEA\xF1\xFE\u010F\u0129\u012B" +
+		"\u012F\u0134\u013D\u0145\u0148";
 	public static __ATN: ATN;
 	public static get _ATN(): ATN {
 		if (!WJSCParser.__ATN) {
@@ -2055,13 +2096,13 @@ export class ProgramContext extends ParserRuleContext {
 	}
 	public END(): TerminalNode { return this.getToken(WJSCParser.END, 0); }
 	public EOF(): TerminalNode { return this.getToken(WJSCParser.EOF, 0); }
-	public imp(): ImpContext[];
-	public imp(i: number): ImpContext;
-	public imp(i?: number): ImpContext | ImpContext[] {
+	public imports(): ImportsContext[];
+	public imports(i: number): ImportsContext;
+	public imports(i?: number): ImportsContext | ImportsContext[] {
 		if (i === undefined) {
-			return this.getRuleContexts(ImpContext);
+			return this.getRuleContexts(ImportsContext);
 		} else {
-			return this.getRuleContext(i, ImpContext);
+			return this.getRuleContext(i, ImportsContext);
 		}
 	}
 	public func(): FuncContext[];
@@ -2101,30 +2142,30 @@ export class ProgramContext extends ParserRuleContext {
 }
 
 
-export class ImpContext extends ParserRuleContext {
+export class ImportsContext extends ParserRuleContext {
 	public IMPORT(): TerminalNode { return this.getToken(WJSCParser.IMPORT, 0); }
-	public FILENAME(): TerminalNode { return this.getToken(WJSCParser.FILENAME, 0); }
+	public STRING_LITERAL(): TerminalNode { return this.getToken(WJSCParser.STRING_LITERAL, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
 	// @Override
-	public get ruleIndex(): number { return WJSCParser.RULE_imp; }
+	public get ruleIndex(): number { return WJSCParser.RULE_imports; }
 	// @Override
 	public enterRule(listener: WJSCParserListener): void {
-		if (listener.enterImp) {
-			listener.enterImp(this);
+		if (listener.enterImports) {
+			listener.enterImports(this);
 		}
 	}
 	// @Override
 	public exitRule(listener: WJSCParserListener): void {
-		if (listener.exitImp) {
-			listener.exitImp(this);
+		if (listener.exitImports) {
+			listener.exitImports(this);
 		}
 	}
 	// @Override
 	public accept<Result>(visitor: WJSCParserVisitor<Result>): Result {
-		if (visitor.visitImp) {
-			return visitor.visitImp(this);
+		if (visitor.visitImports) {
+			return visitor.visitImports(this);
 		} else {
 			return visitor.visitChildren(this);
 		}
@@ -2149,6 +2190,7 @@ export class FuncContext extends ParserRuleContext {
 		return this.tryGetRuleContext(0, ParamListContext);
 	}
 	public DEFINE(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.DEFINE, 0); }
+	public EXTERN(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.EXTERN, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}
@@ -2652,6 +2694,7 @@ export class BaseTypeContext extends ParserRuleContext {
 	public BOOLEAN(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.BOOLEAN, 0); }
 	public CHARACTER(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.CHARACTER, 0); }
 	public STRING(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.STRING, 0); }
+	public VOID(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.VOID, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}

@@ -280,21 +280,25 @@ export class JSCompiler {
     return output.join(';')
   }
 
-  private generateFunctions = (functions: WJSCFunction[]): JSLib.JSFunction[] => (functions.forEach((func: WJSCFunction) => {
+  private generateFunctions = (functions: WJSCFunction[]): Array<JSLib.JSFunction | null> => (functions.forEach((func: WJSCFunction) => {
     /* Build the function prototypes first */
     this.declIdentName(func.identifier)
   }), functions.map((func: WJSCFunction) => {
-    const { paramList, body, identifier } = func
-    const name = this.getIdentName(identifier)
-    this.enterScope()
-    const params = paramList.map((param): string => this.declIdentName((param as any).identifier))
-    const result = {
-      body: this.generateStatement(body),
-      name,
-      params,
-    } as JSLib.JSFunction
-    this.exitScope()
-    return result
+    if (func.body) {
+      const { paramList, body, identifier } = func
+      const name = this.getIdentName(identifier)
+      this.enterScope()
+      const params = paramList.map((param): string => this.declIdentName((param as any).identifier))
+      const result = {
+        body: this.generateStatement(body),
+        name,
+        params,
+      } as JSLib.JSFunction
+      this.exitScope()
+      return result
+    } else {
+      return null
+    }
   }))
 
   private generateStatement = (statement: WJSCStatement): JSLib.JSStat => {

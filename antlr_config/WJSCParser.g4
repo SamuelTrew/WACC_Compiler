@@ -4,12 +4,13 @@ options {
 	tokenVocab = WJSCLexer;
 }
 
-program: BEGIN imp* func* statement END EOF;
+program: BEGIN imports* func* statement END EOF;
 
-imp: IMPORT STRING_LITERAL;
+imports: IMPORT STRING_LITERAL;
 
 func: EXPORT? type IDENTIFIER LPAREN paramList? RPAREN IS statement END
-	| DEFINE type IDENTIFIER LPAREN paramList? RPAREN
+	| EXPORT? DEFINE type IDENTIFIER LPAREN paramList? RPAREN
+	| EXTERN type IDENTIFIER LPAREN paramList? RPAREN
 	;
 
 paramList: param (COMMA param)*;
@@ -52,7 +53,7 @@ pairElement: FIRST expression | SECOND expression;
 
 type: baseType | arrayType | pairType;
 
-baseType: INTEGER | BOOLEAN | CHARACTER | STRING;
+baseType: INTEGER | BOOLEAN | CHARACTER | STRING | VOID;
 
 arrayType:
 	baseType LBRACK RBRACK

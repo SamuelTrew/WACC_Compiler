@@ -480,7 +480,7 @@ class WJSCCodeGenerator {
         this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem))
       } else {
         this.output.push(construct.arithmetic(ARMOpcode.add, itemUsed, itemUsed, nextItem, undefined, false,
-            ARMShiftname.logicalShiftLeft, directive.immNum(2)))
+          ARMShiftname.logicalShiftLeft, directive.immNum(2)))
       }
     })
     if (isFromExpr) {
@@ -857,25 +857,27 @@ class WJSCCodeGenerator {
 
   // Generates code for the function
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
-    this.returnOffsets = []
-    this.output.push(directive.label(`f_${atx.identifier}`),
-      construct.pushPop(ARMOpcode.push, [this.lr]))
-    this.switchToChildTable(atx.body.tableNumber)
-    this.symbolTable.setVarMemAddr(atx.identifier, this.currSpOffset)
-    let offsetctr = 4
-    let lastoffset = 0
-    atx.paramList.forEach((param) => {
-      this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += lastoffset)
-      lastoffset = getTypeSize(param.type)
-    })
-    this.genStatBlock(atx.body, regList)
-    this.switchToParentTable()
+    if (atx.body) {
+      this.returnOffsets = []
+      this.output.push(directive.label(`f_${atx.identifier}`),
+        construct.pushPop(ARMOpcode.push, [this.lr]))
+      this.switchToChildTable(atx.body.tableNumber)
+      this.symbolTable.setVarMemAddr(atx.identifier, this.currSpOffset)
+      let offsetctr = 4
+      let lastoffset = 0
+      atx.paramList.forEach((param) => {
+        this.symbolTable.setVarMemAddr((param as WJSCIdentifier).identifier, offsetctr += lastoffset)
+        lastoffset = getTypeSize(param.type)
+      })
+      this.genStatBlock(atx.body, regList)
+      this.switchToParentTable()
 
-    this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
-    if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || atx.body.parserRule === WJSCParserRules.ConditionalIf) {
-      this.ltorgCheck = false
-    } else {
-      this.output.push(tabSpace + directive.ltorg)
+      this.output.push(construct.pushPop(ARMOpcode.pop, [this.pc]))
+      if (atx.body.parserRule === WJSCParserRules.ConditionalWhile || atx.body.parserRule === WJSCParserRules.ConditionalIf) {
+        this.ltorgCheck = false
+      } else {
+        this.output.push(tabSpace + directive.ltorg)
+      }
     }
   }
 
@@ -906,10 +908,10 @@ class WJSCCodeGenerator {
         this.genArrayElem(atx, [...tail], false)
         if (atx.type === BaseType.Character || atx.type === BaseType.Boolean) {
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
-              `[${nextItem}]`, undefined, undefined, true))
+            `[${nextItem}]`, undefined, undefined, true))
         } else {
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, itemUsed,
-              `[${nextItem}]`))
+            `[${nextItem}]`))
         }
         break
       }

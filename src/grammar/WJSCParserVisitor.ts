@@ -4,7 +4,7 @@
 import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
 
 import { ProgramContext } from "./WJSCParser";
-import { ImpContext } from "./WJSCParser";
+import { ImportsContext } from "./WJSCParser";
 import { FuncContext } from "./WJSCParser";
 import { ParamListContext } from "./WJSCParser";
 import { ParamContext } from "./WJSCParser";
@@ -51,11 +51,11 @@ export interface WJSCParserVisitor<Result> extends ParseTreeVisitor<Result> {
 	visitProgram?: (ctx: ProgramContext) => Result;
 
 	/**
-	 * Visit a parse tree produced by `WJSCParser.imp`.
+	 * Visit a parse tree produced by `WJSCParser.imports`.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	visitImp?: (ctx: ImpContext) => Result;
+	visitImports?: (ctx: ImportsContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by `WJSCParser.func`.

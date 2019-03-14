@@ -21,6 +21,7 @@ import {
   EqualityOperatorContext,
   ExpressionContext,
   FuncContext,
+  ImportsContext,
   IntegerLiteralContext,
   PairElementContext,
   PairElementTypeContext,
@@ -709,17 +710,30 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     } else {
       result.paramList = []
     }
-    const statements = this.visitStatement(ctx.statement())
-    if (!this.containsNeverStatement(statements)) {
-      this.errorLog.synErr(
-        result.line,
-        result.column,
-        SynError.NoReturn,
-        'statement missing return statement',
-      )
+    const functionBody = ctx.statement()
+    /* If there's no function body, then it is a define/extern */
+    result.exported = typeof ctx.EXPORT() !== undefined
+    if (functionBody) {
+      const statements = this.visitStatement(functionBody)
+      if (!this.containsNeverStatement(statements)) {
+        this.errorLog.synErr(
+          result.line,
+          result.column,
+          SynError.NoReturn,
+          'statement missing return statement',
+        )
+      }
+      statements.tableNumber = tableNo
+      result.body = statements
+      result.funcType = 'declare'
+    } else {
+      const define = ctx.DEFINE()
+      const extern = ctx.EXTERN()
+      if ((define === undefined) && (extern === undefined)) {
+        throw new Error('Function has no body, but is not define/extern')
+      }
+      result.funcType = define ? 'define' : 'extern'
     }
-    statements.tableNumber = tableNo
-    result.body = statements
     /* Exit child scope */
     this.symbolTable = this.symbolTable.exitScope()
     return result
@@ -889,6 +903,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
    */
   public visitProgram = (ctx: ProgramContext): WJSCAst => {
     const result = this.initWJSCAst(ctx, WJSCParserRules.Program)
+    const imports = ctx.imports()
     const functions = ctx.func()
 
     // Visit function declarations
@@ -907,6 +922,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.body = body
     result.children.push(body)
     return result
+  }
+
+  public visitImports = (ctx: ImportsContext) => {
+
   }
 
   /** Ensure either skip, Assignments, read, stdlib, conditional,

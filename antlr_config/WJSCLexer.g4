@@ -7,7 +7,8 @@ WHITESPACE: NL+ -> skip;
 // Modules Extension
 EXPORT: 'export';	// Export a function
 IMPORT: 'import';	// Import exported functions from a file
-DEFINE: 'define'; // Define an external function (eg. from C stdlib)
+DEFINE: 'define'; // Define a function, body expected elsewhere
+EXTERN: 'extern'; // External stdlib function
 
 // Keywords
 BEGIN: 'begin';
@@ -84,6 +85,7 @@ BOOLEAN: 'bool';
 CHARACTER: 'char';
 STRING: 'string';
 PAIR: 'pair';
+VOID: 'void';
 
 // Separators
 LPAREN: '(';
