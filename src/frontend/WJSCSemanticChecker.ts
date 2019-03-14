@@ -461,21 +461,29 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
   /** Find out if IF or WHILE block. Then visit children as necessary */
   public visitConditionalBlocks = (ctx: ConditionalBlocksContext): WJSCStatement => {
-    const ifB = ctx.IF()
-    const whileB = ctx.WHILE()
-    const forB = ctx.FOR()
     const keyWord = ctx.IF() || ctx.WHILE() || ctx.FOR()
-    const expr = ctx.expression()
-    const visitedExpr = this.visitExpression(expr)
+    const result = this.initWJSCAst(ctx, WJSCParserRules.Conditional) as WJSCStatement
+
+    switch (keyWord) {
+      case ctx.IF():
+        this.visitCondIf(result, ctx)
+        break
+      case ctx.WHILE():
+        this.visitCondWhile(result, ctx)
+        break
+      case ctx.FOR():
+        this.visitCondFor(result, ctx)
+        break
+    }
+
+    result.type = BaseType.Boolean
+    return result
+  }
+
+  public visitCondIf(result: WJSCStatement, ctx: ConditionalBlocksContext) {
+    result.parserRule = WJSCParserRules.ConditionalIf
+    const visitedExpr = this.visitExpression(ctx.expression())
     const statements = ctx.statement()
-    const result = this.initWJSCAst(
-      ctx,
-      ifB
-        ? WJSCParserRules.ConditionalIf
-        : whileB
-          ? WJSCParserRules.ConditionalWhile
-          : WJSCParserRules.Undefined,
-    ) as WJSCStatement
 
     // Check expression evaluates to type bool
     if (!hasSameType(visitedExpr.type, BaseType.Boolean)) {
@@ -484,24 +492,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.condition = visitedExpr
     this.pushChild(result, visitedExpr)
 
-    switch (keyWord) {
-      case ctx.IF():
-        this.visitCondIf(result, statements)
-        break
-      case ctx.WHILE():
-        this.visitCondWhile(result, statements)
-        break
-      case ctx.FOR():
-        this.visitCondFor(result, statements)
-        break
-    }
-
-    result.type = BaseType.Boolean
-    return result
-  }
-
-  public visitCondIf(result: WJSCStatement, statements: StatementContext[]) {
-    result.parserRule = WJSCParserRules.ConditionalIf
+    // Check number of statements
     if (statements.length !== 2) {
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
     }
@@ -528,8 +519,18 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.falseBranch = visitedFalseBranch
   }
 
-  public visitCondWhile(result: WJSCStatement, statements: StatementContext[]) {
+  public visitCondWhile(result: WJSCStatement, ctx: ConditionalBlocksContext) {
     result.parserRule = WJSCParserRules.ConditionalWhile
+    const visitedExpr = this.visitExpression(ctx.expression())
+    const statements = ctx.statement()
+
+    // Check expression evaluates to type bool
+    if (!hasSameType(visitedExpr.type, BaseType.Boolean)) {
+      this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
+    }
+    result.condition = visitedExpr
+    this.pushChild(result, visitedExpr)
+
     if (statements.length !== 1) {
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
     }
@@ -547,8 +548,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.trueBranch = visitedTrueBranch
   }
 
-  public visitCondFor(result: WJSCStatement, statements: StatementContext[]) {
+  public visitCondFor(result: WJSCStatement, ctx: ConditionalBlocksContext) {
     result.parserRule = WJSCParserRules.ConditionalFor
+    const statements = ctx.statement()
+
     if (statements.length !== 3) {
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [3, 3])
     }
@@ -558,16 +561,31 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const tableNo = this.getTableNumber()
     this.symbolTable = this.symbolTable.enterScope(tableNo)
     const visitedInit = this.visitStatement(init)
+    const visitedExpr = this.visitExpression(ctx.expression())
     const visitedTrueBranch = this.visitStatement(trueBranch)
     const visitedIncrement = this.visitStatement(increment)
     this.symbolTable = this.symbolTable.exitScope()
     visitedTrueBranch.tableNumber = tableNo
 
+    // Check if initialisation is declaration
+    if (visitedInit.parserRule !== WJSCParserRules.Declare) {
+      this.errorLog.semErr(result, SemError.Mismatch, WJSCParserRules.Declare)
+    }
+
+    // Check expression evaluates to type bool
+    if (!hasSameType(visitedExpr.type, BaseType.Boolean)) {
+      this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
+    }
+
     // Store into result
     this.pushChild(result, visitedInit)
+    this.pushChild(result, visitedExpr)
     this.pushChild(result, visitedTrueBranch)
     this.pushChild(result, visitedIncrement)
+    result.init = visitedInit
+    result.condition = visitedExpr
     result.trueBranch = visitedTrueBranch
+    result.increment = visitedIncrement
   }
 
   public visitBooleanAndOperator = (

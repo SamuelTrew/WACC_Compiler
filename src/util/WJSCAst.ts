@@ -114,6 +114,8 @@ interface WJSCStatement extends WJSCAst {
   condition: WJSCExpr
   trueBranch: WJSCStatement
   falseBranch: WJSCStatement
+  init: WJSCStatement
+  increment: WJSCStatement
   readType: TypeName
 }
 
