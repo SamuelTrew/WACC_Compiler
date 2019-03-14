@@ -34,7 +34,7 @@
                 </div>
               </div>
               <div class="optimize-checkbox hidden" id="optimizebutton">
-                <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimizebutton">Optimize JS
+                <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimize-button">Optimize JS
               </div>
               <input class="button button-outline" type="submit" value="Submit" id="submitbutton">
             </fieldset>
@@ -101,25 +101,22 @@
           document.getElementById('optimizebutton').classList.add('hidden')
         }
       })
-      var executeJs = async function (event) {
+      var executeJs = function (event) {
         event.preventDefault()
         if (!isJs) return;
-        const oldlog = console.log
+        var oldlog = console.log
         console.log = function (message) {
           repl.value += message + '\n'
           repl.scrollTop = repl.scrollHeight
-          document.getElementById('parentOfElementToBeRedrawn').style.display = 'none';
-          document.getElementById('parentOfElementToBeRedrawn').style.display = 'block';
         }
         try {
           const exitCode = eval(document.getElementById('output').value)
           console.log('> Exited with exit code ' + (exitCode === undefined ? 0 : exitCode))
         } catch (runtimeError) {
-          console.log('Runtime Error: ' + runtimeError)
+          console.log('Runtime Error: ' + runtimeError.message)
           console.log('Please contact the maintainers with the code that generated this message.')
-        } finally {
-          console.log = oldlog
         }
+        console.log = oldlog
       }
       var clearRepl = function (event) {
         event.preventDefault()
@@ -130,10 +127,12 @@
         document.getElementById('submitbutton').value = 'Loading';
         const targetlang = document.getElementById('targetlang').value;
         const sourcecode = document.getElementById('sourcecode').value;
+        const optimize = document.getElementById('optimize-button').checked;
         var request = new XMLHttpRequest();
         const payload = {
           target: targetlang,
           code: sourcecode,
+          optimize,
         }
         request.open('POST', '/compile', true)
         request.setRequestHeader('Content-type', 'application/json');

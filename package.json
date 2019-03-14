@@ -66,6 +66,7 @@
     "rimraf": "^2.6.3",
     "script-loader": "^0.7.2",
     "sinon": "^7.2.3",
+    "terser": "^3.17.0",
     "terser-webpack-plugin": "^1.2.1",
     "tslint": "^5.12.1",
     "tslint-sonarts": "^1.8.0",
