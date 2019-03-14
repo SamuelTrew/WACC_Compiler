@@ -400,9 +400,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const visitedRhs = this.visitAssignRhs(rhs)
     const visitedLhs = this.visitAssignLhs(lhs, visitedRhs.type)
 
-    const result2 = this.initWJSCAst(ctx, WJSCParserRules.Declare) as WJSCDeclare
+    const result2 = this.initWJSCAst(ctx, WJSCParserRules.Assignment) as WJSCDeclare
     if (!visitedLhs.type) {
-      result2.parserRule = WJSCParserRules.Declare
       result2.rhs = visitedRhs
       result2.type = visitedRhs.type
       result2.identifier = visitedLhs.ident
@@ -720,6 +719,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       result.paramList = []
     }
     const statements = this.visitStatement(ctx.statement())
+
     if (!this.containsNeverStatement(statements)) {
       this.errorLog.synErr(
         result.line,
@@ -914,6 +914,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
     // Visit program body
     const body = this.visitStatement(ctx.statement())
+
     result.body = body
     result.children.push(body)
     return result
@@ -957,9 +958,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         result.parserRule = WJSCParserRules.Skip
       } else if (assignment) {
         const visitedAssignment = this.visitAssignment(assignment) as WJSCAssignment
-        result.children.push(visitedAssignment)
-        result.parserRule = WJSCParserRules.Assignment
         result.assignment = visitedAssignment
+        result.children.push(visitedAssignment)
+        if (visitedAssignment.type) {
+          result.parserRule = WJSCParserRules.Declare
+        } else {
+          result.parserRule = WJSCParserRules.Assignment
+        }
       } else if (declare) {
         const visitedDeclare = this.visitDeclare(declare)
         result.children.push(visitedDeclare)

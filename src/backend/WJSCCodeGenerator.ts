@@ -14,13 +14,7 @@ import {
   WJSCParserRules,
   WJSCStatement,
 } from '../util/WJSCAst'
-import {
-  BaseType,
-  getTypeSize,
-  hasSameType,
-  isArrayType,
-  isPairType,
-} from '../util/WJSCType'
+import { BaseType, getTypeSize, hasSameType, isArrayType, isPairType } from '../util/WJSCType'
 import {
   ARMAddress,
   ARMCondition,
@@ -635,7 +629,6 @@ class WJSCCodeGenerator {
         this.output.push(construct.branch('exit', true))
         break
       case WJSCParserRules.Declare:
-        this.output.push()
         this.genDeclare(atx.declaration, reglist)
         break
       case WJSCParserRules.Assignment:

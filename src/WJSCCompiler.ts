@@ -37,6 +37,7 @@ class WJSCCompiler {
     if (!this.ast) {
       const ctx = this.parser.program()
       if (this.errorLog.numSyntaxErrors() === 0) {
+        ctx
         return this.ast = this.semanticChecker.visit(ctx)
       }
     } else {
