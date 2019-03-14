@@ -472,8 +472,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         this.visitCondWhile(result, ctx)
         break
       case ctx.FOR():
-        this.visitCondFor(result, ctx)
-        break
+        return this.visitCondFor(result, ctx)
     }
 
     result.type = BaseType.Boolean
@@ -548,7 +547,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     result.trueBranch = visitedTrueBranch
   }
 
-  public visitCondFor(result: WJSCStatement, ctx: ConditionalBlocksContext) {
+  // Check semantics of for loop and convert it into a while loop
+  public visitCondFor(result: WJSCStatement, ctx: ConditionalBlocksContext): WJSCStatement {
     result.parserRule = WJSCParserRules.ConditionalFor
     const statements = ctx.statement()
 
@@ -577,6 +577,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
     }
 
+    // Concat true branch and increment to convert for into while loop
+    const body = this.initWJSCAst(ctx, WJSCParserRules.Sequential) as WJSCStatement
+    body.stat = visitedTrueBranch
+    body.nextStat = visitedIncrement
+
     // Store into result
     this.pushChild(result, visitedInit)
     this.pushChild(result, visitedExpr)
@@ -584,8 +589,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     this.pushChild(result, visitedIncrement)
     result.init = visitedInit
     result.condition = visitedExpr
-    result.trueBranch = visitedTrueBranch
-    result.increment = visitedIncrement
+    result.trueBranch = body
+    result.parserRule = WJSCParserRules.ConditionalWhile
+
+    const whileAST = this.initWJSCAst(ctx, WJSCParserRules.Sequential) as WJSCStatement
+    whileAST.stat = visitedInit
+    whileAST.nextStat = result
+
+    return whileAST
   }
 
   public visitBooleanAndOperator = (
