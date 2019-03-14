@@ -35,7 +35,8 @@ import {
 } from '../grammar/WJSCParser'
 import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
-  WJSCArrayElem, WJSCAssignLhs,
+  WJSCArrayElem,
+  WJSCAssignLhs,
   WJSCAssignment,
   WJSCAssignRhs,
   WJSCAst,
@@ -283,6 +284,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       if (lhsElems instanceof TerminalNode) {
         const type = this.symbolTable.lookup(lhsNode.token)
         if (!type) {
+          console.log('HIIII')
           this.errorLog.semErr(lhsNode, SemError.Undefined)
         }
         result.type = type
@@ -396,11 +398,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       = this.initWJSCAst(ctx, WJSCParserRules.Assignment) as WJSCAssignment
     const lhs = ctx.assignLhs()
     const rhs = ctx.assignRhs()
+
     const visitedLhs = this.visitAssignLhs(lhs)
     const visitedRhs = this.visitAssignRhs(rhs)
 
     if (!hasSameType(visitedLhs.type, visitedRhs.type)) {
-      this.errorLog.semErr(visitedRhs, SemError.Mismatch, visitedLhs.type)
+      if (visitedRhs.type && !visitedLhs.type) {
+        visitedLhs.type = visitedRhs.type
+      } else {
+        this.errorLog.semErr(visitedRhs, SemError.Mismatch, visitedLhs.type)
+      }
     }
     result.lhs = visitedLhs
     result.rhs = visitedRhs
