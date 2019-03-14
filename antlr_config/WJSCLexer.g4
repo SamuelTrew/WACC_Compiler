@@ -4,6 +4,11 @@ lexer grammar WJSCLexer;
 EOL: ('\n' | '\r' | '\r\n') -> skip;
 WHITESPACE: NL+ -> skip;
 
+// Modules Extension
+EXPORT: 'export';	// Export a function
+IMPORT: 'import';	// Import exported functions from a file
+DEFINE: 'define'; // Define an external function (eg. from C stdlib)
+
 // Keywords
 BEGIN: 'begin';
 END: 'end';

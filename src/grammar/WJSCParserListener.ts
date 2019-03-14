@@ -4,6 +4,7 @@
 import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 
 import { ProgramContext } from "./WJSCParser";
+import { ImpContext } from "./WJSCParser";
 import { FuncContext } from "./WJSCParser";
 import { ParamListContext } from "./WJSCParser";
 import { ParamContext } from "./WJSCParser";
@@ -49,6 +50,17 @@ export interface WJSCParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitProgram?: (ctx: ProgramContext) => void;
+
+	/**
+	 * Enter a parse tree produced by `WJSCParser.imp`.
+	 * @param ctx the parse tree
+	 */
+	enterImp?: (ctx: ImpContext) => void;
+	/**
+	 * Exit a parse tree produced by `WJSCParser.imp`.
+	 * @param ctx the parse tree
+	 */
+	exitImp?: (ctx: ImpContext) => void;
 
 	/**
 	 * Enter a parse tree produced by `WJSCParser.func`.
