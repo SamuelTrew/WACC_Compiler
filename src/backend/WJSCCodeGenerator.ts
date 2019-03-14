@@ -891,7 +891,9 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Identifier: {
         const sizeIsByte = getTypeSize(atx.type) === 1
         const id = atx.token
+        console.log(id + ' ' + atx.line + ' ' + this.symbolTable.getSpOffset())
         const offset = this.symbolTable.getAssignAddr(id, atx.line, this.symbolTable.getSpOffset())
+        console.log(offset)
 
         this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, `[${this.sp}${offset ? `, #${offset}` : ''}]`, undefined, undefined, sizeIsByte))
         break

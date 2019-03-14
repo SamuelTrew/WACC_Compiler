@@ -255,21 +255,24 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   /** Ensure either identifier, array element or pair element. Visit them ro
    * ensure it's in the symbol table, then ensure correct type.
    */
-  public visitAssignLhs = (ctx: AssignLhsContext): WJSCAssignLhs => {
+  public visitAssignLhs = (ctx: AssignLhsContext, RHStype?: TypeName): WJSCAssignLhs => {
     // We need to rewrite the parser rules!
     const result = this.initWJSCAst(ctx, WJSCParserRules.Assignment) as WJSCAssignLhs
     const lhsElems = ctx.IDENTIFIER() || ctx.arrayElement() || ctx.pairElement()
     if (!lhsElems) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
-      if (lhsElems instanceof TerminalNode) {
-        this.functionUse(result, this.visitTerminal(lhsElems))
-      }
       let lhsNode
       if (lhsElems instanceof TerminalNode) {
         // Ident case
+        this.functionUse(result, this.visitTerminal(lhsElems))
         lhsNode = this.visitTerminal(lhsElems)
         result.parserRule = WJSCParserRules.Identifier
+        // code: hello let type = this.symbolTable.lookup(lhsNode.token)
+        // if (!type) {
+        //   type = RHStype
+        //   this.symbolTable.insertSymbol(lhsNode.token, type, result.line)
+        // }
       } else if (lhsElems instanceof ArrayElementContext) {
         // Array elem case
         lhsNode = this.visitArrayElement(lhsElems)
@@ -282,12 +285,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       }
       this.pushChild(result, lhsNode)
       if (lhsElems instanceof TerminalNode) {
-        const type = this.symbolTable.lookup(lhsNode.token)
-        if (!type) {
-          console.log('HIIII')
-          this.errorLog.semErr(lhsNode, SemError.Undefined)
-        }
-        result.type = type
+        result.type = this.symbolTable.lookup(lhsNode.token)
       }
     }
     return result
@@ -399,21 +397,26 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const lhs = ctx.assignLhs()
     const rhs = ctx.assignRhs()
 
-    const visitedLhs = this.visitAssignLhs(lhs)
     const visitedRhs = this.visitAssignRhs(rhs)
+    const visitedLhs = this.visitAssignLhs(lhs, visitedRhs.type)
 
-    if (!hasSameType(visitedLhs.type, visitedRhs.type)) {
-      if (visitedRhs.type && !visitedLhs.type) {
-        visitedLhs.type = visitedRhs.type
-      } else {
+    const result2 = this.initWJSCAst(ctx, WJSCParserRules.Declare) as WJSCDeclare
+    if (!visitedLhs.type) {
+      result2.parserRule = WJSCParserRules.Declare
+      result2.rhs = visitedRhs
+      result2.type = visitedRhs.type
+      result2.identifier = visitedLhs.ident
+      this.pushChild(result2, visitedLhs)
+      return result2
+    } else {
+      if (!hasSameType(visitedLhs.type, visitedRhs.type)) {
         this.errorLog.semErr(visitedRhs, SemError.Mismatch, visitedLhs.type)
       }
+      result.lhs = visitedLhs
+      result.rhs = visitedRhs
+      this.pushChild(result, visitedRhs)
+      return result
     }
-    result.lhs = visitedLhs
-    result.rhs = visitedRhs
-    this.pushChild(result, visitedRhs)
-
-    return result
   }
 
   public visitDeclare = (ctx: DeclareContext): WJSCDeclare => {

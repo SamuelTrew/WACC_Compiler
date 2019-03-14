@@ -68,7 +68,9 @@ export class WJSCSymbolTable {
   public lookup = (identifier: string): TypeName => (this.getGlobalEntry(identifier) || { type: undefined }).type
 
   // Return table entry with the given identifier in the local scope
-  public getLocalEntry = (identifier: string): WJSCSymbolTableValue | undefined => this.symbolTable.get(identifier)
+  public getLocalEntry = (identifier: string): WJSCSymbolTableValue | undefined => {
+    return this.symbolTable.get(identifier)
+  }
 
   // Return table entry with the given identifier in the global scope
   public getGlobalEntry = (identifier: string): WJSCSymbolTableValue | undefined => this.getLocalEntry(identifier) || (this.parentLevel || { getGlobalEntry: (_: string): undefined => undefined }).getGlobalEntry(identifier)
@@ -112,6 +114,8 @@ export class WJSCSymbolTable {
     let entry = this.getGlobalEntry(id)
 
     if (entry) {
+      console.log('HIIII')
+      console.log(entry.spOffset)
       if (entry.lineNo > lineNo && this.parentLevel) {
         entry = this.parentLevel.getGlobalEntry(id)
       }
@@ -119,6 +123,7 @@ export class WJSCSymbolTable {
         return currSp - entry.spOffset
       }
     }
+
     return -10000
   }
 
