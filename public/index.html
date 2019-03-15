@@ -115,17 +115,18 @@
   var updateIfNeeded = function(event) {
     event = (event ? event : window.event)
     const debug = document.getElementById('sourcecode')
-    // debug.value = event.target.id
+    event = event || window.event;
     setTimeout(function () {
       const currIndex = (window.getSelection().getRangeAt(0).startOffset);
-      debug.value = currIndex + event.target.id
-      if (currIndex === 0) {
+      const lineLength = event.target.textContent.length
+      debug.value = currIndex + event.target.id + 'lineLen' + lineLength
+      if (currIndex === 0 && lineLength !== 0) {
         const lastLineLength = lastIndex
         const changedSpanId = event.target.id
         debug.value = 'currInd:' + currIndex + 'len:' + lastLineLength + changedSpanId
         // We update the original span
         const fst = event.target.textContent.substring(0, lastLineLength)
-        const snd = event.target.textContent.substring(lastLineLength, event.target.textContent.length)
+        const snd = event.target.textContent.substring(lastLineLength, lineLength)
         event.target.textContent = fst
         // We create a new span
         const newSpan= document.createElement('span');
@@ -135,63 +136,69 @@
         }
         newSpan.textContent = snd
         event.target.parentNode.insertBefore(newSpan, event.target.nextSibling);
+        update()
+      } else if (lineLength === 0) {
+        regenerate()
       }
       lastIndex = currIndex
     }, 0);
   }
-  var update = function (event) {
-    const inputBox = document.getElementById('inputDiv')
+  var regenerate = function () {
+    const inputDiv = document.getElementById('inputDiv')
     const debug = document.getElementById('sourcecode')
-    let spans = inputBox.getElementsByTagName('span'), text = [];
-    for (let i = 0; i < spans.length; i++) {
-      text.push(spans[i].textContent)
-    }
-    let index = 0
-    while (spans.length !== 0) {
-      const currSpan = spans[index]
-      inputBox.removeChild(currSpan)
-      index++
-    }
-    //debug.value = text[0] + text[0].indexOf('\n')
-    let currSpanLine = ''
-    let charsSinceLastLine = 0
-    let newSpans = []
-    let firstTime = true
-    text.forEach((child, index) => {
-      let br = child.indexOf('\n')
-      if (br === -1) {
-        charsSinceLastLine += child.length
-        currSpanLine += child
-      } else {
-        // We need to find all line breaks in this child line
-        const splitChild = child.split(`\n`)
-        for (let i = 0; i < splitChild.length ; i++) {
-          let newLine = ''
-            // We highlight the whole line in red
-          newLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine + splitChild[i].length() > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
-                  + `${currSpanLine + splitChild[i]}` + `</span>`
-          if (firstTime) {
-            firstTime = false
-          }
-          newSpans.push(newLine)
-          charsSinceLastLine = 0
-          currSpanLine = ''
-        }
-        charsSinceLastLine = splitChild[splitChild.length()-1].length
-        currSpanLine = splitChild[splitChild.length()-1]
+    let spans = inputDiv.getElementsByTagName('span')
+    let markedForDelete =[]
+    for (let i = 0; i < spans.length ; i++) {
+      if (spans[i].textContent.length === 0) {
+        // mark this for delete
+        markedForDelete.push(spans[i])
       }
-    })
-    let lastLine = ''
-    lastLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
-      + `${currSpanLine}` + `</span>`
-    if (firstTime) {
-      firstTime = false
     }
-    newSpans.push(lastLine)
-    // Now that we have collected the ideal spans, we post them out
-    newSpans.forEach((newSpan) => {
-      inputBox.innerHTML += newSpan
+    markedForDelete.forEach( (marked) =>{
+      marked.remove()
     })
+    if (spans.length === 0) {
+      // Create new span
+      const newSpan= document.createElement('span');
+      const attrs = {"class": "wacc-form autoExpand", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
+      for(var key in attrs) {
+        newSpan.setAttribute(key, attrs[key]);
+      }
+      newSpan.textContent = 'Enter your code here'
+      inputDiv.append(newSpan)
+    }
+  }
+  var update = function () {
+    /* Three scenarios to take care of:
+       1. Empty spans 2. Overly long spans 3. No spans left
+       Also we need to insert a break between spans
+     */
+    const inputDiv = document.getElementById('inputDiv')
+    const debug = document.getElementById('sourcecode')
+    let spans = inputDiv.getElementsByTagName('span')
+    let markedForDelete = []
+    for (let i = 0; i < spans.length ; i++) {
+      if (spans[i].textContent.length === 0) {
+        // mark this for delete
+        markedForDelete.push(spans[i])
+      } else if (spans[i].textContent.length > 80) {
+        spans[i].style.color = '#f00'
+      } else {
+        spans[i].style.color = '#000'
+      }
+    }
+    markedForDelete.forEach((marked) => {
+      marked.remove()
+    })
+    if (spans.length - markedForDelete.length <= 0){
+      // Create new span
+      const newSpan= document.createElement('span');
+      const attrs = {"class": "wacc-form autoExpand", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
+      for(var key in attrs) {
+        newSpan.setAttribute(key, attrs[key]);
+      }
+      inputDiv.append(newSpan)
+    }
   }
   var executeJs = function (event) {
     event.preventDefault()
