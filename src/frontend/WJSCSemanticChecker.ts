@@ -497,14 +497,14 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
     // Check expression evaluates to type bool
     if (!hasSameType(visitedExpr.type, BaseType.Boolean)) {
-      this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
+      this.errorLog.semErr(result, this.fileContext, SemError.Mismatch, BaseType.Boolean)
     }
     result.condition = visitedExpr
     this.pushChild(result, visitedExpr)
 
     // Check number of statements
     if (statements.length !== 2) {
-      this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
+      this.errorLog.semErr(result, this.fileContext, SemError.IncorrectArgNo, [2, 2])
     }
     const [trueBranch, falseBranch] = statements
 
@@ -536,13 +536,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
     // Check expression evaluates to type bool
     if (!hasSameType(visitedExpr.type, BaseType.Boolean)) {
-      this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
+      this.errorLog.semErr(result, this.fileContext, SemError.Mismatch, BaseType.Boolean)
     }
     result.condition = visitedExpr
     this.pushChild(result, visitedExpr)
 
     if (statements.length !== 1) {
-      this.errorLog.semErr(result, SemError.IncorrectArgNo, [2, 2])
+      this.errorLog.semErr(result, this.fileContext, SemError.IncorrectArgNo, [2, 2])
     }
     const [trueBranch] = statements
 
@@ -567,7 +567,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const statements = ctx.statement()
 
     if (statements.length !== 3) {
-      this.errorLog.semErr(result, SemError.IncorrectArgNo, [3, 3])
+      this.errorLog.semErr(result, this.fileContext, SemError.IncorrectArgNo, [3, 3])
     }
     const [init, increment, trueBranch] = statements
     const visitedInit = this.visitStatement(init)
@@ -583,12 +583,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
 
     // Check if initialisation is declaration
     if (visitedInit.parserRule !== WJSCParserRules.Declare) {
-      this.errorLog.semErr(result, SemError.Mismatch, WJSCParserRules.Declare)
+      this.errorLog.semErr(result, this.fileContext, SemError.Mismatch, WJSCParserRules.Declare)
     }
 
     // Check expression evaluates to type bool
     if (!hasSameType(visitedCondStat.type, BaseType.Boolean)) {
-      this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
+      this.errorLog.semErr(result, this.fileContext, SemError.Mismatch, BaseType.Boolean)
     }
 
     // Concat true branch and increment to convert for into while loop
