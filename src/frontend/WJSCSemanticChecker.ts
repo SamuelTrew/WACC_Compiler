@@ -775,7 +775,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   /** If paramList is defined, visit them. visit type of ident, paramList,
    * statement. insert function to symbol table
    */
-  public visitFunc = (ctx: FuncContext): WJSCFunction => {
+  public visitFunc = (ctx: FuncContext, namespace?: string): WJSCFunction => {
     const result = this.initWJSCAst(
       ctx,
       WJSCParserRules.Function,
@@ -783,11 +783,11 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const visitedType = this.visitType(ctx.type()).type
     const ident = this.visitTerminal(ctx.IDENTIFIER())
     const paramList = ctx.paramList()
-    result.identifier = ident.value
+    result.identifier = (namespace ? namespace + ':' : '') + ident.value
     result.type = visitedType
     /* Check types of Params and Statements, enter child scope */
     const tableNo = this.getTableNumber()
-    this.symbolTable = this.symbolTable.enterFuncScope(ident.value, tableNo)
+    this.symbolTable = this.symbolTable.enterFuncScope(result.identifier, tableNo)
     if (paramList) {
       const visitedParamList = this.visitParamList(paramList)
       this.pushChild(result, visitedParamList)
@@ -826,44 +826,45 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   /* Generate all function declarations and add them to the symbol table */
-  public visitAllFuncDecs = (ctx: ProgramContext): void => {
+  public visitAllFuncDecs = (ctx: ProgramContext, namespace?: string): void => {
     const functions = ctx.func()
-    functions.forEach(this.visitFuncDec)
+    functions.forEach((func) => this.visitFuncDec(func, namespace))
   }
 
-  public visitAllFuncs = (ctx: ProgramContext): WJSCFunction[] => {
+  public visitAllFuncs = (ctx: ProgramContext, namespace?: string): WJSCFunction[] => {
     const functions = ctx.func()
-    return functions.map(this.visitFunc)
+    return functions.map((func) => this.visitFunc(func, namespace))
   }
 
-  public visitFuncDec = (ctx: FuncContext): void => {
+  public visitFuncDec = (ctx: FuncContext, namespace?: string): void => {
     /* If a list of functions to compile exists, visit only those which are exported. */
     const external = ctx.EXTERN() !== undefined
     const define = ctx.DEFINE() !== undefined
     const result = this.initWJSCAst(ctx, WJSCParserRules.Function)
     const visitedType = this.visitType(ctx.type()).type
     const ident = this.visitTerminal(ctx.IDENTIFIER())
+    const namespaceDeclash = (namespace ? namespace + ':' : '') + ident.value
     const paramList = ctx.paramList()
     let paramTypes: TypeName[]
-    this.symbolTable = this.symbolTable.enterFuncScope(ident.value, this.getTableNumber())
+    this.symbolTable = this.symbolTable.enterFuncScope(namespaceDeclash, this.getTableNumber())
     if (paramList) {
       const visitedParamList = this.checkParamDoubleDeclaration(paramList)
       paramTypes = visitedParamList.paramTypes
     } else {
       paramTypes = []
     }
-    this.symbolTable.insertSymbol(ident.token, visitedType, result.line, define, external, paramTypes)
+    this.symbolTable.insertSymbol(namespaceDeclash, visitedType, result.line, define, external, paramTypes)
     this.symbolTable = this.symbolTable.exitScope()
     /* Double insertion check */
-    const possibleEntry = this.symbolTable.getGlobalEntry(ident.value)
+    const possibleEntry = this.symbolTable.getGlobalEntry(namespaceDeclash)
     if (possibleEntry && possibleEntry.params) {
       if (possibleEntry.isDefine) {
-        this.symbolTable.setDeclared(ident.value)
+        this.symbolTable.setDeclared(namespaceDeclash)
       } else if (!define) {
         this.errorLog.semErr(ident, this.fileContext, SemError.DoubleDeclare)
       }
     } else {
-      this.symbolTable.insertSymbol(ident.token, visitedType, result.line, define, external, paramTypes)
+      this.symbolTable.insertSymbol(namespaceDeclash, visitedType, result.line, define, external, paramTypes)
     }
   }
 

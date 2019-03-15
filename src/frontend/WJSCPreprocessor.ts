@@ -45,18 +45,11 @@ class WJSCPreprocessor {
     this.parseTree = this.parser.program()
   }
 
-  public declare = (): void => this.semanticChecker.visitAllFuncDecs(this.parseTree)
+  public declare = (): void => this.semanticChecker.visitAllFuncDecs(this.parseTree, this.namespace)
 
   public generate = (): WJSCFunction[] => {
     if (this.errorLog.numSyntaxErrors() === 0) {
-      const functions = this.semanticChecker.visitAllFuncs(this.parseTree)
-      if (this.namespace) {
-        functions.forEach((func) => {
-          const newIdent = `${this.namespace}:${func.identifier}`
-          this.symbolTable.rename(func.identifier, newIdent)
-          func.identifier = newIdent
-        })
-      }
+      const functions = this.semanticChecker.visitAllFuncs(this.parseTree, this.namespace)
       if (this.functionNames) {
         /* Check that all delcared function names have been compiled, otherwise throw an error */
         this.functionNames.forEach((name) => {

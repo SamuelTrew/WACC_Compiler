@@ -1,0 +1,9 @@
+begin
+  export int max(int a, int b) is
+    if a < b then
+      return b
+    else 
+      return a
+    fi
+  end
+end
