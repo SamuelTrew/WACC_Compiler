@@ -142,9 +142,8 @@
         // We need to find all line breaks in this child line
         const splitChild = child.split(`\n`)
         for (let i = 0; i < splitChild.length ; i++) {
-          let newLine = ''
             // We highlight the whole line in red
-          newLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine + splitChild[i].length() > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
+          let newLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine + splitChild[i].length() > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
                   + `${currSpanLine + splitChild[i]}` + `</span>`
           if (firstTime) {
             firstTime = false
@@ -157,8 +156,7 @@
         currSpanLine = splitChild[splitChild.length()-1]
       }
     })
-    let lastLine = ''
-    lastLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
+    let lastLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
       + `${currSpanLine}` + `</span>`
     if (firstTime) {
       firstTime = false
