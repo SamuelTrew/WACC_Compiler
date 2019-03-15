@@ -108,10 +108,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   public visitArithmeticOperator2 = (
     ctx: ArithmeticOperator2Context,
   ): WJSCOperators => {
+    console.log('adding the stuff')
     const result = this.initWJSCAst(
       ctx,
       WJSCParserRules.Operator,
     ) as WJSCOperators
+
     const operator = (ctx.MINUS() || ctx.PLUS()) as TerminalNode
     result.inputs = [BaseType.Integer]
     result.arrayInput = false
@@ -268,11 +270,12 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         this.functionUse(result, this.visitTerminal(lhsElems))
         lhsNode = this.visitTerminal(lhsElems)
         result.parserRule = WJSCParserRules.Identifier
-        // code: hello let type = this.symbolTable.lookup(lhsNode.token)
-        // if (!type) {
-        //   type = RHStype
-        //   this.symbolTable.insertSymbol(lhsNode.token, type, result.line)
-        // }
+        const type = this.symbolTable.lookup(lhsNode.token)
+        if (!type) {
+          this.symbolTable.insertSymbol(lhsNode.value, RHStype, result.line)
+        }
+        result.type = type
+        console.log('result is ' + result.type)
       } else if (lhsElems instanceof ArrayElementContext) {
         // Array elem case
         lhsNode = this.visitArrayElement(lhsElems)
@@ -284,9 +287,6 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         result.pairElem = lhsNode
       }
       this.pushChild(result, lhsNode)
-      if (lhsElems instanceof TerminalNode) {
-        result.type = this.symbolTable.lookup(lhsNode.token)
-      }
     }
     return result
   }
@@ -403,8 +403,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const result2 = this.initWJSCAst(ctx, WJSCParserRules.Assignment) as WJSCDeclare
     if (!visitedLhs.type) {
       result2.rhs = visitedRhs
-      result2.type = visitedRhs.type
       result2.identifier = visitedLhs.ident
+      visitedLhs.type = visitedRhs.type
       this.pushChild(result2, visitedLhs)
       return result2
     } else {
@@ -617,11 +617,13 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         result.value = terminal.value
         result.parserRule = terminal.parserRule
       } else if (intLiterals) {
+        console.log('im an int')
         /* int literal */
         const intValue = this.visitIntegerLiteral(intLiterals)
         this.pushChild(result, intValue)
         result.value = intValue.value
         result.parserRule = intValue.parserRule
+        result.type = BaseType.Integer
       } else if (ident) {
         /* Identifier scenario */
         const visitedTerminal = this.visitTerminal(ident)
@@ -631,6 +633,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         }
         result.value = visitedTerminal.value
         result.parserRule = visitedTerminal.parserRule
+        result.type = visitedTerminal.type
       } else if (arrayElem) {
         /* array elem scenario */
         const visitedArrayElem = this.visitArrayElement(arrayElem)
@@ -678,8 +681,10 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
               }
               visitedOp.parserRule = WJSCParserRules.BinOp
               result.children.push(visitedOp)
+              console.log('going to x and y')
               const exp1 = this.visitExpression(expressions[0])
               const exp2 = this.visitExpression(expressions[1])
+              console.log('left is ' + exp1.type + ' and right is ' + exp2.type)
               result.expr1 = exp1
               result.expr2 = exp2
               result.operator = visitedOp
@@ -958,11 +963,17 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         result.parserRule = WJSCParserRules.Skip
       } else if (assignment) {
         const visitedAssignment = this.visitAssignment(assignment) as WJSCAssignment
-        result.assignment = visitedAssignment
-        result.children.push(visitedAssignment)
-        if (visitedAssignment.type) {
+        const visitedDeclaration = this.visitAssignment(assignment) as WJSCDeclare
+        if (visitedDeclaration.type) {
+          console.log('hi there')
+          visitedDeclaration.type = visitedDeclaration.rhs.type
+          result.declaration = visitedDeclaration
+          result.children.push(visitedDeclaration)
           result.parserRule = WJSCParserRules.Declare
         } else {
+          console.log(visitedAssignment.type)
+          result.assignment = visitedAssignment
+          result.children.push(visitedAssignment)
           result.parserRule = WJSCParserRules.Assignment
         }
       } else if (declare) {

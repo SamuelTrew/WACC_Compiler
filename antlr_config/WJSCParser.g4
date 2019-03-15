@@ -48,7 +48,7 @@ pairElement: FIRST expression | SECOND expression;
 
 type: baseType | arrayType | pairType;
 
-baseType: INTEGER | BOOLEAN | CHARACTER | STRING;
+baseType: INTEGER | BOOLEAN | CHARACTER | STRING | DECLARATION;
 
 arrayType:
 	baseType LBRACK RBRACK

@@ -79,6 +79,7 @@ BOOLEAN: 'bool';
 CHARACTER: 'char';
 STRING: 'string';
 PAIR: 'pair';
+DECLARATION: 'dec';
 
 // Separators
 LPAREN: '(';
