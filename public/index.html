@@ -23,7 +23,7 @@
       <form id="inputform">
         <fieldset>
           <div id = "inputDiv">
-                <span class = "wacc-form autoExpand" contenteditable="true" style="resize: none" id = "initialSpan" onclick = "updateIndex()" onkeyup="updateIfNeeded()">Enter your code here</span>
+                <span class = "autoExpand one-per-line" contenteditable="true" style="resize: none" id = "initialSpan" onclick = "updateIndex()" onkeyup="updateIfNeeded()">Enter your code here</span>
           </div>
           <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
                     id="sourcecode"></textarea>
@@ -130,7 +130,7 @@
         event.target.textContent = fst
         // We create a new span
         const newSpan= document.createElement('span');
-        const attrs = {"class": "wacc-form autoExpand", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
+        const attrs = {"class": "autoExpand one-per-line", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
         for(var key in attrs) {
           newSpan.setAttribute(key, attrs[key]);
         }
@@ -156,7 +156,7 @@
     if (spans.length === 0) {
       // ensure at least one span
       const newSpan= document.createElement('span');
-      const attrs = {"class": "wacc-form autoExpand", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
+      const attrs = {"class": "autoExpand one-per-line", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
       for(var key in attrs) {
         newSpan.setAttribute(key, attrs[key]);
       }
@@ -179,14 +179,8 @@
         // markedForDelete.push(spans[i])
       } else if (spans[i].textContent.length > 80) {
         spans[i].style.color = '#f00'
-        if (!spans[i].innerHTML.includes('<br>')) {
-          spans[i].innerHTML += '<br>'
-        }
       } else {
         spans[i].style.color = '#000'
-        if (!spans[i].innerHTML.includes('<br>')) {
-          spans[i].innerHTML += '<br>'
-        }
       }
     }
     /*
