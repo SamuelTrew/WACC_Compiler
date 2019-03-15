@@ -1,0 +1,6 @@
+begin
+  any a = "hello";
+  any b = 'c';
+  println a;
+  print b
+end
