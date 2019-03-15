@@ -1,272 +1,250 @@
 <!doctype html>
 <html>
 
-  <head>
-    <title>WJSC Web Compiler</title>
-    <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,500" rel="stylesheet">
-    <link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
-    <link href="style.css" rel="stylesheet">
-  </head>
+<head>
+  <title>WJSC Web Compiler</title>
+  <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,500" rel="stylesheet">
+  <link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
+  <link href="style.css" rel="stylesheet">
+</head>
 
-  <body>
-    <div class="centerfold">
-      <img src="wjsc_512.png" style="width:20vw;margin:30px">
-      <h1>
-        WJSC Web Compiler
-      </h1>
-      <p>
-        I heard you like WACC.
-      </p>
-      <div class="flex-container">
-        <div class="flex-items">
-          <h4>Input WACC</h4>
-          <form id="inputform">
-            <fieldset>
-              <div id = "inputDiv">
+<body>
+<div class="centerfold">
+  <img src="wjsc_512.png" style="width:20vw;margin:30px">
+  <h1>
+    WJSC Web Compiler
+  </h1>
+  <p>
+    I heard you like WACC.
+  </p>
+  <div class="flex-container">
+    <div class="flex-items">
+      <h4>Input WACC</h4>
+      <form id="inputform">
+        <fieldset>
+          <div id = "inputDiv">
                 <span class = "wacc-form autoExpand" contenteditable="true" style="resize: none" id = "initialSpan" onkeyup="updateIfNeeded()">
                   Enter your code here
                 </span>
-              </div>
-              <textarea id="sourcecode"></textarea>
-              <!--
-               <textarea class="wacc-form autoExpand" rows="20" placeholder="Input" style="resize: none;"
-                id="sourcecode" onkeyup="updateIDE()"> </textarea> -->
-              <div class="flex-container flex-container-left">
-                <div>
-                  Target Language
-                  <select name="target" id="targetlang">
-                    <option value="arm">ARM7TDMI</option>
-                    <option value="js">ES5</option>
-                  </select>
-                </div>
-              </div>
-              <div class="optimize-checkbox hidden" id="optimizebutton">
-                <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimize-button">Optimize JS
-              </div>
-              <input class="button button-outline" type="submit" value="Submit" id="submitbutton">
-            </fieldset>
-          </form>
-        </div>
-        <div class="flex-items">
-          <h4>Output</h4>
-          <form>
-            <fieldset>
-              <textarea class="wacc-form autoExpand" id="output" rows="20" placeholder="Output" style="resize: none;"
-                disabled></textarea>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-      <div>
-        <h4>WJSC REPL</h4>
-        <p>Try compiled JS code!</p>
-        <textarea class="repl" id="repl" rows="20" cols="80" style="resize: none;" disabled></textarea>
-        <div class="flex-container">
-          <button id="repl-run" class="repl-buttons button button-outline" onclick="executeJs(event)">Run</button>
-          <button id="repl-clear" class="repl-buttons button button-clear" onclick="clearRepl(event)">Clear</button>
-        </div>
-      </div>
+          </div>
+          <textarea id="sourcecode"></textarea>
+          <!--
+           <textarea class="wacc-form autoExpand" rows="20" placeholder="Input" style="resize: none;"
+            id="sourcecode" onkeyup="updateIDE()"> </textarea> -->
+          <div class="flex-container flex-container-left">
+            <div>
+              Target Language
+              <select name="target" id="targetlang">
+                <option value="arm">ARM7TDMI</option>
+                <option value="js">ES5</option>
+              </select>
+            </div>
+          </div>
+          <div class="optimize-checkbox hidden" id="optimizebutton">
+            <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimize-button">Optimize JS
+          </div>
+          <input class="button button-outline" type="submit" value="Submit" id="submitbutton">
+        </fieldset>
+      </form>
     </div>
-    <script>
-      document.getElementById('repl-run').disabled = true
-      document.getElementById('repl-clear').disabled = true
-      const repl = document.getElementById('repl')
-      repl.value += '> Generate JS code and run it.\n'
-      var isJs = false
-      var textareas = document.getElementsByTagName('textarea');
-      var count = textareas.length;
-      for (var i = 0; i < count; i++) {
-        textareas[i].onkeydown = function (e) {
-          if (e.keyCode == 9 || e.which == 9) {
-            e.preventDefault();
-            var s = this.selectionStart;
-            this.value = this.value.substring(0, this.selectionStart) + '  ' + this.value.substring(this.selectionEnd);
-            this.selectionEnd = s + 1;
-          }
-        }
+    <div class="flex-items">
+      <h4>Output</h4>
+      <form>
+        <fieldset>
+              <textarea class="wacc-form autoExpand" id="output" rows="20" placeholder="Output" style="resize: none;"
+                        disabled></textarea>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div>
+    <h4>WJSC REPL</h4>
+    <p>Try compiled JS code!</p>
+    <textarea class="repl" id="repl" rows="20" cols="80" style="resize: none;" disabled></textarea>
+    <div class="flex-container">
+      <button id="repl-run" class="repl-buttons button button-outline" onclick="executeJs(event)">Run</button>
+      <button id="repl-clear" class="repl-buttons button button-clear" onclick="clearRepl(event)">Clear</button>
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById('repl-run').disabled = true
+  document.getElementById('repl-clear').disabled = true
+  const repl = document.getElementById('repl')
+  repl.value += '> Generate JS code and run it.\n'
+  var isJs = false
+  var textareas = document.getElementsByTagName('textarea');
+  var count = textareas.length;
+  for (var i = 0; i < count; i++) {
+    textareas[i].onkeydown = function (e) {
+      if (e.keyCode == 9 || e.which == 9) {
+        e.preventDefault();
+        var s = this.selectionStart;
+        this.value = this.value.substring(0, this.selectionStart) + '  ' + this.value.substring(this.selectionEnd);
+        this.selectionEnd = s + 1;
       }
-      var autoExpand = function (field) {
-        field.style.height = '120px';
-        var computed = window.getComputedStyle(field);
-        var height = parseInt(computed.getPropertyValue('border-top-width'), 10)
-          + parseInt(computed.getPropertyValue('padding-top'), 10)
-          + field.scrollHeight
-          + parseInt(computed.getPropertyValue('padding-bottom'), 10)
-          + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
-        field.style.height = height - 12 + 'px';
-      };
-      document.addEventListener('input', function (event) {
-        if (event.target.tagName.toLowerCase() !== 'textarea') return;
-        if (event.target.id === 'repl') return;
-        autoExpand(event.target);
-      }, false);
-      document.addEventListener('input', function (even) {
-        if (event.target.id !== 'targetlang') return;
-        if (event.target.value === 'js') {
-          document.getElementById('optimizebutton').classList.remove('hidden')
-        } else {
-          document.getElementById('optimizebutton').classList.add('hidden')
-        }
-      })
-      let pastTime = new Date()
-      var updateIfNeeded = function(event) {
-        // If the user rests for > 2 seconds, then we update
-        const currTime = new Date()
-        if (currTime - pastTime > 2000) {
-          update()
-          pastTime = currTime
-        } else {
-          pastTime = currTime
-        }
-      }
-      var update = function (event) {
-        const inputBox = document.getElementById('inputDiv')
-        const debug = document.getElementById('sourcecode')
-        let spans = inputBox.getElementsByTagName('span'), text = [];
-        //debug.value = spans.length
-        //debug.value = spans[0].textContent
-        for (let i = 0; i < spans.length; i++) {
-          text.push(spans[i].textContent)
-        }
-        let index = 0
-        while (spans.length !== 0) {
-          const currSpan = spans[index]
-          inputBox.removeChild(currSpan)
-          index++
-        }
-        let currSpanLine = ''
-        let charsSinceLastLine = 0
-        let newSpans = []
-        let firstTime = true
-        text.forEach((child, index) => {
-          let br = child.indexOf('\\n')
-          if (br === -1) {
-            charsSinceLastLine += child.length
-            currSpanLine += child
-            debug.value = text[0]
-          } else {
-            // We need to find all line breaks in this child line
-            const splitChild = child.split('\\n')
-            for (let i = 0; i < splitChild.length - 1; i++) {
-              let newLine = ''
-              if (charsSinceLastLine + splitChild[i].length() > 80) {
-                // We highlight the whole line in red
-                if (!firstTime) {
-                  newLine = '<br>' + '<span style="color: #f00;" onkeyup="update()" contenteditable="true">' + currSpanLine + splitChild[i] + '</span>'
-                } else {
-                  newLine = '<span style="color: #f00;" onkeyup="update()" contenteditable="true">' + currSpanLine + splitChild[i] + '</span>'
-                  firstTime = false
-                }
-              } else {
-                // regular text color
-                if (!firstTime) {
-                  newLine = '<br>' + '<span style="color: #000;" onkeyup="update()" contenteditable="true">' + currSpanLine + splitChild[i] + '</span>'
-                } else {
-                  newLine = '<span style="color: #000;" onkeyup="update()" contenteditable="true">' + currSpanLine + splitChild[i] + '</span>'
-                  firstTime = false
-                }
-              }
-              newSpans.push(newLine)
-              charsSinceLastLine = 0
-              currSpanLine = ''
-            }
-            charsSinceLastLine = splitChild[splitChild.length()-1].length
-            currSpanLine = splitChild[splitChild.length()-1]
-          }
-        })
-        let lastLine = ''
-        if (charsSinceLastLine > 80) {
-          // We highlight the whole line in red
-          if (!firstTime) {
-            lastLine = '<br>' + '<span style="color: #f00;" onkeyup="update()" contenteditable="true">' + currSpanLine  + '</span>'
-          } else {
-            lastLine = '<span style="color: #f00;" onkeyup="update()" contenteditable="true">' + currSpanLine + '</span>'
+    }
+  }
+  var autoExpand = function (field) {
+    field.style.height = '120px';
+    var computed = window.getComputedStyle(field);
+    var height = parseInt(computed.getPropertyValue('border-top-width'), 10)
+            + parseInt(computed.getPropertyValue('padding-top'), 10)
+            + field.scrollHeight
+            + parseInt(computed.getPropertyValue('padding-bottom'), 10)
+            + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
+    field.style.height = height - 12 + 'px';
+  };
+  document.addEventListener('input', function (event) {
+    if (event.target.tagName.toLowerCase() !== 'textarea') return;
+    if (event.target.id === 'repl') return;
+    autoExpand(event.target);
+  }, false);
+  document.addEventListener('input', function (even) {
+    if (event.target.id !== 'targetlang') return;
+    if (event.target.value === 'js') {
+      document.getElementById('optimizebutton').classList.remove('hidden')
+    } else {
+      document.getElementById('optimizebutton').classList.add('hidden')
+    }
+  })
+  let pastTime = new Date()
+  var updateIfNeeded = function(event) {
+    // If the user rests for > 2 seconds, then we update
+    const currTime = new Date()
+    if (currTime - pastTime > 2000) {
+      update()
+      pastTime = currTime
+    } else {
+      pastTime = currTime
+    }
+  }
+
+  var update = function (event) {
+    const inputBox = document.getElementById('inputDiv')
+    const debug = document.getElementById('sourcecode')
+    let spans = inputBox.getElementsByTagName('span'), text = [];
+    //debug.value = spans.length
+    //debug.value = spans[0].textContent
+    for (let i = 0; i < spans.length; i++) {
+      text.push(spans[i].textContent)
+    }
+    let index = 0
+    while (spans.length !== 0) {
+      const currSpan = spans[index]
+      inputBox.removeChild(currSpan)
+      index++
+    }
+    let currSpanLine = ''
+    let charsSinceLastLine = 0
+    let newSpans = []
+    let firstTime = true
+    text.forEach((child, index) => {
+      let br = child.indexOf('\\n')
+      if (br === -1) {
+        charsSinceLastLine += child.length
+        currSpanLine += child
+        debug.value = text[0]
+      } else {
+        // We need to find all line breaks in this child line
+        const splitChild = child.split('\\n')
+        for (let i = 0; i < splitChild.length - 1; i++) {
+          let newLine = ''
+            // We highlight the whole line in red
+          newLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine + splitChild[i].length() > 80)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
+                  + `${currSpanLine + splitChild[i]}` + `</span>`
+          if (firstTime) {
             firstTime = false
           }
-        } else {
-          // regular text color
-          if (!firstTime) {
-            lastLine = '<br>' + '<span style="color: #000;" onkeyup="update()" contenteditable="true">' + currSpanLine  + '</span>'
-          } else {
-            lastLine = '<span style="color: #000;" onkeyup="update()" contenteditable="true">' + currSpanLine + '</span>'
-            firstTime = false
-          }
+          newSpans.push(newLine)
+          charsSinceLastLine = 0
+          currSpanLine = ''
         }
-        newSpans.push(lastLine)
-        // Now that we have collected the ideal spans, we post them out
-        newSpans.forEach((newSpan) => {
-          inputBox.innerHTML += newSpan
-        })
+        charsSinceLastLine = splitChild[splitChild.length()-1].length
+        currSpanLine = splitChild[splitChild.length()-1]
       }
-      var executeJs = function (event) {
-        event.preventDefault()
-        if (!isJs) return;
-        var oldlog = console.log
-        console.log = function (message) {
-          repl.value += message + '\n'
-          repl.scrollTop = repl.scrollHeight
-        }
-        try {
-          const exitCode = eval(document.getElementById('output').value)
-          console.log('> Exited with exit code ' + (exitCode === undefined ? 0 : exitCode))
-        } catch (runtimeError) {
-          console.log('Runtime Error: ' + runtimeError.message)
-          console.log('Please contact the maintainers with the code that generated this message.')
-        }
-        console.log = oldlog
+    })
+    let lastLine = ''
+    lastLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine > 80)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
+      + `${currSpanLine}` + `</span>`
+    if (firstTime) {
+      firstTime = false
+    }
+    newSpans.push(lastLine)
+    // Now that we have collected the ideal spans, we post them out
+    newSpans.forEach((newSpan) => {
+      inputBox.innerHTML += newSpan
+    })
+  }
+  var executeJs = function (event) {
+    event.preventDefault()
+    if (!isJs) return;
+    var oldlog = console.log
+    console.log = function (message) {
+      repl.value += message + '\n'
+      repl.scrollTop = repl.scrollHeight
+    }
+    try {
+      const exitCode = eval(document.getElementById('output').value)
+      console.log('> Exited with exit code ' + (exitCode === undefined ? 0 : exitCode))
+    } catch (runtimeError) {
+      console.log('Runtime Error: ' + runtimeError.message)
+      console.log('Please contact the maintainers with the code that generated this message.')
+    }
+    console.log = oldlog
+  }
+  var clearRepl = function (event) {
+    event.preventDefault()
+    repl.value = '> Generate JS code and run it.\n'
+  }
+  var getCode = function (code) {
+    document.getElementById('submitbutton').disabled = true;
+    document.getElementById('submitbutton').value = 'Loading';
+    const targetlang = document.getElementById('targetlang').value;
+    const sourcecode = document.getElementById('sourcecode').value;
+    const optimize = document.getElementById('optimize-button').checked;
+    var request = new XMLHttpRequest();
+    const payload = {
+      target: targetlang,
+      code: sourcecode,
+      optimize,
+    }
+    request.open('POST', '/compile', true)
+    request.setRequestHeader('Content-type', 'application/json');
+    request.send(JSON.stringify(payload))
+    request.onload = function () {
+      var data = JSON.parse(this.response)
+      var output
+      switch (this.status) {
+        case 200:
+          output = data.code
+          break
+        case 400:
+          output = 'Client Error: ' + data.error + '\nContact the maintainers for more info.'
+          break
+        case 500:
+          output = 'Compile Error:\n' + data.error
+          break
       }
-      var clearRepl = function (event) {
-        event.preventDefault()
-        repl.value = '> Generate JS code and run it.\n'
-      }
-      var getCode = function (code) {
-        document.getElementById('submitbutton').disabled = true;
-        document.getElementById('submitbutton').value = 'Loading';
-        const targetlang = document.getElementById('targetlang').value;
-        const sourcecode = document.getElementById('sourcecode').value;
-        const optimize = document.getElementById('optimize-button').checked;
-        var request = new XMLHttpRequest();
-        const payload = {
-          target: targetlang,
-          code: sourcecode,
-          optimize,
-        }
-        request.open('POST', '/compile', true)
-        request.setRequestHeader('Content-type', 'application/json');
-        request.send(JSON.stringify(payload))
-        request.onload = function () {
-          var data = JSON.parse(this.response)
-          var output
-          switch (this.status) {
-            case 200:
-              output = data.code
-              break
-            case 400:
-              output = 'Client Error: ' + data.error + '\nContact the maintainers for more info.'
-              break
-            case 500:
-              output = 'Compile Error:\n' + data.error
-              break
-          }
-          document.getElementById('output').value = output
-          autoExpand(document.getElementById('output'))
-          document.getElementById('submitbutton').disabled = false;
-          document.getElementById('submitbutton').value = 'Submit';
-          isJs = targetlang === 'js'
-          document.getElementById('repl-run').disabled = !isJs
-          document.getElementById('repl-clear').disabled = !isJs
-        }
-        request.onerror = function () {
-          document.getElementById('output').value = 'Error fetching from server!\nContact the maintainers for more info.'
-          document.getElementById('submitbutton').disabled = false;
-          document.getElementById('submitbutton').value = 'Submit';
-        }
-      }
-      document.getElementById("inputform").addEventListener("submit", function (event) {
-        event.preventDefault()
-        getCode()
-      });
-    </script>
-  </body>
+      document.getElementById('output').value = output
+      autoExpand(document.getElementById('output'))
+      document.getElementById('submitbutton').disabled = false;
+      document.getElementById('submitbutton').value = 'Submit';
+      isJs = targetlang === 'js'
+      document.getElementById('repl-run').disabled = !isJs
+      document.getElementById('repl-clear').disabled = !isJs
+    }
+    request.onerror = function () {
+      document.getElementById('output').value = 'Error fetching from server!\nContact the maintainers for more info.'
+      document.getElementById('submitbutton').disabled = false;
+      document.getElementById('submitbutton').value = 'Submit';
+    }
+  }
+  document.getElementById("inputform").addEventListener("submit", function (event) {
+    event.preventDefault()
+    getCode()
+  });
+</script>
+</body>
 
 </html>
