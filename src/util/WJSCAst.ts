@@ -20,6 +20,7 @@ enum WJSCParserRules {
   Conditional = 'conditional',
   ConditionalIf = 'condif',
   ConditionalWhile = 'condwhile',
+  ConditionalFor = 'condfor',
   Expression = 'expr',
   IntLiteral = 'int literal',
   Literal = 'literal',
@@ -113,6 +114,8 @@ interface WJSCStatement extends WJSCAst {
   condition: WJSCExpr
   trueBranch: WJSCStatement
   falseBranch: WJSCStatement
+  init: WJSCStatement
+  increment: WJSCStatement
   readType: TypeName
 }
 
