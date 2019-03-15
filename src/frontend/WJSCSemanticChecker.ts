@@ -549,6 +549,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   // Check semantics of for loop and convert it into a while loop
+  // Wraps a sequential statement containing the initialisation and the a while loop
+  // with it body containing the for body followed by the incrementation
   public visitCondFor(result: WJSCStatement, ctx: ConditionalBlocksContext) {
     result.parserRule = WJSCParserRules.ConditionalFor
 
