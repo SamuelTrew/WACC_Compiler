@@ -472,7 +472,8 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
         this.visitCondWhile(result, ctx)
         break
       case ctx.FOR():
-        return this.visitCondFor(result, ctx)
+        this.visitCondFor(result, ctx)
+        break
     }
 
     result.type = BaseType.Boolean
@@ -548,20 +549,21 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   }
 
   // Check semantics of for loop and convert it into a while loop
-  public visitCondFor(result: WJSCStatement, ctx: ConditionalBlocksContext): WJSCStatement {
+  public visitCondFor(result: WJSCStatement, ctx: ConditionalBlocksContext) {
     result.parserRule = WJSCParserRules.ConditionalFor
+
     const statements = ctx.statement()
 
     if (statements.length !== 3) {
       this.errorLog.semErr(result, SemError.IncorrectArgNo, [3, 3])
     }
     const [init, increment, trueBranch] = statements
+    const visitedInit = this.visitStatement(init)
+    const visitedCondStat = this.visitExpression(ctx.expression())
 
     // Visit all three statements
     const tableNo = this.getTableNumber()
     this.symbolTable = this.symbolTable.enterScope(tableNo)
-    const visitedInit = this.visitStatement(init)
-    const visitedExpr = this.visitExpression(ctx.expression())
     const visitedTrueBranch = this.visitStatement(trueBranch)
     const visitedIncrement = this.visitStatement(increment)
     this.symbolTable = this.symbolTable.exitScope()
@@ -573,30 +575,24 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
 
     // Check expression evaluates to type bool
-    if (!hasSameType(visitedExpr.type, BaseType.Boolean)) {
+    if (!hasSameType(visitedCondStat.type, BaseType.Boolean)) {
       this.errorLog.semErr(result, SemError.Mismatch, BaseType.Boolean)
     }
 
     // Concat true branch and increment to convert for into while loop
-    const body = this.initWJSCAst(ctx, WJSCParserRules.Sequential) as WJSCStatement
-    body.stat = visitedTrueBranch
-    body.nextStat = visitedIncrement
+    const whileBody = this.initWJSCAst(ctx, WJSCParserRules.Sequential) as WJSCStatement
+    whileBody.stat = visitedTrueBranch
+    whileBody.nextStat = visitedIncrement
+    whileBody.tableNumber = tableNo
 
     // Store into result
-    this.pushChild(result, visitedInit)
-    this.pushChild(result, visitedExpr)
-    this.pushChild(result, visitedTrueBranch)
-    this.pushChild(result, visitedIncrement)
-    result.init = visitedInit
-    result.condition = visitedExpr
-    result.trueBranch = body
-    result.parserRule = WJSCParserRules.ConditionalWhile
+    const whileLoop = this.initWJSCAst(ctx, WJSCParserRules.ConditionalWhile) as WJSCStatement
+    whileLoop.condition = visitedCondStat
+    whileLoop.trueBranch = whileBody
 
-    const whileAST = this.initWJSCAst(ctx, WJSCParserRules.Sequential) as WJSCStatement
-    whileAST.stat = visitedInit
-    whileAST.nextStat = result
-
-    return whileAST
+    result.stat = visitedInit
+    result.nextStat = whileLoop
+    result.tableNumber = tableNo
   }
 
   public visitBooleanAndOperator = (
