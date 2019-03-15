@@ -23,7 +23,7 @@
       <form id="inputform">
         <fieldset>
           <div id = "inputDiv">
-                <span class = "wacc-form autoExpand" contenteditable="true" style="resize: none" id = "initialSpan" onkeyup="updateIfNeeded()">Enter your code here</span>
+                <span class = "wacc-form autoExpand" contenteditable="true" style="resize: none" id = "initialSpan" onclick = "updateIndex()" onkeyup="updateIfNeeded()">Enter your code here</span>
           </div>
           <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
                     id="sourcecode"></textarea>
@@ -104,15 +104,40 @@
       document.getElementById('optimizebutton').classList.add('hidden')
     }
   })
-  var updateIfNeeded = function(event) {
+  let lastIndex = 0
+  var updateIndex = function(event) {
     const debug = document.getElementById('sourcecode')
-    event = event || window.event;
-    let code = event.keyCode || event.which;
-    if (code == 13) {
-      //let inputs = $("#inputsTable input.td_in");
-      //let index = inputs.index(this);
-      update()
-    }
+    setTimeout(function () {
+      lastIndex= (window.getSelection().getRangeAt(0).startOffset);
+      debug.value = lastIndex
+    }, 0);
+  }
+  var updateIfNeeded = function(event) {
+    event = (event ? event : window.event)
+    const debug = document.getElementById('sourcecode')
+    // debug.value = event.target.id
+    setTimeout(function () {
+      const currIndex = (window.getSelection().getRangeAt(0).startOffset);
+      debug.value = currIndex + event.target.id
+      if (currIndex === 0) {
+        const lastLineLength = lastIndex
+        const changedSpanId = event.target.id
+        debug.value = 'currInd:' + currIndex + 'len:' + lastLineLength + changedSpanId
+        // We update the original span
+        const fst = event.target.textContent.substring(0, lastLineLength)
+        const snd = event.target.textContent.substring(lastLineLength, event.target.textContent.length)
+        event.target.textContent = fst
+        // We create a new span
+        const newSpan= document.createElement('span');
+        const attrs = {"class": "wacc-form autoExpand", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
+        for(var key in attrs) {
+          newSpan.setAttribute(key, attrs[key]);
+        }
+        newSpan.textContent = snd
+        event.target.parentNode.insertBefore(newSpan, event.target.nextSibling);
+      }
+      lastIndex = currIndex
+    }, 0);
   }
   var update = function (event) {
     const inputBox = document.getElementById('inputDiv')
