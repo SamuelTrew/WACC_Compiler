@@ -1,4 +1,4 @@
-import { WJSCAst } from './WJSCAst'
+import { WJSCAst, WJSCParserRules } from './WJSCAst'
 import { BaseType, Stdlib, TypeName } from './WJSCType'
 
 enum SynError {
@@ -21,7 +21,7 @@ enum SemError {
   BadFunctionUse = 'bad function use',
 }
 
-type typeERR = TypeName | TypeName[] | number[] | Stdlib
+type typeERR = TypeName | TypeName[] | number[] | Stdlib | WJSCParserRules
 
 class WJSCErrorLog {
   private readonly errorLookup: Map<SemError, (node: WJSCAst, arg?: typeERR) => string>

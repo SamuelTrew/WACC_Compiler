@@ -144,7 +144,7 @@ export class WJSCParser extends Parser {
 	private static readonly _SYMBOLIC_NAMES: Array<string | undefined> = [
 		undefined, "EOL", "WHITESPACE", "BEGIN", "END", "IS", "WSKIP", "READ", 
 		"FREE", "RETURN", "EXIT", "PRINT", "PRINTLN", "IF", "THEN", "ELSE", "FI", 
-		"WHILE", "DO", "DONE", "CALL", "FIRST", "SECOND", "MULTIPLY", "DIVIDE", 
+		"WHILE", "FOR", "DO", "DONE", "CALL", "FIRST", "SECOND", "MULTIPLY", "DIVIDE", 
 		"MODULO", "PLUS", "MINUS", "GREATER_THAN", "GREATER_EQUAL", "LESS_THAN", 
 		"LESS_EQUAL", "EQUALS", "STRICT_EQUALS", "NEQUALS", "NSTRICT_EQUALS", 
 		"LOGICAL_AND", "LOGICAL_OR", "ASSIGNMENT", "LOGICAL_NEGATION", "NEW_PAIR", 
@@ -476,7 +476,7 @@ export class WJSCParser extends Parser {
 		let _localctx: ConditionalBlocksContext = new ConditionalBlocksContext(this._ctx, this.state);
 		this.enterRule(_localctx, 10, WJSCParser.RULE_conditionalBlocks);
 		try {
-			this.state = 130;
+			this.state = 142;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case WJSCParser.IF:
@@ -513,6 +513,33 @@ export class WJSCParser extends Parser {
 				this.match(WJSCParser.DONE);
 				}
 				break;
+			case WJSCParser.FOR:
+				this.enterOuterAlt(_localctx, 3);
+				{
+				this.state = 130;
+				this.match(WJSCParser.FOR);
+				this.state = 131;
+				this.match(WJSCParser.LPAREN);
+				this.state = 132;
+				this.statement(0);
+				this.state = 133;
+				this.match(WJSCParser.SEMICOLON);
+				this.state = 134;
+				this.expression(0);
+				this.state = 135;
+				this.match(WJSCParser.SEMICOLON);
+				this.state = 136;
+				this.statement(0);
+				this.state = 137;
+				this.match(WJSCParser.RPAREN);
+				this.state = 138;
+				this.match(WJSCParser.DO);
+				this.state = 139;
+				this.statement(0);
+				this.state = 140;
+				this.match(WJSCParser.DONE);
+				}
+				break;
 			default:
 				throw new NoViableAltException(this);
 			}
@@ -538,11 +565,11 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 132;
+			this.state = 144;
 			this.assignLhs();
-			this.state = 133;
+			this.state = 145;
 			this.match(WJSCParser.ASSIGNMENT);
-			this.state = 134;
+			this.state = 146;
 			this.assignRhs();
 			}
 		}
@@ -567,13 +594,13 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 136;
+			this.state = 148;
 			this.type();
-			this.state = 137;
+			this.state = 149;
 			this.match(WJSCParser.IDENTIFIER);
-			this.state = 138;
+			this.state = 150;
 			this.match(WJSCParser.ASSIGNMENT);
-			this.state = 139;
+			this.state = 151;
 			this.assignRhs();
 			}
 		}
@@ -596,13 +623,13 @@ export class WJSCParser extends Parser {
 		let _localctx: AssignLhsContext = new AssignLhsContext(this._ctx, this.state);
 		this.enterRule(_localctx, 16, WJSCParser.RULE_assignLhs);
 		try {
-			this.state = 144;
+			this.state = 156;
 			this._errHandler.sync(this);
 			switch ( this.interpreter.adaptivePredict(this._input, 6, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 141;
+				this.state = 153;
 				this.match(WJSCParser.IDENTIFIER);
 				}
 				break;
@@ -610,7 +637,7 @@ export class WJSCParser extends Parser {
 			case 2:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 142;
+				this.state = 154;
 				this.arrayElement();
 				}
 				break;
@@ -618,7 +645,7 @@ export class WJSCParser extends Parser {
 			case 3:
 				this.enterOuterAlt(_localctx, 3);
 				{
-				this.state = 143;
+				this.state = 155;
 				this.pairElement();
 				}
 				break;
@@ -644,7 +671,7 @@ export class WJSCParser extends Parser {
 		this.enterRule(_localctx, 18, WJSCParser.RULE_assignRhs);
 		let _la: number;
 		try {
-			this.state = 163;
+			this.state = 175;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case WJSCParser.PLUS:
@@ -662,31 +689,31 @@ export class WJSCParser extends Parser {
 			case WJSCParser.IDENTIFIER:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 146;
+				this.state = 158;
 				this.expression(0);
 				}
 				break;
 			case WJSCParser.LBRACK:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 147;
+				this.state = 159;
 				this.arrayLiteral();
 				}
 				break;
 			case WJSCParser.NEW_PAIR:
 				this.enterOuterAlt(_localctx, 3);
 				{
-				this.state = 148;
+				this.state = 160;
 				this.match(WJSCParser.NEW_PAIR);
-				this.state = 149;
+				this.state = 161;
 				this.match(WJSCParser.LPAREN);
-				this.state = 150;
+				this.state = 162;
 				this.expression(0);
-				this.state = 151;
+				this.state = 163;
 				this.match(WJSCParser.COMMA);
-				this.state = 152;
+				this.state = 164;
 				this.expression(0);
-				this.state = 153;
+				this.state = 165;
 				this.match(WJSCParser.RPAREN);
 				}
 				break;
@@ -694,30 +721,30 @@ export class WJSCParser extends Parser {
 			case WJSCParser.SECOND:
 				this.enterOuterAlt(_localctx, 4);
 				{
-				this.state = 155;
+				this.state = 167;
 				this.pairElement();
 				}
 				break;
 			case WJSCParser.CALL:
 				this.enterOuterAlt(_localctx, 5);
 				{
-				this.state = 156;
+				this.state = 168;
 				this.match(WJSCParser.CALL);
-				this.state = 157;
+				this.state = 169;
 				this.match(WJSCParser.IDENTIFIER);
-				this.state = 158;
+				this.state = 170;
 				this.match(WJSCParser.LPAREN);
-				this.state = 160;
+				this.state = 172;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS || ((((_la - 39)) & ~0x1F) === 0 && ((1 << (_la - 39)) & ((1 << (WJSCParser.LOGICAL_NEGATION - 39)) | (1 << (WJSCParser.LENGTH - 39)) | (1 << (WJSCParser.ORDER_OF - 39)) | (1 << (WJSCParser.CHARACTER_OF - 39)) | (1 << (WJSCParser.DIGIT - 39)) | (1 << (WJSCParser.BOOLEAN_LITERAL - 39)) | (1 << (WJSCParser.CHARACTER_LITERAL - 39)) | (1 << (WJSCParser.PAIR_LITERAL - 39)) | (1 << (WJSCParser.STRING_LITERAL - 39)) | (1 << (WJSCParser.LPAREN - 39)) | (1 << (WJSCParser.IDENTIFIER - 39)))) !== 0)) {
+				if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS || ((((_la - 40)) & ~0x1F) === 0 && ((1 << (_la - 40)) & ((1 << (WJSCParser.LOGICAL_NEGATION - 40)) | (1 << (WJSCParser.LENGTH - 40)) | (1 << (WJSCParser.ORDER_OF - 40)) | (1 << (WJSCParser.CHARACTER_OF - 40)) | (1 << (WJSCParser.DIGIT - 40)) | (1 << (WJSCParser.BOOLEAN_LITERAL - 40)) | (1 << (WJSCParser.CHARACTER_LITERAL - 40)) | (1 << (WJSCParser.PAIR_LITERAL - 40)) | (1 << (WJSCParser.STRING_LITERAL - 40)) | (1 << (WJSCParser.LPAREN - 40)) | (1 << (WJSCParser.IDENTIFIER - 40)))) !== 0)) {
 					{
-					this.state = 159;
+					this.state = 171;
 					this.argList();
 					}
 				}
 
-				this.state = 162;
+				this.state = 174;
 				this.match(WJSCParser.RPAREN);
 				}
 				break;
@@ -747,21 +774,21 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 165;
+			this.state = 177;
 			this.expression(0);
-			this.state = 170;
+			this.state = 182;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			while (_la === WJSCParser.COMMA) {
 				{
 				{
-				this.state = 166;
+				this.state = 178;
 				this.match(WJSCParser.COMMA);
-				this.state = 167;
+				this.state = 179;
 				this.expression(0);
 				}
 				}
-				this.state = 172;
+				this.state = 184;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 			}
@@ -786,24 +813,24 @@ export class WJSCParser extends Parser {
 		let _localctx: PairElementContext = new PairElementContext(this._ctx, this.state);
 		this.enterRule(_localctx, 22, WJSCParser.RULE_pairElement);
 		try {
-			this.state = 177;
+			this.state = 189;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case WJSCParser.FIRST:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 173;
+				this.state = 185;
 				this.match(WJSCParser.FIRST);
-				this.state = 174;
+				this.state = 186;
 				this.expression(0);
 				}
 				break;
 			case WJSCParser.SECOND:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 175;
+				this.state = 187;
 				this.match(WJSCParser.SECOND);
-				this.state = 176;
+				this.state = 188;
 				this.expression(0);
 				}
 				break;
@@ -830,13 +857,13 @@ export class WJSCParser extends Parser {
 		let _localctx: TypeContext = new TypeContext(this._ctx, this.state);
 		this.enterRule(_localctx, 24, WJSCParser.RULE_type);
 		try {
-			this.state = 182;
+			this.state = 194;
 			this._errHandler.sync(this);
 			switch ( this.interpreter.adaptivePredict(this._input, 11, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 179;
+				this.state = 191;
 				this.baseType();
 				}
 				break;
@@ -844,7 +871,7 @@ export class WJSCParser extends Parser {
 			case 2:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 180;
+				this.state = 192;
 				this.arrayType(0);
 				}
 				break;
@@ -852,7 +879,7 @@ export class WJSCParser extends Parser {
 			case 3:
 				this.enterOuterAlt(_localctx, 3);
 				{
-				this.state = 181;
+				this.state = 193;
 				this.pairType();
 				}
 				break;
@@ -880,7 +907,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 184;
+			this.state = 196;
 			_la = this._input.LA(1);
 			if (!(((((_la - 49)) & ~0x1F) === 0 && ((1 << (_la - 49)) & ((1 << (WJSCParser.INTEGER - 49)) | (1 << (WJSCParser.BOOLEAN - 49)) | (1 << (WJSCParser.CHARACTER - 49)) | (1 << (WJSCParser.STRING - 49)) | (1 << (WJSCParser.ANY - 49)))) !== 0))) {
 			this._errHandler.recoverInline(this);
@@ -927,7 +954,7 @@ export class WJSCParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 195;
+			this.state = 207;
 			this._errHandler.sync(this);
 			switch (this._input.LA(1)) {
 			case WJSCParser.INTEGER:
@@ -936,21 +963,21 @@ export class WJSCParser extends Parser {
 			case WJSCParser.STRING:
 			case WJSCParser.ANY:
 				{
-				this.state = 187;
+				this.state = 199;
 				this.baseType();
-				this.state = 188;
+				this.state = 200;
 				this.match(WJSCParser.LBRACK);
-				this.state = 189;
+				this.state = 201;
 				this.match(WJSCParser.RBRACK);
 				}
 				break;
 			case WJSCParser.PAIR:
 				{
-				this.state = 191;
+				this.state = 203;
 				this.pairType();
-				this.state = 192;
+				this.state = 204;
 				this.match(WJSCParser.LBRACK);
-				this.state = 193;
+				this.state = 205;
 				this.match(WJSCParser.RBRACK);
 				}
 				break;
@@ -958,7 +985,7 @@ export class WJSCParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			this._ctx._stop = this._input.tryLT(-1);
-			this.state = 202;
+			this.state = 214;
 			this._errHandler.sync(this);
 			_alt = this.interpreter.adaptivePredict(this._input, 13, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
@@ -971,18 +998,18 @@ export class WJSCParser extends Parser {
 					{
 					_localctx = new ArrayTypeContext(_parentctx, _parentState);
 					this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_arrayType);
-					this.state = 197;
+					this.state = 209;
 					if (!(this.precpred(this._ctx, 2))) {
 						throw new FailedPredicateException(this, "this.precpred(this._ctx, 2)");
 					}
-					this.state = 198;
+					this.state = 210;
 					this.match(WJSCParser.LBRACK);
-					this.state = 199;
+					this.state = 211;
 					this.match(WJSCParser.RBRACK);
 					}
 					}
 				}
-				this.state = 204;
+				this.state = 216;
 				this._errHandler.sync(this);
 				_alt = this.interpreter.adaptivePredict(this._input, 13, this._ctx);
 			}
@@ -1009,17 +1036,17 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 205;
+			this.state = 217;
 			this.match(WJSCParser.PAIR);
-			this.state = 206;
+			this.state = 218;
 			this.match(WJSCParser.LPAREN);
-			this.state = 207;
+			this.state = 219;
 			this.pairElementType();
-			this.state = 208;
+			this.state = 220;
 			this.match(WJSCParser.COMMA);
-			this.state = 209;
+			this.state = 221;
 			this.pairElementType();
-			this.state = 210;
+			this.state = 222;
 			this.match(WJSCParser.RPAREN);
 			}
 		}
@@ -1042,13 +1069,13 @@ export class WJSCParser extends Parser {
 		let _localctx: PairElementTypeContext = new PairElementTypeContext(this._ctx, this.state);
 		this.enterRule(_localctx, 32, WJSCParser.RULE_pairElementType);
 		try {
-			this.state = 215;
+			this.state = 227;
 			this._errHandler.sync(this);
 			switch ( this.interpreter.adaptivePredict(this._input, 14, this._ctx) ) {
 			case 1:
 				this.enterOuterAlt(_localctx, 1);
 				{
-				this.state = 212;
+				this.state = 224;
 				this.baseType();
 				}
 				break;
@@ -1056,7 +1083,7 @@ export class WJSCParser extends Parser {
 			case 2:
 				this.enterOuterAlt(_localctx, 2);
 				{
-				this.state = 213;
+				this.state = 225;
 				this.arrayType(0);
 				}
 				break;
@@ -1064,7 +1091,7 @@ export class WJSCParser extends Parser {
 			case 3:
 				this.enterOuterAlt(_localctx, 3);
 				{
-				this.state = 214;
+				this.state = 226;
 				this.match(WJSCParser.PAIR);
 				}
 				break;
@@ -1103,80 +1130,80 @@ export class WJSCParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 232;
+			this.state = 244;
 			this._errHandler.sync(this);
 			switch ( this.interpreter.adaptivePredict(this._input, 15, this._ctx) ) {
 			case 1:
 				{
-				this.state = 218;
+				this.state = 230;
 				this.integerLiteral();
 				}
 				break;
 
 			case 2:
 				{
-				this.state = 219;
+				this.state = 231;
 				this.arrayElement();
 				}
 				break;
 
 			case 3:
 				{
-				this.state = 220;
+				this.state = 232;
 				this.unaryOperator();
-				this.state = 221;
+				this.state = 233;
 				this.expression(7);
 				}
 				break;
 
 			case 4:
 				{
-				this.state = 223;
+				this.state = 235;
 				this.match(WJSCParser.LPAREN);
-				this.state = 224;
+				this.state = 236;
 				this.expression(0);
-				this.state = 225;
+				this.state = 237;
 				this.match(WJSCParser.RPAREN);
 				}
 				break;
 
 			case 5:
 				{
-				this.state = 227;
+				this.state = 239;
 				this.match(WJSCParser.IDENTIFIER);
 				}
 				break;
 
 			case 6:
 				{
-				this.state = 228;
+				this.state = 240;
 				this.match(WJSCParser.BOOLEAN_LITERAL);
 				}
 				break;
 
 			case 7:
 				{
-				this.state = 229;
+				this.state = 241;
 				this.match(WJSCParser.CHARACTER_LITERAL);
 				}
 				break;
 
 			case 8:
 				{
-				this.state = 230;
+				this.state = 242;
 				this.match(WJSCParser.STRING_LITERAL);
 				}
 				break;
 
 			case 9:
 				{
-				this.state = 231;
+				this.state = 243;
 				this.match(WJSCParser.PAIR_LITERAL);
 				}
 				break;
 			}
 			this._ctx._stop = this._input.tryLT(-1);
-			this.state = 260;
+			this.state = 272;
 			this._errHandler.sync(this);
 			_alt = this.interpreter.adaptivePredict(this._input, 17, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
@@ -1186,20 +1213,20 @@ export class WJSCParser extends Parser {
 					}
 					_prevctx = _localctx;
 					{
-					this.state = 258;
+					this.state = 270;
 					this._errHandler.sync(this);
 					switch ( this.interpreter.adaptivePredict(this._input, 16, this._ctx) ) {
 					case 1:
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 234;
+						this.state = 246;
 						if (!(this.precpred(this._ctx, 14))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 14)");
 						}
-						this.state = 235;
+						this.state = 247;
 						this.arithmeticOperator();
-						this.state = 236;
+						this.state = 248;
 						this.expression(15);
 						}
 						break;
@@ -1208,13 +1235,13 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 238;
+						this.state = 250;
 						if (!(this.precpred(this._ctx, 13))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 13)");
 						}
-						this.state = 239;
+						this.state = 251;
 						this.arithmeticOperator2();
-						this.state = 240;
+						this.state = 252;
 						this.expression(14);
 						}
 						break;
@@ -1223,13 +1250,13 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 242;
+						this.state = 254;
 						if (!(this.precpred(this._ctx, 12))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 12)");
 						}
-						this.state = 243;
+						this.state = 255;
 						this.comparisonOperator();
-						this.state = 244;
+						this.state = 256;
 						this.expression(13);
 						}
 						break;
@@ -1238,13 +1265,13 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 246;
+						this.state = 258;
 						if (!(this.precpred(this._ctx, 11))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 11)");
 						}
-						this.state = 247;
+						this.state = 259;
 						this.equalityOperator();
-						this.state = 248;
+						this.state = 260;
 						this.expression(12);
 						}
 						break;
@@ -1253,13 +1280,13 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 250;
+						this.state = 262;
 						if (!(this.precpred(this._ctx, 10))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 10)");
 						}
-						this.state = 251;
+						this.state = 263;
 						this.booleanAndOperator();
-						this.state = 252;
+						this.state = 264;
 						this.expression(11);
 						}
 						break;
@@ -1268,20 +1295,20 @@ export class WJSCParser extends Parser {
 						{
 						_localctx = new ExpressionContext(_parentctx, _parentState);
 						this.pushNewRecursionContext(_localctx, _startState, WJSCParser.RULE_expression);
-						this.state = 254;
+						this.state = 266;
 						if (!(this.precpred(this._ctx, 9))) {
 							throw new FailedPredicateException(this, "this.precpred(this._ctx, 9)");
 						}
-						this.state = 255;
+						this.state = 267;
 						this.booleanOrOperator();
-						this.state = 256;
+						this.state = 268;
 						this.expression(10);
 						}
 						break;
 					}
 					}
 				}
-				this.state = 262;
+				this.state = 274;
 				this._errHandler.sync(this);
 				_alt = this.interpreter.adaptivePredict(this._input, 17, this._ctx);
 			}
@@ -1310,12 +1337,12 @@ export class WJSCParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 264;
+			this.state = 276;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS) {
 				{
-				this.state = 263;
+				this.state = 275;
 				_la = this._input.LA(1);
 				if (!(_la === WJSCParser.PLUS || _la === WJSCParser.MINUS)) {
 				this._errHandler.recoverInline(this);
@@ -1330,7 +1357,7 @@ export class WJSCParser extends Parser {
 				}
 			}
 
-			this.state = 267;
+			this.state = 279;
 			this._errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -1338,7 +1365,7 @@ export class WJSCParser extends Parser {
 				case 1:
 					{
 					{
-					this.state = 266;
+					this.state = 278;
 					this.match(WJSCParser.DIGIT);
 					}
 					}
@@ -1346,7 +1373,7 @@ export class WJSCParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				this.state = 269;
+				this.state = 281;
 				this._errHandler.sync(this);
 				_alt = this.interpreter.adaptivePredict(this._input, 19, this._ctx);
 			} while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER);
@@ -1374,9 +1401,9 @@ export class WJSCParser extends Parser {
 			let _alt: number;
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 271;
+			this.state = 283;
 			this.match(WJSCParser.IDENTIFIER);
-			this.state = 276;
+			this.state = 288;
 			this._errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -1384,11 +1411,11 @@ export class WJSCParser extends Parser {
 				case 1:
 					{
 					{
-					this.state = 272;
+					this.state = 284;
 					this.match(WJSCParser.LBRACK);
-					this.state = 273;
+					this.state = 285;
 					this.expression(0);
-					this.state = 274;
+					this.state = 286;
 					this.match(WJSCParser.RBRACK);
 					}
 					}
@@ -1396,7 +1423,7 @@ export class WJSCParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				this.state = 278;
+				this.state = 290;
 				this._errHandler.sync(this);
 				_alt = this.interpreter.adaptivePredict(this._input, 20, this._ctx);
 			} while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER);
@@ -1424,35 +1451,35 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 280;
+			this.state = 292;
 			this.match(WJSCParser.LBRACK);
-			this.state = 289;
+			this.state = 301;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS || ((((_la - 39)) & ~0x1F) === 0 && ((1 << (_la - 39)) & ((1 << (WJSCParser.LOGICAL_NEGATION - 39)) | (1 << (WJSCParser.LENGTH - 39)) | (1 << (WJSCParser.ORDER_OF - 39)) | (1 << (WJSCParser.CHARACTER_OF - 39)) | (1 << (WJSCParser.DIGIT - 39)) | (1 << (WJSCParser.BOOLEAN_LITERAL - 39)) | (1 << (WJSCParser.CHARACTER_LITERAL - 39)) | (1 << (WJSCParser.PAIR_LITERAL - 39)) | (1 << (WJSCParser.STRING_LITERAL - 39)) | (1 << (WJSCParser.LPAREN - 39)) | (1 << (WJSCParser.IDENTIFIER - 39)))) !== 0)) {
+			if (_la === WJSCParser.PLUS || _la === WJSCParser.MINUS || ((((_la - 40)) & ~0x1F) === 0 && ((1 << (_la - 40)) & ((1 << (WJSCParser.LOGICAL_NEGATION - 40)) | (1 << (WJSCParser.LENGTH - 40)) | (1 << (WJSCParser.ORDER_OF - 40)) | (1 << (WJSCParser.CHARACTER_OF - 40)) | (1 << (WJSCParser.DIGIT - 40)) | (1 << (WJSCParser.BOOLEAN_LITERAL - 40)) | (1 << (WJSCParser.CHARACTER_LITERAL - 40)) | (1 << (WJSCParser.PAIR_LITERAL - 40)) | (1 << (WJSCParser.STRING_LITERAL - 40)) | (1 << (WJSCParser.LPAREN - 40)) | (1 << (WJSCParser.IDENTIFIER - 40)))) !== 0)) {
 				{
-				this.state = 281;
+				this.state = 293;
 				this.expression(0);
-				this.state = 286;
+				this.state = 298;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
 				while (_la === WJSCParser.COMMA) {
 					{
 					{
-					this.state = 282;
+					this.state = 294;
 					this.match(WJSCParser.COMMA);
-					this.state = 283;
+					this.state = 295;
 					this.expression(0);
 					}
 					}
-					this.state = 288;
+					this.state = 300;
 					this._errHandler.sync(this);
 					_la = this._input.LA(1);
 				}
 				}
 			}
 
-			this.state = 291;
+			this.state = 303;
 			this.match(WJSCParser.RBRACK);
 			}
 		}
@@ -1478,7 +1505,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 293;
+			this.state = 305;
 			_la = this._input.LA(1);
 			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << WJSCParser.MULTIPLY) | (1 << WJSCParser.DIVIDE) | (1 << WJSCParser.MODULO))) !== 0))) {
 			this._errHandler.recoverInline(this);
@@ -1514,7 +1541,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 295;
+			this.state = 307;
 			_la = this._input.LA(1);
 			if (!(_la === WJSCParser.PLUS || _la === WJSCParser.MINUS)) {
 			this._errHandler.recoverInline(this);
@@ -1550,9 +1577,9 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 297;
+			this.state = 309;
 			_la = this._input.LA(1);
-			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << WJSCParser.GREATER_THAN) | (1 << WJSCParser.GREATER_EQUAL) | (1 << WJSCParser.LESS_THAN) | (1 << WJSCParser.LESS_EQUAL))) !== 0))) {
+			if (!(((((_la - 29)) & ~0x1F) === 0 && ((1 << (_la - 29)) & ((1 << (WJSCParser.GREATER_THAN - 29)) | (1 << (WJSCParser.GREATER_EQUAL - 29)) | (1 << (WJSCParser.LESS_THAN - 29)) | (1 << (WJSCParser.LESS_EQUAL - 29)))) !== 0))) {
 			this._errHandler.recoverInline(this);
 			} else {
 				if (this._input.LA(1) === Token.EOF) {
@@ -1586,7 +1613,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 299;
+			this.state = 311;
 			_la = this._input.LA(1);
 			if (!(_la === WJSCParser.EQUALS || _la === WJSCParser.NEQUALS)) {
 			this._errHandler.recoverInline(this);
@@ -1621,7 +1648,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 301;
+			this.state = 313;
 			this.match(WJSCParser.LOGICAL_AND);
 			}
 		}
@@ -1646,7 +1673,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 303;
+			this.state = 315;
 			this.match(WJSCParser.LOGICAL_OR);
 			}
 		}
@@ -1672,9 +1699,9 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 305;
+			this.state = 317;
 			_la = this._input.LA(1);
-			if (!(((((_la - 27)) & ~0x1F) === 0 && ((1 << (_la - 27)) & ((1 << (WJSCParser.MINUS - 27)) | (1 << (WJSCParser.LOGICAL_NEGATION - 27)) | (1 << (WJSCParser.LENGTH - 27)) | (1 << (WJSCParser.ORDER_OF - 27)) | (1 << (WJSCParser.CHARACTER_OF - 27)))) !== 0))) {
+			if (!(((((_la - 28)) & ~0x1F) === 0 && ((1 << (_la - 28)) & ((1 << (WJSCParser.MINUS - 28)) | (1 << (WJSCParser.LOGICAL_NEGATION - 28)) | (1 << (WJSCParser.LENGTH - 28)) | (1 << (WJSCParser.ORDER_OF - 28)) | (1 << (WJSCParser.CHARACTER_OF - 28)))) !== 0))) {
 			this._errHandler.recoverInline(this);
 			} else {
 				if (this._input.LA(1) === Token.EOF) {
@@ -1708,7 +1735,7 @@ export class WJSCParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 307;
+			this.state = 319;
 			_la = this._input.LA(1);
 			if (!((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << WJSCParser.FREE) | (1 << WJSCParser.RETURN) | (1 << WJSCParser.EXIT) | (1 << WJSCParser.PRINT) | (1 << WJSCParser.PRINTLN))) !== 0))) {
 			this._errHandler.recoverInline(this);
@@ -1802,17 +1829,19 @@ export class WJSCParser extends Parser {
 		"\x06\x03\x06\x03\x06\x03\x06\x03\x06\x03\x06\x05\x06m\n\x06\x03\x06\x03" +
 		"\x06\x03\x06\x07\x06r\n\x06\f\x06\x0E\x06u\v\x06\x03\x07\x03\x07\x03\x07" +
 		"\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07" +
-		"\x03\x07\x03\x07\x05\x07\x85\n\x07\x03\b\x03\b\x03\b\x03\b\x03\t\x03\t" +
-		"\x03\t\x03\t\x03\t\x03\n\x03\n\x03\n\x05\n\x93\n\n\x03\v\x03\v\x03\v\x03" +
-		"\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x05\v\xA3" +
-		"\n\v\x03\v\x05\v\xA6\n\v\x03\f\x03\f\x03\f\x07\f\xAB\n\f\f\f\x0E\f\xAE" +
-		"\v\f\x03\r\x03\r\x03\r\x03\r\x05\r\xB4\n\r\x03\x0E\x03\x0E\x03\x0E\x05" +
-		"\x0E\xB9\n\x0E\x03\x0F\x03\x0F\x03\x10\x03\x10\x03\x10\x03\x10\x03\x10" +
-		"\x03\x10\x03\x10\x03\x10\x03\x10\x05\x10\xC6\n\x10\x03\x10\x03\x10\x03" +
-		"\x10\x07\x10\xCB\n\x10\f\x10\x0E\x10\xCE\v\x10\x03\x11\x03\x11\x03\x11" +
-		"\x03\x11\x03\x11\x03\x11\x03\x11\x03\x12\x03\x12\x03\x12\x05\x12\xDA\n" +
-		"\x12\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03" +
-		"\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x05\x13\xEB\n\x13" +
+		"\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07" +
+		"\x03\x07\x03\x07\x03\x07\x03\x07\x03\x07\x05\x07\x91\n\x07\x03\b\x03\b" +
+		"\x03\b\x03\b\x03\t\x03\t\x03\t\x03\t\x03\t\x03\n\x03\n\x03\n\x05\n\x9F" +
+		"\n\n\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v\x03\v" +
+		"\x03\v\x03\v\x03\v\x05\v\xAF\n\v\x03\v\x05\v\xB2\n\v\x03\f\x03\f\x03\f" +
+		"\x07\f\xB7\n\f\f\f\x0E\f\xBA\v\f\x03\r\x03\r\x03\r\x03\r\x05\r\xC0\n\r" +
+		"\x03\x0E\x03\x0E\x03\x0E\x05\x0E\xC5\n\x0E\x03\x0F\x03\x0F\x03\x10\x03" +
+		"\x10\x03\x10\x03\x10\x03\x10\x03\x10\x03\x10\x03\x10\x03\x10\x05\x10\xD2" +
+		"\n\x10\x03\x10\x03\x10\x03\x10\x07\x10\xD7\n\x10\f\x10\x0E\x10\xDA\v\x10" +
+		"\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11\x03\x11\x03\x12\x03\x12" +
+		"\x03\x12\x05\x12\xE6\n\x12\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03" +
+		"\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03" +
+		"\x13\x05\x13\xF7\n\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13" +
 		"\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13" +
 		"\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13" +
 		"\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x03\x13\x07\x13\u0105\n\x13\f" +
@@ -2189,6 +2218,18 @@ export class ConditionalBlocksContext extends ParserRuleContext {
 	public WHILE(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.WHILE, 0); }
 	public DO(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.DO, 0); }
 	public DONE(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.DONE, 0); }
+	public FOR(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.FOR, 0); }
+	public LPAREN(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.LPAREN, 0); }
+	public SEMICOLON(): TerminalNode[];
+	public SEMICOLON(i: number): TerminalNode;
+	public SEMICOLON(i?: number): TerminalNode | TerminalNode[] {
+		if (i === undefined) {
+			return this.getTokens(WJSCParser.SEMICOLON);
+		} else {
+			return this.getToken(WJSCParser.SEMICOLON, i);
+		}
+	}
+	public RPAREN(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.RPAREN, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}

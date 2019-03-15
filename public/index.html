@@ -34,7 +34,7 @@
                 </div>
               </div>
               <div class="optimize-checkbox hidden" id="optimizebutton">
-                <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimizebutton">Optimize JS
+                <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimize-button">Optimize JS
               </div>
               <input class="button button-outline" type="submit" value="Submit" id="submitbutton">
             </fieldset>
@@ -127,10 +127,12 @@
         document.getElementById('submitbutton').value = 'Loading';
         const targetlang = document.getElementById('targetlang').value;
         const sourcecode = document.getElementById('sourcecode').value;
+        const optimize = document.getElementById('optimize-button').checked;
         var request = new XMLHttpRequest();
         const payload = {
           target: targetlang,
           code: sourcecode,
+          optimize,
         }
         request.open('POST', '/compile', true)
         request.setRequestHeader('Content-type', 'application/json');

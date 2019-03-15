@@ -22,8 +22,8 @@
     "test:watch": "mocha -w --reporter mochawesome --reporter-options reportDir=test/report",
     "test:serve": "live-server --port=9000 --mount=/:test/report/ --entry-file=test/report/mochawesome.html",
     "start:test": "concurrently --kill-others \"npm run test:watch\" \"npm run test:serve\" \"npm run build:tscw\"",
-    "start": "node ./build/server/App.js",
-    "start:local": "cross-env PORT=8080 node ./build/server/App.js",
+    "start": "node ./build/app.js",
+    "start:local": "cross-env PORT=8080 node ./build/app.js",
     "serve": "live-server --port=8080 --mount=/:public/ --entry-file=public/index.html"
   },
   "repository": {
@@ -66,6 +66,7 @@
     "rimraf": "^2.6.3",
     "script-loader": "^0.7.2",
     "sinon": "^7.2.3",
+    "terser": "^3.17.0",
     "terser-webpack-plugin": "^1.2.1",
     "tslint": "^5.12.1",
     "tslint-sonarts": "^1.8.0",
