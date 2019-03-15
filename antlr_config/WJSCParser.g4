@@ -25,13 +25,13 @@ statement:
 
 conditionalBlocks:
 	IF expression THEN statement ELSE statement FI
-	| WHILE expression DO statement DONE;
+	| WHILE expression DO statement DONE
+	| FOR LPAREN statement SEMICOLON expression SEMICOLON statement RPAREN
+	    DO statement DONE;
 
-assignment:
-	assignLhs ASSIGNMENT assignRhs;
+assignment: assignLhs ASSIGNMENT assignRhs;
 
-declare:
-	type IDENTIFIER ASSIGNMENT assignRhs;
+declare: type IDENTIFIER ASSIGNMENT assignRhs;
 
 assignLhs: IDENTIFIER | arrayElement | pairElement;
 
@@ -48,7 +48,7 @@ pairElement: FIRST expression | SECOND expression;
 
 type: baseType | arrayType | pairType;
 
-baseType: INTEGER | BOOLEAN | CHARACTER | STRING;
+baseType: INTEGER | BOOLEAN | CHARACTER | STRING | ANY;
 
 arrayType:
 	baseType LBRACK RBRACK

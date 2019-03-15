@@ -1,7 +1,6 @@
 image: charlieharutaka/cetacea:latest
 
 stages:
-- validate
 - install
 - build
 - test
@@ -13,10 +12,10 @@ cache:
   - node_modules/
   - .awcache/
 
-validate:
-  stage: validate
-  script:
-    - echo $(git log -1 --pretty=%B) | node ./src/postflight.js
+#validate:
+#  stage: validate
+#  script:
+#    - echo $(git log -1 --pretty=%B) | node ./src/postflight.js
   
 install:
   stage: install
