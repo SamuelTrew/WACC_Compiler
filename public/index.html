@@ -27,10 +27,8 @@
                   Enter your code here
                 </span>
           </div>
-          <textarea id="sourcecode"></textarea>
-          <!--
-           <textarea class="wacc-form autoExpand" rows="20" placeholder="Input" style="resize: none;"
-            id="sourcecode" onkeyup="updateIDE()"> </textarea> -->
+           <textarea class="wacc-form autoExpand" id="sourcecode" rows="20" placeholder="Input" style="resize: none;"
+                     disabled> </textarea>
           <div class="flex-container flex-container-left">
             <div>
               Target Language
@@ -108,15 +106,12 @@
       document.getElementById('optimizebutton').classList.add('hidden')
     }
   })
-  let pastTime = new Date()
   var updateIfNeeded = function(event) {
-    // If the user rests for > 2 seconds, then we update
-    const currTime = new Date()
-    if (currTime - pastTime > 2000) {
+    const debug = document.getElementById('sourcecode')
+    event = event || window.event;
+    let code = event.keyCode || event.which;
+    if (code == 188) {
       update()
-      pastTime = currTime
-    } else {
-      pastTime = currTime
     }
   }
 
@@ -124,8 +119,6 @@
     const inputBox = document.getElementById('inputDiv')
     const debug = document.getElementById('sourcecode')
     let spans = inputBox.getElementsByTagName('span'), text = [];
-    //debug.value = spans.length
-    //debug.value = spans[0].textContent
     for (let i = 0; i < spans.length; i++) {
       text.push(spans[i].textContent)
     }
@@ -140,18 +133,19 @@
     let newSpans = []
     let firstTime = true
     text.forEach((child, index) => {
-      let br = child.indexOf('\\n')
-      if (br === -1) {
+      let br = child.indexOf(`\n`)
+      if (br === 0) {
+        debug.value = br
         charsSinceLastLine += child.length
         currSpanLine += child
-        debug.value = text[0]
       } else {
         // We need to find all line breaks in this child line
-        const splitChild = child.split('\\n')
-        for (let i = 0; i < splitChild.length - 1; i++) {
+        debug.value = br
+        const splitChild = child.split(`\n`)
+        for (let i = 0; i < splitChild.length ; i++) {
           let newLine = ''
             // We highlight the whole line in red
-          newLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine + splitChild[i].length() > 80)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
+          newLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine + splitChild[i].length() > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
                   + `${currSpanLine + splitChild[i]}` + `</span>`
           if (firstTime) {
             firstTime = false
@@ -165,7 +159,7 @@
       }
     })
     let lastLine = ''
-    lastLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine > 80)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
+    lastLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
       + `${currSpanLine}` + `</span>`
     if (firstTime) {
       firstTime = false
