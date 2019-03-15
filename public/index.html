@@ -23,9 +23,7 @@
       <form id="inputform">
         <fieldset>
           <div id = "inputDiv">
-                <span class = "wacc-form autoExpand" contenteditable="true" style="resize: none" id = "initialSpan" onkeyup="updateIfNeeded()">
-                  Enter your code here
-                </span>
+                <span class = "wacc-form autoExpand" contenteditable="true" style="resize: none" id = "initialSpan" onkeyup="updateIfNeeded()">Enter your code here</span>
           </div>
            <textarea class="wacc-form autoExpand" id="sourcecode" rows="20" placeholder="Input" style="resize: none;"
                      disabled> </textarea>
@@ -110,7 +108,9 @@
     const debug = document.getElementById('sourcecode')
     event = event || window.event;
     let code = event.keyCode || event.which;
-    if (code == 188) {
+    if (code == 13) {
+      //let inputs = $("#inputsTable input.td_in");
+      //let index = inputs.index(this);
       update()
     }
   }
@@ -128,19 +128,18 @@
       inputBox.removeChild(currSpan)
       index++
     }
+    //debug.value = text[0] + text[0].indexOf('\n')
     let currSpanLine = ''
     let charsSinceLastLine = 0
     let newSpans = []
     let firstTime = true
     text.forEach((child, index) => {
-      let br = child.indexOf(`\n`)
-      if (br === 0) {
-        debug.value = br
+      let br = child.indexOf('\n')
+      if (br === -1) {
         charsSinceLastLine += child.length
         currSpanLine += child
       } else {
         // We need to find all line breaks in this child line
-        debug.value = br
         const splitChild = child.split(`\n`)
         for (let i = 0; i < splitChild.length ; i++) {
           let newLine = ''
