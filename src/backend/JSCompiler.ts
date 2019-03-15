@@ -155,6 +155,11 @@ export class JSCompiler {
         type: JSLib.JSStatTypes.Void,
       } as JSLib.JSVoidStatement
     }],
+    [WJSCParserRules.ConditionalFor, (stat: WJSCStatement): JSLib.JSStat => ({
+        stat1: this.generateStatement(stat.stat),
+        stat2: this.generateStatement(stat.nextStat),
+        type: JSLib.JSStatTypes.Sequential,
+      } as JSLib.JSSeqStat)],
   ])
 
   private readonly exprMap: Map<WJSCParserRules, (expr: WJSCExpr) => JSLib.JSExpr> = new Map([
