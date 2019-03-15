@@ -1,7 +1,6 @@
 image: charlieharutaka/cetacea:latest
 
 stages:
-- validate
 - install
 - build
 - test
