@@ -147,18 +147,14 @@
     const inputDiv = document.getElementById('inputDiv')
     const debug = document.getElementById('sourcecode')
     let spans = inputDiv.getElementsByTagName('span')
-    let markedForDelete =[]
     for (let i = 0; i < spans.length ; i++) {
       if (spans[i].textContent.length === 0) {
-        // mark this for delete
-        markedForDelete.push(spans[i])
+        // delete all empty spans
+        spans[i].remove()
       }
     }
-    markedForDelete.forEach( (marked) =>{
-      marked.remove()
-    })
     if (spans.length === 0) {
-      // Create new span
+      // ensure at least one span
       const newSpan= document.createElement('span');
       const attrs = {"class": "wacc-form autoExpand", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
       for(var key in attrs) {
@@ -176,17 +172,24 @@
     const inputDiv = document.getElementById('inputDiv')
     const debug = document.getElementById('sourcecode')
     let spans = inputDiv.getElementsByTagName('span')
-    let markedForDelete = []
+    // let markedForDelete = []
     for (let i = 0; i < spans.length ; i++) {
       if (spans[i].textContent.length === 0) {
-        // mark this for delete
-        markedForDelete.push(spans[i])
+        spans[i].remove()
+        // markedForDelete.push(spans[i])
       } else if (spans[i].textContent.length > 80) {
         spans[i].style.color = '#f00'
+        if (!spans[i].innerHTML.includes('<br>')) {
+          spans[i].innerHTML += '<br>'
+        }
       } else {
         spans[i].style.color = '#000'
+        if (!spans[i].innerHTML.includes('<br>')) {
+          spans[i].innerHTML += '<br>'
+        }
       }
     }
+    /*
     markedForDelete.forEach((marked) => {
       marked.remove()
     })
@@ -198,7 +201,7 @@
         newSpan.setAttribute(key, attrs[key]);
       }
       inputDiv.append(newSpan)
-    }
+    } */
   }
   var executeJs = function (event) {
     event.preventDefault()
