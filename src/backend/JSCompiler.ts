@@ -233,23 +233,28 @@ export class JSCompiler {
   }
 
   /** Declare an identifier and assign it a name if clashing */
-  private declIdentName = (ident: string): string => {
+  private declIdentName = (ident: string, func = false): string => {
     let modifiedIdent = ident
+    const mapIdent = `${func ? 'func$' : 'var$'}${ident}`
     while (JSLib.reservedKeywords.includes(modifiedIdent)) { modifiedIdent += '_' }
     const numberlessIdent = modifiedIdent
     let count = 0
     /* Iterate through tables to build up array of taken names */
     const nameArray = []
-    for (const curtable of this.symboltable) { nameArray.push(curtable.get(ident)) }
+    for (const curtable of this.symboltable) {
+      nameArray.push(curtable.get('func$' + ident))
+      nameArray.push(curtable.get('var$' + ident))
+    }
     while (nameArray.includes(modifiedIdent)) { modifiedIdent = numberlessIdent + ++count }
-    this.symboltable[0].set(ident, modifiedIdent)
+    this.symboltable[0].set(mapIdent, modifiedIdent)
     return modifiedIdent
   }
 
   /** Search the symbol table for the most local occurrence of `ident` */
-  private getIdentName = (ident: string): string => {
+  private getIdentName = (ident: string, func = false): string => {
+    const findKey = `${func ? 'func$' : 'var$'}${ident}`
     for (const curtable of this.symboltable) {
-      const found = curtable.get(ident)
+      const found = curtable.get(findKey)
       if (found) { return found }
     }
     console.log(this.symboltable)
@@ -280,21 +285,25 @@ export class JSCompiler {
     return output.join(';')
   }
 
-  private generateFunctions = (functions: WJSCFunction[]): JSLib.JSFunction[] => (functions.forEach((func: WJSCFunction) => {
+  private generateFunctions = (functions: WJSCFunction[]): Array<JSLib.JSFunction | null> => (functions.forEach((func: WJSCFunction) => {
     /* Build the function prototypes first */
-    this.declIdentName(func.identifier)
+    this.declIdentName(func.identifier, true)
   }), functions.map((func: WJSCFunction) => {
-    const { paramList, body, identifier } = func
-    const name = this.getIdentName(identifier)
-    this.enterScope()
-    const params = paramList.map((param): string => this.declIdentName((param as any).identifier))
-    const result = {
-      body: this.generateStatement(body),
-      name,
-      params,
-    } as JSLib.JSFunction
-    this.exitScope()
-    return result
+    if (func.body) {
+      const { paramList, body, identifier } = func
+      const name = this.getIdentName(identifier, true).replace(':', '$')
+      this.enterScope()
+      const params = paramList.map((param): string => this.declIdentName((param as any).identifier))
+      const result = {
+        body: this.generateStatement(body),
+        name,
+        params,
+      } as JSLib.JSFunction
+      this.exitScope()
+      return result
+    } else {
+      return null
+    }
   }))
 
   private generateStatement = (statement: WJSCStatement): JSLib.JSStat => {
@@ -363,7 +372,7 @@ export class JSCompiler {
       case WJSCParserRules.FunctionCall:
         return {
           args: (rhs.argList || []).map(this.generateExpression),
-          iden: this.getIdentName(rhs.ident),
+          iden: this.getIdentName(rhs.ident, true).replace(':', '$'),
           type: JSLib.JSExprTypes.Call,
         } as JSLib.JSFunctionCall
       default:

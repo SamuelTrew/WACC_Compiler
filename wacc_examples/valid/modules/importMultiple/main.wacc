@@ -1,0 +1,12 @@
+begin
+  import "./fileA.wacc"
+  import "./fileB.wacc"
+  int a = call a();
+  int b = call b();
+  int c = call c();
+  int d = call d();
+  println a;
+  println b;
+  println c;
+  println d
+end

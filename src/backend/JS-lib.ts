@@ -236,7 +236,7 @@ const exprMap = new Map<JSExprTypes, (expr: JSExpr) => string>([
 
 const stringify = Object.freeze({
   expr: (expr: JSExpr): string => (exprMap.get(expr.type) || (() => { throw new TypeError(`unknown expression ${expr.type}`) }))(expr),
-  func: (func: JSFunction) => `function ${func.name}(${func.params.join(',')}){${stringify.stat(func.body)}}`,
+  func: (func: JSFunction | null) => func ? `function ${func.name}(${func.params.join(',')}){${stringify.stat(func.body)}}` : '',
   stat: (stat: JSStat): string => (statMap.get(stat.type) || (() => { throw new TypeError(`unknown statement ${stat.type}`) }))(stat),
 })
 

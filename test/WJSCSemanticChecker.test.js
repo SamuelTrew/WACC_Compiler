@@ -5,7 +5,7 @@ const fs = require('fs')
 
 const WJSCCompiler = require('../build/WJSCCompiler')
 
-recursive(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'], function (validError, validFiles) {
+recursive(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output', '**/importBasicSpecific.wacc', '**/defineBasic.wacc', '**/ticTacToe/*.wacc'], function (validError, validFiles) {
   if (validError) { throw validError }
   recursive(path.resolve('wacc_examples', 'invalid', 'semanticErr'), ['*.wacc~', '*.in', '*.output'], function (semErrError, semanticErrFiles) {
     if (semErrError) { throw semErrError }
@@ -19,7 +19,7 @@ recursive(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'
               fs.readFile(filename, 'utf8', function (readError, data) {
                 if (readError) throw readError
                 let compileError
-                const compiler = new WJSCCompiler.default(data)
+                const compiler = new WJSCCompiler.default(data, filename)
                 try {
                   compiler.check()
                 } catch (error) {
@@ -40,7 +40,7 @@ recursive(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'
               fs.readFile(filename, 'utf8', function (readError, data) {
                 if (readError) throw readError
                 let compileError
-                const compiler = new WJSCCompiler.default(data)
+                const compiler = new WJSCCompiler.default(data, filename)
                 try {
                   compiler.check()
                 } catch (error) {
@@ -62,14 +62,14 @@ recursive(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'
               fs.readFile(filename, 'utf8', function (readError, data) {
                 if (readError) throw readError
                 let compileError
-                const compiler = new WJSCCompiler.default(data)
+                const compiler = new WJSCCompiler.default(data, filename)
                 try {
                   compiler.check()
                 } catch (error) {
                   compileError = error
                 } finally {
                   assert(!compileError, compileError)
-                  assert(compiler.errorLog.numErrors() > 0,'No error produced')
+                  assert(compiler.errorLog.numErrors() > 0, 'No error produced')
                   done(compileError)
                 }
               })

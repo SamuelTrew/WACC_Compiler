@@ -12,14 +12,16 @@ export class WJSCSymbolTable {
   private parentLevel?: WJSCSymbolTable
   private stackOffsets?: string[]
   private spOffset = 0
+  private fileContext: string
 
-  constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, isInFunction: boolean, errorLog: WJSCErrorLog) {
+  constructor(scopeLevel: number, parentLevel: WJSCSymbolTable | undefined, isInFunction: boolean, errorLog: WJSCErrorLog, fileContext: string) {
     this.tableNumber = scopeLevel
     this.symbolTable = new Map()
     this.childrenTables = []
     this.parentLevel = parentLevel
     this.isInFunction = isInFunction
     this.errorLog = errorLog
+    this.fileContext = fileContext
   }
 
   public getTableNumber = (): number => this.tableNumber
@@ -42,7 +44,7 @@ export class WJSCSymbolTable {
 
   // Create new child symbol table
   public enterScope = (tableNumber: number): WJSCSymbolTable => {
-    const childTable = new WJSCSymbolTable(tableNumber, this, this.isInFunction, this.errorLog)
+    const childTable = new WJSCSymbolTable(tableNumber, this, this.isInFunction, this.errorLog, this.fileContext)
     this.childrenTables.push(childTable)
     return childTable
   }
@@ -59,10 +61,34 @@ export class WJSCSymbolTable {
   public exitScope = (): WJSCSymbolTable => (this.parentLevel || (this.errorLog.runtimeError(new Error('Cannot exit from top level scope')), this))
 
   // Add an entry to the symbol table with optional function params
-  public insertSymbol = (identifier: string, type: TypeName, lineNo: number, params?: TypeName[]) => {
+  public insertSymbol = (identifier: string, type: TypeName, lineNo: number, isDefine = false, isExternal = false, params?: TypeName[]) => {
     const table = this
-    this.symbolTable.set(identifier, { type, table, lineNo, params })
+    this.symbolTable.set(identifier, { type, table, lineNo, params, isExternal, isDefine })
   }
+
+  public setDeclared = (ident: string) => {
+    const entry = this.symbolTable.get(ident)
+    if (entry) {
+      entry.isDefine = false
+    } else {
+      throw new Error('Tried to declare undefined variable')
+    }
+    this.symbolTable.delete(ident)
+    this.symbolTable.set(ident, entry)
+  }
+
+  public rename = (oldId: string, newId: string) => {
+    const entry = this.symbolTable.get(oldId)
+    if (entry) {
+      this.symbolTable.delete(oldId)
+      this.symbolTable.set(newId, entry)
+    } else {
+      throw new Error('Tried to rename undefined variable')
+    }
+  }
+
+  public functionIsExternal = (identifier: string): boolean =>
+    (this.symbolTable.get(identifier) || { isExternal: false }).isExternal
 
   // Return the type of entry with given identifier if found
   public lookup = (identifier: string): TypeName => (this.getGlobalEntry(identifier) || { type: undefined }).type
@@ -77,11 +103,11 @@ export class WJSCSymbolTable {
   public checkType = (astNode: WJSCAst): boolean => {
     const lookupResult = this.lookup(astNode.token)
     if (lookupResult === undefined) {
-      this.errorLog.semErr(astNode, SemError.Undefined)
+      this.errorLog.semErr(astNode, this.fileContext, SemError.Undefined)
       return false
     } else {
       if (!hasSameType(lookupResult, astNode.type)) {
-        this.errorLog.semErr(astNode, SemError.Mismatch, lookupResult)
+        this.errorLog.semErr(astNode, this.fileContext, SemError.Mismatch, lookupResult)
         return false
       }
     }
@@ -161,4 +187,6 @@ export interface WJSCSymbolTableValue {
   messageName?: string
   msgNumber?: number
   spOffset?: number
+  isExternal: boolean
+  isDefine: boolean
 }
