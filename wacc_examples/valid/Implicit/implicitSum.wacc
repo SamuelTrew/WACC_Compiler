@@ -1,0 +1,5 @@
+begin
+  any x = 5;
+  any y = 7;
+  any z = x + y
+end

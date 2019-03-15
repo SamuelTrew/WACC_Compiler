@@ -35,7 +35,8 @@ import {
 } from '../grammar/WJSCParser'
 import { WJSCParserVisitor } from '../grammar/WJSCParserVisitor'
 import {
-  WJSCArrayElem, WJSCAssignLhs,
+  WJSCArrayElem,
+  WJSCAssignLhs,
   WJSCAssignment,
   WJSCAssignRhs,
   WJSCAst,
@@ -419,7 +420,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     /* Assignment */
     const visitedRhs = this.visitAssignRhs(rhs)
     const visitedLhs = this.visitType(lhsType)
-    const visitedLhsType = visitedLhs.type
+    let visitedLhsType = visitedLhs.type
     const visitedIdentifier = this.visitTerminal(lhsIdent)
     /* Check for double declaration */
     const possibleEntry
@@ -427,7 +428,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     if (possibleEntry && !possibleEntry.params) {
       this.errorLog.semErr(visitedIdentifier, SemError.DoubleDeclare)
     }
-
+    if (visitedLhsType === BaseType.Any) {
+      visitedLhsType = visitedRhs.type
+    }
     visitedIdentifier.type = visitedLhsType
     this.pushChild(result, visitedIdentifier)
     /* Ensure RHS has same type as LHS */
@@ -448,7 +451,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   public visitBaseType = (ctx: BaseTypeContext): WJSCAst => {
     const result = this.initWJSCAst(ctx, WJSCParserRules.Type)
     const base =
-      ctx.INTEGER() || ctx.BOOLEAN() || ctx.CHARACTER() || ctx.STRING()
+      ctx.INTEGER() || ctx.BOOLEAN() || ctx.CHARACTER() || ctx.STRING() || ctx.ANY()
     if (!base) {
       this.errorLog.semErr(result, SemError.Undefined)
     } else {
@@ -1164,7 +1167,7 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           )
         }
       }
-    } else if (WJSCLexer.INTEGER <= type && type <= WJSCLexer.PAIR) {
+    } else if (WJSCLexer.INTEGER <= type && type <= WJSCLexer.ANY) {
       switch (type) {
         case WJSCLexer.INTEGER:
           terminal.terminalType = terminal.type = BaseType.Integer
@@ -1180,6 +1183,9 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
           break
         case WJSCLexer.PAIR:
           terminal.terminalType = terminal.type = BaseType.Pair
+          break
+        case WJSCLexer.ANY:
+          terminal.terminalType = terminal.type = BaseType.Any
           break
       }
     } else if (type === WJSCLexer.IDENTIFIER) {
