@@ -1,0 +1,48 @@
+begin
+	# Allocate a new board. 
+	# We use a Pair4Three structure to store pointers to the 3 rows.
+	export pair(pair, pair) allocateNewBoard() is
+		pair(pair, char) row1 = call allocateNewRow() ;
+		pair(pair, char) row2 = call allocateNewRow() ;
+		pair(pair, char) row3 = call allocateNewRow() ;
+		
+		pair(pair, pair) front = newpair(row1, row2) ;
+		pair(pair, pair) root = newpair(front, row3) ;
+		return root
+	end
+	
+	# Allocate a row of the board. 
+	# A row is represented by a Pair4Three structure.
+	# The default value in each cell is '\0'.
+	export pair(pair, char) allocateNewRow() is
+		pair(char, char) front = newpair('\0', '\0') ;
+		pair(pair, char) root = newpair(front, '\0') ;
+		return root
+	end
+
+	# Free a memory used to store the whole board.
+	# Return true.
+	export bool freeBoard(pair(pair, pair) board) is
+		pair(pair, pair) front = fst board ;
+		
+		pair(pair, char) row1 = fst front ;
+		pair(pair, char) row2 = snd front ;
+		pair(pair, char) row3 = snd board ;
+		
+		bool _ = call freeRow(row1) ;
+		_ = call freeRow(row2) ;
+		_ = call freeRow(row3) ;
+		
+		free front ;
+		free board ;
+		return true
+	end
+	
+	# Free the memory used for a row. Return true.
+	export bool freeRow(pair(pair, char) row) is
+		pair(char, char) front = fst row ;
+		free front ;
+		free row ;
+		return true
+	end
+end

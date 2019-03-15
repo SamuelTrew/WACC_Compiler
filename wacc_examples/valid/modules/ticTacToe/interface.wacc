@@ -1,0 +1,137 @@
+begin
+	# Print greeting message and ask the player to choose their symbol.
+	# Return either 'x' or 'o'. 'x' plays first.
+	export char chooseSymbol() is
+		println "========= Tic Tac Toe ================" ;
+		println "=  Because we know you want to win   =" ;
+		println "======================================" ;
+		println "=                                    =" ;
+		println "= Who would you like to be?          =" ;
+		println "=   x  (play first)                  =" ;
+		println "=   o  (play second)                 =" ;
+		println "=   q  (quit)                        =" ;
+		println "=                                    =" ;
+		println "======================================" ;
+		
+		char chosen = '\0' ;
+		while chosen == '\0' do 
+			print "Which symbol you would like to choose: " ;
+			char c = '\0' ;
+			read c ;
+			if c == 'x' || c == 'X' then
+				chosen = 'x'
+			else
+				if c == 'o' || c == 'O' then
+					chosen = 'o'
+				else
+					if c == 'q' || c == 'Q' then
+						println "Goodbye safety." ;
+						exit 0
+					else
+						print "Invalid symbol: " ;
+						println c ;
+						println "Please try again."
+					fi 
+				fi
+			fi
+		done ;
+		print "You have chosen: " ;
+		println chosen ;
+		return chosen
+	end
+	
+	# Print the board out to the screen.
+	export bool printBoard(pair(pair, pair) board) is
+		pair(pair, pair) front = fst board ;
+		pair(pair, char) row1 = fst front ;
+		pair(pair, char) row2 = snd front ;
+		pair(pair, char) row3 = snd board ;
+	
+    println " 1 2 3";
+    print "1";	
+		bool _ = call printRow(row1) ;
+		println " -+-+-" ;
+    print "2";	
+		_ = call printRow(row2) ;
+		println " -+-+-" ;
+    print "3";	
+		_ = call printRow(row3) ;
+		println "";
+		return true 
+	end
+	
+	# Print a row with a newline to the screen.
+	export bool printRow(pair(pair, char) row) is
+		pair(char, char) front = fst row ;
+		
+		char cell1 = fst front ;
+		char cell2 = snd front ;
+		char cell3 = snd row ;
+		
+		bool _ = call printCell(cell1) ;
+		print '|' ;
+		_ = call printCell(cell2) ;
+		print '|' ;
+		_ = call printCell(cell3) ;
+		println "" ;
+		return true
+	end 
+	
+	# Print a given cell. Print an empty space if it is empty. Return true.
+	export bool printCell(char cell) is
+		if cell == '\0' then
+			print ' ' 
+		else
+			print cell 
+		fi ;
+		return true
+	end
+	
+	# Ask for a move from the human player. The valid move is then stored in the given move array. 
+	# The row number is stored at move[0], the column number is stored at move[1]. Return true.
+	export bool askForAMoveHuman(pair(pair, pair) board, int[] move) is
+		bool success = false ;
+		int row = 0 ;
+		int column = 0 ;
+			
+		while !success do
+			println "What is your next move?" ;
+			print " row (1-3): " ;
+			read row ;
+			print " column (1-3): " ;
+			read column ; 
+			success = call validateMove(board, row, column) ;
+			
+			if success then
+				println "" ; # Just print out an empty line
+				move[0] = row ;
+				move[1] = column ;
+				return true
+			else
+				println "Your move is invalid. Please try again."
+			fi			
+		done ; 
+		# Should not reach here
+		return true
+	end
+	
+	# Validate that the give move is valid. Returns true iff it is valid.
+	export bool validateMove(pair(pair, pair) board, int moveRow, int moveColumn) is
+		if 1 <= moveRow && moveRow <= 3 && 1 <= moveColumn && moveColumn <= 3 then
+			char sym = call symbolAt(board, moveRow, moveColumn) ;
+			# Make sure that the cell is empty
+			return sym == '\0'
+		else
+			return false
+		fi
+	end
+	
+	# Print out to the screen about a recent move maid by the AI. Return true.
+	export bool notifyMoveHuman(pair(pair, pair) board, char currentTurn, char playerSymbol, int moveRow, int moveColumn) is
+		print "The AI played at row " ;
+		print moveRow ;
+		print " column " ;
+		println moveColumn ;
+		return true
+	end
+end

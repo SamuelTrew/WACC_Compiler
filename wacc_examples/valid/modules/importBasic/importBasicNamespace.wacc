@@ -1,0 +1,14 @@
+# Imports functions with namespace renaming, should not affect the declaration
+# of a.
+
+begin
+  import "./importBasicFuncs.wacc" as f
+  char a() is 
+    return 'c'
+  end
+  int a = call f:a();
+  int b = call f:b(a);
+  println b;
+  int c = call a();
+  println c
+end

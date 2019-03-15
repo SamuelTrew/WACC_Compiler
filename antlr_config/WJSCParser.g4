@@ -4,9 +4,18 @@ options {
 	tokenVocab = WJSCLexer;
 }
 
-program: BEGIN func* statement END EOF;
+program: BEGIN imports* func* statement? END EOF;
 
-func: type IDENTIFIER LPAREN paramList? RPAREN IS statement END;
+imports: IMPORT STRING_LITERAL (AS IDENTIFIER)?
+	|	IMPORT importList FROM STRING_LITERAL
+	;
+
+importList: IDENTIFIER (COMMA IDENTIFIER)*;
+
+func: EXPORT? type IDENTIFIER LPAREN paramList? RPAREN IS statement END
+	| EXPORT? DEFINE type IDENTIFIER LPAREN paramList? RPAREN
+	| EXTERN type IDENTIFIER LPAREN paramList? RPAREN
+	;
 
 paramList: param (COMMA param)*;
 
@@ -40,7 +49,7 @@ assignRhs:
 	| arrayLiteral
 	| NEW_PAIR LPAREN expression COMMA expression RPAREN
 	| pairElement
-	| CALL IDENTIFIER LPAREN argList? RPAREN;
+	| CALL (IDENTIFIER COLON)? IDENTIFIER LPAREN argList? RPAREN;
 
 argList: expression (COMMA expression)*;
 

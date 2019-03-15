@@ -1,9 +1,9 @@
 begin
-  int void() is return 0 end
+  int none() is return 0 end
   int one(int x) is return x end
   int two(int x, int y) is return x + y end
   int three(int x, int y, int z) is return x + y * z end
-  int a = call void();
+  int a = call none();
   int b = call one(0);
   int c = call two(1, 2);
   int d = call three(3, 4, 5);

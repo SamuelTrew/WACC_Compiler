@@ -1,0 +1,11 @@
+# File to define several exported functions.
+# Has no main; is identical to begin skip end.
+
+begin
+  export int a() is 
+    return 1
+  end
+  export int b(int x) is
+    return x + 1
+  end
+end

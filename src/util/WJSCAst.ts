@@ -89,7 +89,9 @@ interface WJSCFunction extends WJSCAst {
   parserRule: WJSCParserRules.Function
   identifier: string
   paramList: WJSCAst[]
-  body: WJSCStatement
+  body?: WJSCStatement
+  funcType: 'declare' | 'define' | 'extern'
+  exported: boolean
 }
 
 interface WJSCOperators extends WJSCAst {

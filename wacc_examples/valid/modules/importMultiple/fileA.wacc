@@ -1,0 +1,8 @@
+begin
+  export int a() is 
+    return 0
+  end
+  export int b() is
+    return 0
+  end
+end

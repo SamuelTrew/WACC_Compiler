@@ -1,0 +1,4 @@
+begin
+  extern int assert(bool condition)
+  int bye = call assert(false)
+end
