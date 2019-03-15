@@ -25,8 +25,8 @@
           <div id = "inputDiv">
                 <span class = "wacc-form autoExpand" contenteditable="true" style="resize: none" id = "initialSpan" onkeyup="updateIfNeeded()">Enter your code here</span>
           </div>
-           <textarea class="wacc-form autoExpand" id="sourcecode" rows="20" placeholder="Input" style="resize: none;"
-                     disabled> </textarea>
+          <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
+                    id="sourcecode"></textarea>
           <div class="flex-container flex-container-left">
             <div>
               Target Language
@@ -114,7 +114,6 @@
       update()
     }
   }
-
   var update = function (event) {
     const inputBox = document.getElementById('inputDiv')
     const debug = document.getElementById('sourcecode')
@@ -142,8 +141,9 @@
         // We need to find all line breaks in this child line
         const splitChild = child.split(`\n`)
         for (let i = 0; i < splitChild.length ; i++) {
+          let newLine = ''
             // We highlight the whole line in red
-          let newLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine + splitChild[i].length() > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
+          newLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine + splitChild[i].length() > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
                   + `${currSpanLine + splitChild[i]}` + `</span>`
           if (firstTime) {
             firstTime = false
@@ -156,7 +156,8 @@
         currSpanLine = splitChild[splitChild.length()-1]
       }
     })
-    let lastLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
+    let lastLine = ''
+    lastLine = `${firstTime ? '' : '<br>' }` + `<span style="color: ${(charsSinceLastLine > 60)? '#f00' : '#000'};" onkeyup="update()" contenteditable="true">`
       + `${currSpanLine}` + `</span>`
     if (firstTime) {
       firstTime = false
