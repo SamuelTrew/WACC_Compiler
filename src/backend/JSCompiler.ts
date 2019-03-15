@@ -1,5 +1,5 @@
-import { WJSCSymbolTable } from '../frontend/WJSCSymbolTable'
-import { WJSCArrayElem, WJSCAssignLhs, WJSCAssignRhs, WJSCAst, WJSCExpr, WJSCFunction, WJSCIdentifier, WJSCParam, WJSCParserRules, WJSCStatement } from '../util/WJSCAst'
+import * as Terser from 'terser'
+import { WJSCArrayElem, WJSCAssignLhs, WJSCAssignRhs, WJSCAst, WJSCExpr, WJSCFunction, WJSCParserRules, WJSCStatement } from '../util/WJSCAst'
 import * as JSLib from './JS-lib'
 
 /**
@@ -144,10 +144,7 @@ export class JSCompiler {
       this.polyfills.push('read')
       return {
         expr: {
-          lhs: {
-            type: JSLib.JSExprTypes.Terminal,
-            value: stat.children[1].token,
-          } as JSLib.JSTerminalExpr,
+          lhs: this.generateLhs(stat.children[1] as WJSCAssignLhs),
           rhs: {
             args: [],
             iden: 'read',
@@ -205,18 +202,34 @@ export class JSCompiler {
   }
   private readonly main = '_main'
   private symboltable: Array<Map<string, string>> = []
+  private opts: { minify: boolean }
+
+  constructor(opts?: { minify: boolean }) {
+    if (opts) {
+      this.opts = opts
+    } else {
+      this.opts = {
+        minify: false,
+      }
+    }
+  }
 
   public generateProgram = (ast: WJSCAst) => {
     this.symboltable.unshift(new Map())
     const { functions, body } = ast
     const generatedFunctions = this.generateFunctions(functions)
     const generatedStatements = body ? this.generateStatement(body) : undefined
-    return `"use strict";` + this.presetPolyfill.stdout
+    const code = `"use strict";` + this.presetPolyfill.stdout
       + `${generatedFunctions.map(JSLib.stringify.func).join(';')}`
       + (generatedStatements ? `function ${this.main}(){${JSLib.stringify.stat(generatedStatements)}}` : '')
       + (this.polyfills.length > 0 ? `;${this.generatePolyfills()}` : '')
       + `;var _exit=${this.main}()` + `;if(_buf.length>0){_write()}`
       + ';_exit'
+    if (this.opts.minify) {
+      return Terser.minify(code, { mangle: { toplevel: true } }).code || 'Terser Error'
+    } else {
+      return code
+    }
   }
 
   /** Declare an identifier and assign it a name if clashing */
@@ -309,7 +322,7 @@ export class JSCompiler {
     if (parserRule === WJSCParserRules.Identifier) {
       return {
         type: JSLib.JSExprTypes.Terminal,
-        value: lhs.token,
+        value: this.getIdentName(lhs.token),
       } as JSLib.JSTerminalExpr
     } else if (parserRule === WJSCParserRules.ArrayElem) {
       return {

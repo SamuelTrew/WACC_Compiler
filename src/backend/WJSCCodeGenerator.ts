@@ -591,6 +591,8 @@ class WJSCCodeGenerator {
     stats.forEach((stat) => {
       if (stat.parserRule === WJSCParserRules.Declare) {
         thisStackSize += getTypeSize(stat.declaration.type)
+      } else if (stat.parserRule === WJSCParserRules.ConditionalFor) {
+        thisStackSize += getTypeSize(stat.stat.type)
       }
     })
     this.currSpOffset = thisStackSize
@@ -641,6 +643,7 @@ class WJSCCodeGenerator {
       case WJSCParserRules.Assignment:
         this.genAssignment(atx.assignment, reglist)
         break
+      case WJSCParserRules.ConditionalFor:
       case WJSCParserRules.Sequential:
         this.traverseStat(atx.stat, reglist)
         this.traverseStat(atx.nextStat, reglist)

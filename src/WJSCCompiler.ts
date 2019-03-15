@@ -21,14 +21,14 @@ class WJSCCompiler {
   private ast?: WJSCAst
   private asm?: string
 
-  constructor(data: string, js: boolean = false) {
+  constructor(data: string, js: boolean = false, jsOpts?: { minify: boolean }) {
     this.errorLog = new WJSCErrorLog()
     this.errorListener = new WJSCErrorListener(this.errorLog)
     this.symbolTable = new WJSCSymbolTable(0, undefined, false, this.errorLog)
     this.semanticChecker = new WJSCSemanticChecker(this.errorLog, this.symbolTable)
     this.lexer = new WJSCLexer(new ANTLRInputStream(data))
     this.parser = new WJSCParser(new CommonTokenStream(this.lexer))
-    this.codeGenerator = js ? new JSCompiler() : new WJSCCodeGenerator(this.semanticChecker.symbolTable)
+    this.codeGenerator = js ? new JSCompiler(jsOpts) : new WJSCCodeGenerator(this.semanticChecker.symbolTable)
     this.parser.removeErrorListeners()
     this.parser.addErrorListener(this.errorListener)
   }

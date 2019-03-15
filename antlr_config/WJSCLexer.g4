@@ -20,6 +20,7 @@ THEN: 'then';
 ELSE: 'else';
 FI: 'fi';
 WHILE: 'while';
+FOR: 'for';
 DO: 'do';
 DONE: 'done';
 CALL: 'call';

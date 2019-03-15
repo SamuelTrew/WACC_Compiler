@@ -63,11 +63,17 @@ argp.addArgument(['--debug'], {
 
 argp.addArgument(['-j', '--javascript'], {
   action: 'storeTrue',
-  help: 'Generate God\'s language.',
+  help: 'Generate JavaScript.',
+})
+
+argp.addArgument(['-m', '--minify'], {
+  action: 'storeTrue',
+  help: 'Minify JavaScript using Terser',
 })
 
 const args = argp.parseArgs()
 const javascript = args.javascript
+const minify = args.minify
 const output = path.resolve(args.output || (path.parse(args.src).name + (javascript ? '.js' : '.s')))
 const treeout = args.tree
 const errout = path.resolve(args.errors)
@@ -87,12 +93,8 @@ fs.readFile(args.src, 'utf8', (err, data) => {
     }
   }
 
-  if (javascript) {
-    console.log('generating god\'s language')
-  }
-
   /* Instantiate our compiler */
-  const compiler = new WJSCCompiler(data, javascript)
+  const compiler = new WJSCCompiler(data, javascript, javascript ? { minify } : undefined)
   let tree
   let asm
   /* Visit the tree */

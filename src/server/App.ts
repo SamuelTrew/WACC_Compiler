@@ -16,7 +16,7 @@ app.post('/compile', (req, res) => {
   console.log(`${info} Compile request`)
   const compileReq = req.body
   if (checkRequestBody(compileReq, res)) {
-    const compiler = new WJSCCompiler(compileReq.code, compileReq.target === 'js')
+    const compiler = new WJSCCompiler(compileReq.code, compileReq.target === 'js', { minify: compileReq.optimize || false })
     try {
       const result = compiler.generate()
       res.json({
@@ -62,6 +62,7 @@ const checkRequestBody = (body: any, res: Response): body is CompileRequest => {
 interface CompileRequest {
   target: 'arm' | 'js'
   code: string
+  optimize: boolean
 }
 
 interface CompileOKResponse {
