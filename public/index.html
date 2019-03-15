@@ -109,7 +109,7 @@
     const debug = document.getElementById('sourcecode')
     setTimeout(function () {
       lastIndex= (window.getSelection().getRangeAt(0).startOffset);
-      debug.value = lastIndex
+      //debug.value = lastIndex
     }, 0);
   }
   var updateIfNeeded = function(event) {
@@ -119,11 +119,11 @@
     setTimeout(function () {
       const currIndex = (window.getSelection().getRangeAt(0).startOffset);
       const lineLength = event.target.textContent.length
-      debug.value = currIndex + event.target.id + 'lineLen' + lineLength
+      // debug.value = currIndex + event.target.id + 'lineLen' + lineLength
       if (currIndex === 0 && lineLength !== 0) {
         const lastLineLength = lastIndex
         const changedSpanId = event.target.id
-        debug.value = 'currInd:' + currIndex + 'len:' + lastLineLength + changedSpanId
+        // debug.value = 'currInd:' + currIndex + 'len:' + lastLineLength + changedSpanId
         // We update the original span
         const fst = event.target.textContent.substring(0, lastLineLength)
         const snd = event.target.textContent.substring(lastLineLength, lineLength)
@@ -172,30 +172,29 @@
     const inputDiv = document.getElementById('inputDiv')
     const debug = document.getElementById('sourcecode')
     let spans = inputDiv.getElementsByTagName('span')
-    // let markedForDelete = []
+    let markedForDelete = []
     for (let i = 0; i < spans.length ; i++) {
-      if (spans[i].textContent.length === 0) {
-        spans[i].remove()
-        // markedForDelete.push(spans[i])
+      if (spans[i].textContent.length === 0 && i !== spans.length - 1) { // <- If last, assume user wants new line
+        markedForDelete.push(spans[i])
       } else if (spans[i].textContent.length > 80) {
         spans[i].style.color = '#f00'
       } else {
         spans[i].style.color = '#000'
       }
     }
-    /*
     markedForDelete.forEach((marked) => {
       marked.remove()
     })
-    if (spans.length - markedForDelete.length <= 0){
-      // Create new span
-      const newSpan= document.createElement('span');
-      const attrs = {"class": "wacc-form autoExpand", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
-      for(var key in attrs) {
-        newSpan.setAttribute(key, attrs[key]);
-      }
-      inputDiv.append(newSpan)
-    } */
+    /*
+  if (spans.length - markedForDelete.length <= 0){
+    // Create new span
+    const newSpan= document.createElement('span');
+    const attrs = {"class": "wacc-form autoExpand", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
+    for(var key in attrs) {
+      newSpan.setAttribute(key, attrs[key]);
+    }
+    inputDiv.append(newSpan)
+  } */
   }
   var executeJs = function (event) {
     event.preventDefault()

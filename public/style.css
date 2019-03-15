@@ -12,7 +12,9 @@ h4 {
 }
 
 .one-per-line {
+  white-space: normal;
   display: block;
+  word-break: break-all;
 }
 
 .centerfold {
