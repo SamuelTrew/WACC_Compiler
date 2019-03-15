@@ -1,0 +1,8 @@
+# Imports functions without namespace renaming.
+
+begin
+  import "./importBasicFuncs.wacc"
+  int a = call a();
+  int b = call b(a);
+  println b
+end

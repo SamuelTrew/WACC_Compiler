@@ -64,6 +64,16 @@ export class WJSCSymbolTable {
     this.symbolTable.set(identifier, { type, table, lineNo, params })
   }
 
+  public rename = (oldId: string, newId: string) => {
+    const entry = this.symbolTable.get(oldId)
+    if (entry) {
+      this.symbolTable.delete(oldId)
+      this.symbolTable.set(newId, entry)
+    } else {
+      throw new Error('Tried to rename undefined variable')
+    }
+  }
+
   // Return the type of entry with given identifier if found
   public lookup = (identifier: string): TypeName => (this.getGlobalEntry(identifier) || { type: undefined }).type
 

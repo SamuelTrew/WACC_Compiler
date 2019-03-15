@@ -9,6 +9,9 @@ EXPORT: 'export';	// Export a function
 IMPORT: 'import';	// Import exported functions from a file
 DEFINE: 'define'; // Define a function, body expected elsewhere
 EXTERN: 'extern'; // External stdlib function
+FROM: 'from'; // Importing specific functions
+AS: 'as'; // Namespace renaming
+COLON: ':'; // Namespace accessor
 
 // Keywords
 BEGIN: 'begin';

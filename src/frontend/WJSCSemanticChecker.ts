@@ -21,6 +21,7 @@ import {
   EqualityOperatorContext,
   ExpressionContext,
   FuncContext,
+  ImportListContext,
   ImportsContext,
   IntegerLiteralContext,
   PairElementContext,
@@ -66,6 +67,7 @@ import {
   TerminalOperators,
   TypeName,
 } from '../util/WJSCType'
+import { WJSCPreprocessor } from './WJSCPreprocessor'
 import { WJSCSymbolTable } from './WJSCSymbolTable'
 
 /**
@@ -77,15 +79,19 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
   public errorLog: WJSCErrorLog
   public symbolTable: WJSCSymbolTable
   private tableCounter = 0
+  private readonly fileContext: string
+  private readonly allowEmptyBody: boolean
 
   /**
    * Returns a new Semantic Checker instance.
    * @param errorLog The error log to use for logging
    */
-  constructor(errorLog: WJSCErrorLog, symbolTable: WJSCSymbolTable) {
+  constructor(errorLog: WJSCErrorLog, symbolTable: WJSCSymbolTable, fileContext: string, allowEmptyBody = false) {
     super()
     this.errorLog = errorLog
     this.symbolTable = symbolTable
+    this.fileContext = fileContext
+    this.allowEmptyBody = allowEmptyBody
   }
 
   public visitArithmeticOperator = (
@@ -314,15 +320,16 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
       result.parserRule = WJSCParserRules.FunctionCall
       /* Function call */
       result.children.push(this.visitTerminal(call))
-      const ident = ctx.IDENTIFIER()
+      const [ident, namespace] = ctx.IDENTIFIER().reverse()
       const argList = ctx.argList()
       if (!ident) {
         this.errorLog.semErr(result, SemError.Undefined)
       } else {
         const visitedIdent = this.visitTerminal(ident)
+        if (namespace) { visitedIdent.value = `${namespace}:${visitedIdent.value}`}
         visitedIdent.type = this.symbolTable.lookup(visitedIdent.value)
         this.pushChild(result, visitedIdent)
-        result.ident = visitedIdent.token
+        result.ident = visitedIdent.value
         if (argList) {
           const visitedArgList = this.visitArgList(argList)
           result.children.push(visitedArgList)
@@ -905,10 +912,17 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     const result = this.initWJSCAst(ctx, WJSCParserRules.Program)
     const imports = ctx.imports()
     const functions = ctx.func()
+    result.functions = []
+
+    /* Visit imports */
+    if (imports) {
+      imports.forEach((importStatement) => {
+        result.functions = result.functions.concat(this.visitImport(importStatement))
+      })
+    }
 
     // Visit function declarations
     if (functions) {
-      result.functions = []
       functions.forEach((child) => {
         this.visitFuncDec(child)
       })
@@ -918,15 +932,40 @@ class WJSCSemanticChecker extends AbstractParseTreeVisitor<WJSCAst>
     }
 
     // Visit program body
-    const body = this.visitStatement(ctx.statement())
-    result.body = body
-    result.children.push(body)
+    const body = ctx.statement()
+    let visitedBody
+    if (body) {
+      visitedBody = this.visitStatement(body)
+    } else {
+      if (!this.allowEmptyBody) {
+        this.errorLog.warning('Warning: Compiling without program body')
+      }
+      visitedBody = {
+        parserRule: WJSCParserRules.Skip,
+      } as WJSCStatement
+    }
+    result.body = visitedBody
+    result.children.push(visitedBody)
     return result
   }
 
-  public visitImports = (ctx: ImportsContext) => {
-
+  public visitImport = (ctx: ImportsContext): WJSCFunction[] => {
+    const filename = this.visitTerminal(ctx.STRING_LITERAL()).value
+    const namespace = ctx.IDENTIFIER() ? this.visitTerminal(ctx.IDENTIFIER() as TerminalNode).value : undefined
+    const funcNames = this.visitImportNames(ctx.importList())
+    console.log('Importing functions from ' + filename)
+    try {
+      const preprocessor = new WJSCPreprocessor(filename, this.fileContext, this.errorLog, this.symbolTable, namespace, funcNames)
+      const funcs = preprocessor.generate()
+      return funcs
+    } catch (error) {
+      this.errorLog.synErr(ctx.start.line, ctx.start.charPositionInLine, SynError.BadImport, 'Preprocessor couldn\'t find file ' + filename)
+      return []
+    }
   }
+
+  public visitImportNames = (ctx?: ImportListContext): string[] | undefined => ctx ?
+    ctx.IDENTIFIER().map((ident) => ident.text) : undefined
 
   /** Ensure either skip, Assignments, read, stdlib, conditional,
    * begin/end or semicolon

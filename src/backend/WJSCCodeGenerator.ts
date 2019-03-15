@@ -859,7 +859,7 @@ class WJSCCodeGenerator {
   public genFunc = (atx: WJSCFunction, regList: Register[]) => {
     if (atx.body) {
       this.returnOffsets = []
-      this.output.push(directive.label(`f_${atx.identifier}`),
+      this.output.push(directive.label(`f_${atx.identifier.replace(':', '_')}`),
         construct.pushPop(ARMOpcode.push, [this.lr]))
       this.switchToChildTable(atx.body.tableNumber)
       this.symbolTable.setVarMemAddr(atx.identifier, this.currSpOffset)
@@ -1009,7 +1009,7 @@ class WJSCCodeGenerator {
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-argsize)], undefined, undefined, argsize === 1, undefined, true))
           this.stackPointer += argsize
         })
-        this.output.push(construct.branch(`f_${atx.ident}`, true))
+        this.output.push(construct.branch(`f_${atx.ident.replace(':', '_')}`, true))
         if (argc > 0) {
           this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(offsetctr)))
         }

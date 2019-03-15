@@ -312,11 +312,11 @@ begin
 	end
 	
 	# Copy the content of one board to another. Return true.
-	bool copyBoard(pair(pair, pair) from, pair(pair, pair) to) is
-		pair(pair, pair) frontFrom = fst from ;
+	bool copyBoard(pair(pair, pair) from_ , pair(pair, pair) to) is
+		pair(pair, pair) frontFrom = fst from_ ;
 		pair(pair, char) row1From = fst frontFrom ;
 		pair(pair, char) row2From = snd frontFrom ;
-		pair(pair, char) row3From = snd from ;
+		pair(pair, char) row3From = snd from_ ;
 		
 		pair(pair, pair) frontTo = fst to ;
 		pair(pair, char) row1To = fst frontTo ;
@@ -331,13 +331,13 @@ begin
 	end
 	
 	# Copy from one board row to another. Return true.
-	bool copyRow(pair(pair, char) from, pair(pair, char) to) is
-		pair(char, char) frontFrom = fst from ;
+	bool copyRow(pair(pair, char) from_ , pair(pair, char) to) is
+		pair(char, char) frontFrom = fst from_ ;
 		pair(char, char) frontTo = fst to ;
 		
 		fst frontTo = fst frontFrom ;
 		snd frontTo = snd frontFrom ;
-		snd to = snd from ;
+		snd to = snd from_ ;
 		return true
 	end
 	

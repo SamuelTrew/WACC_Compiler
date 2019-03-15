@@ -94,7 +94,7 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   }
 
   /* Instantiate our compiler */
-  const compiler = new WJSCCompiler(data, javascript, javascript ? { minify } : undefined)
+  const compiler = new WJSCCompiler(data, path.dirname(args.src), javascript, javascript ? { minify } : undefined)
   let tree
   let asm
   /* Visit the tree */
@@ -103,6 +103,8 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   } catch (error) {
     compiler.errorLog.runtimeError(error)
   }
+
+  compiler.errorLog.printWarnings().forEach((warning) => warn(warning))
 
   /* Count the number of error */
   const synerrors = compiler.errorLog.numSyntaxErrors()

@@ -8,6 +8,7 @@ enum SynError {
   Overflow = 'overflow',
   Underflow = 'underflow',
   NoReturn = 'no return',
+  BadImport = 'can\'t find import file',
 }
 
 enum SemError {
@@ -73,11 +74,13 @@ class WJSCErrorLog {
   private runtimeErrors: string[]
   private semanticErrors: string[]
   private syntaxErrors: string[]
+  private warnings: string[]
 
   constructor() {
     this.runtimeErrors = []
     this.semanticErrors = []
     this.syntaxErrors = []
+    this.warnings = []
   }
 
   public semErr = (node: WJSCAst, error: SemError, additionalParam?: typeERR) => {
@@ -107,13 +110,19 @@ class WJSCErrorLog {
     )
   }
 
+  public warning = (warning: string) => this.warnings.push(warning)
+
   public printErrors = (): string => {
     let errors = ''
-    this.runtimeErrors.forEach((error) => (errors += error + '\n'))
-    this.syntaxErrors.forEach((error) => (errors += error + '\n'))
-    this.semanticErrors.forEach((error) => (errors += error + '\n'))
+    errors += this.runtimeErrors.join('\n')
+    errors += errors === '' ? '' : '\n'
+    errors += this.syntaxErrors.join('\n')
+    errors += errors === '' ? '' : '\n'
+    errors += this.semanticErrors.join('\n')
     return errors
   }
+
+  public printWarnings = (): string[] => this.warnings
 
   public numErrors = (): number =>
     this.numSemanticErrors() + this.numSyntaxErrors()
@@ -128,6 +137,7 @@ class WJSCErrorLog {
     this.semanticErrors = []
     this.syntaxErrors = []
     this.runtimeErrors = []
+    this.warnings = []
   }
 }
 
