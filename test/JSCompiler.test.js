@@ -27,7 +27,7 @@ const execCheck = (code, done) => {
   */
 }
 
-readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output'], (err, files) => {
+readdir(path.resolve('wacc_examples', 'valid'), ['*.wacc~', '*.in', '*.output', '**/importBasicSpecific.wacc', '**/defineBasic.wacc', '**/ticTacToe/*.wacc'], (err, files) => {
   if (err) {
     throw err
   } else {

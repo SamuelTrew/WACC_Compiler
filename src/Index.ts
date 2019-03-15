@@ -94,7 +94,7 @@ fs.readFile(args.src, 'utf8', (err, data) => {
   }
 
   /* Instantiate our compiler */
-  const compiler = new WJSCCompiler(data, path.dirname(args.src), javascript, javascript ? { minify } : undefined)
+  const compiler = new WJSCCompiler(data, args.src, javascript, javascript ? { minify } : undefined)
   let tree
   let asm
   /* Visit the tree */

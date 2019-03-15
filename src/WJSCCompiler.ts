@@ -23,8 +23,8 @@ class WJSCCompiler {
 
   constructor(data: string, fileContext: string, js: boolean = false, jsOpts?: { minify: boolean }) {
     this.errorLog = new WJSCErrorLog()
-    this.errorListener = new WJSCErrorListener(this.errorLog)
-    this.symbolTable = new WJSCSymbolTable(0, undefined, false, this.errorLog)
+    this.errorListener = new WJSCErrorListener(this.errorLog, fileContext)
+    this.symbolTable = new WJSCSymbolTable(0, undefined, false, this.errorLog, fileContext)
     this.semanticChecker = new WJSCSemanticChecker(this.errorLog, this.symbolTable, fileContext)
     this.lexer = new WJSCLexer(new ANTLRInputStream(data))
     this.parser = new WJSCParser(new CommonTokenStream(this.lexer))

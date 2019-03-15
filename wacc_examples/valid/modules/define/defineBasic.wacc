@@ -1,4 +1,7 @@
 begin
+  import "./defineFuncs.wacc"
   define int f(int x)
-  int x = call f(1)
+  define int g(int x)
+  int x = call f(1);
+  int y = call g(1)
 end

@@ -1,3 +1,4 @@
+import * as path from 'path'
 import { WJSCAst } from './WJSCAst'
 import { BaseType, Stdlib, TypeName } from './WJSCType'
 
@@ -9,6 +10,7 @@ enum SynError {
   Underflow = 'underflow',
   NoReturn = 'no return',
   BadImport = 'can\'t find import file',
+  NoFunction = 'can\'t find declared function',
 }
 
 enum SemError {
@@ -83,10 +85,10 @@ class WJSCErrorLog {
     this.warnings = []
   }
 
-  public semErr = (node: WJSCAst, error: SemError, additionalParam?: typeERR) => {
+  public semErr = (node: WJSCAst, file: string, error: SemError, additionalParam?: typeERR) => {
     let errorMessage = ''
     const { line, column } = node
-    errorMessage += `Semantic Error '${error}' at ${line}:${column}: `
+    errorMessage += `Semantic Error '${error}' at ${path.basename(file)}:${line}:${column}: `
     errorMessage += (this.errorLookup.get(error) || (() => {
       throw new Error('Undefined error lookup')
     }))(node, additionalParam)
@@ -96,11 +98,12 @@ class WJSCErrorLog {
   public synErr = (
     line: number,
     column: number,
+    file: string,
     error: SynError,
     message: string,
   ) => {
     this.syntaxErrors.push(
-      `Syntax Error '${error}' at ${line}:${column}: ` + message,
+      `Syntax Error '${error}' at ${path.basename(file)}:${line}:${column}: ` + message,
     )
   }
 

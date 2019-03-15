@@ -230,7 +230,7 @@ export class WJSCParser extends Parser {
 			this.state = 76;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
-			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << WJSCParser.BEGIN) | (1 << WJSCParser.WSKIP) | (1 << WJSCParser.READ) | (1 << WJSCParser.FREE) | (1 << WJSCParser.RETURN) | (1 << WJSCParser.EXIT) | (1 << WJSCParser.PRINT) | (1 << WJSCParser.PRINTLN) | (1 << WJSCParser.IF) | (1 << WJSCParser.WHILE) | (1 << WJSCParser.FIRST) | (1 << WJSCParser.SECOND))) !== 0) || ((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)) | (1 << (WJSCParser.PAIR - 56)) | (1 << (WJSCParser.VOID - 56)) | (1 << (WJSCParser.IDENTIFIER - 56)))) !== 0)) {
+			if ((((_la) & ~0x1F) === 0 && ((1 << _la) & ((1 << WJSCParser.BEGIN) | (1 << WJSCParser.WSKIP) | (1 << WJSCParser.READ) | (1 << WJSCParser.FREE) | (1 << WJSCParser.RETURN) | (1 << WJSCParser.EXIT) | (1 << WJSCParser.PRINT) | (1 << WJSCParser.PRINTLN) | (1 << WJSCParser.IF) | (1 << WJSCParser.WHILE) | (1 << WJSCParser.FIRST) | (1 << WJSCParser.SECOND))) !== 0) || ((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)) | (1 << (WJSCParser.PAIR - 56)) | (1 << (WJSCParser.IDENTIFIER - 56)))) !== 0)) {
 				{
 				this.state = 75;
 				this.statement(0);
@@ -390,7 +390,7 @@ export class WJSCParser extends Parser {
 				this.state = 109;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)) | (1 << (WJSCParser.PAIR - 56)) | (1 << (WJSCParser.VOID - 56)))) !== 0)) {
+				if (((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)) | (1 << (WJSCParser.PAIR - 56)))) !== 0)) {
 					{
 					this.state = 108;
 					this.paramList();
@@ -432,7 +432,7 @@ export class WJSCParser extends Parser {
 				this.state = 124;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)) | (1 << (WJSCParser.PAIR - 56)) | (1 << (WJSCParser.VOID - 56)))) !== 0)) {
+				if (((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)) | (1 << (WJSCParser.PAIR - 56)))) !== 0)) {
 					{
 					this.state = 123;
 					this.paramList();
@@ -458,7 +458,7 @@ export class WJSCParser extends Parser {
 				this.state = 133;
 				this._errHandler.sync(this);
 				_la = this._input.LA(1);
-				if (((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)) | (1 << (WJSCParser.PAIR - 56)) | (1 << (WJSCParser.VOID - 56)))) !== 0)) {
+				if (((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)) | (1 << (WJSCParser.PAIR - 56)))) !== 0)) {
 					{
 					this.state = 132;
 					this.paramList();
@@ -1108,7 +1108,7 @@ export class WJSCParser extends Parser {
 			{
 			this.state = 247;
 			_la = this._input.LA(1);
-			if (!(((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)) | (1 << (WJSCParser.VOID - 56)))) !== 0))) {
+			if (!(((((_la - 56)) & ~0x1F) === 0 && ((1 << (_la - 56)) & ((1 << (WJSCParser.INTEGER - 56)) | (1 << (WJSCParser.BOOLEAN - 56)) | (1 << (WJSCParser.CHARACTER - 56)) | (1 << (WJSCParser.STRING - 56)))) !== 0))) {
 			this._errHandler.recoverInline(this);
 			} else {
 				if (this._input.LA(1) === Token.EOF) {
@@ -1160,7 +1160,6 @@ export class WJSCParser extends Parser {
 			case WJSCParser.BOOLEAN:
 			case WJSCParser.CHARACTER:
 			case WJSCParser.STRING:
-			case WJSCParser.VOID:
 				{
 				this.state = 250;
 				this.baseType();
@@ -2057,7 +2056,7 @@ export class WJSCParser extends Parser {
 		"\x03\x1F\x03 \x03 \x03 \x02\x02\x05\x0E\"(!\x02\x02\x04\x02\x06\x02\b" +
 		"\x02\n\x02\f\x02\x0E\x02\x10\x02\x12\x02\x14\x02\x16\x02\x18\x02\x1A\x02" +
 		"\x1C\x02\x1E\x02 \x02\"\x02$\x02&\x02(\x02*\x02,\x02.\x020\x022\x024\x02" +
-		"6\x028\x02:\x02<\x02>\x02\x02\t\x04\x02:=??\x03\x02#$\x03\x02 \"\x03\x02" +
+		"6\x028\x02:\x02<\x02>\x02\x02\t\x03\x02:=\x03\x02#$\x03\x02 \"\x03\x02" +
 		"%(\x04\x02))++\x05\x02$$0024\x03\x02\x11\x15\u0191\x02@\x03\x02\x02\x02" +
 		"\x04^\x03\x02\x02\x02\x06`\x03\x02\x02\x02\b\x8B\x03\x02\x02\x02\n\x8D" +
 		"\x03\x02\x02\x02\f\x95\x03\x02\x02\x02\x0E\xA7\x03\x02\x02\x02\x10\xBF" +
@@ -2869,7 +2868,6 @@ export class BaseTypeContext extends ParserRuleContext {
 	public BOOLEAN(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.BOOLEAN, 0); }
 	public CHARACTER(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.CHARACTER, 0); }
 	public STRING(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.STRING, 0); }
-	public VOID(): TerminalNode | undefined { return this.tryGetToken(WJSCParser.VOID, 0); }
 	constructor(parent: ParserRuleContext | undefined, invokingState: number) {
 		super(parent, invokingState);
 	}

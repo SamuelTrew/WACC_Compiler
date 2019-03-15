@@ -1,0 +1,8 @@
+begin
+  export int c() is 
+    return 0
+  end
+  export int d() is
+    return 0
+  end
+end

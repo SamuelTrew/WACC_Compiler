@@ -1,0 +1,60 @@
+begin
+	export bool printAiData(pair(pair, pair) aiData) is
+		
+		pair(char, pair) info = fst aiData ;
+		pair(pair, int) stateTree = snd aiData ;
+		
+		bool _ = call printStateTreeRecursively(stateTree) ;
+		exit 0
+	end
+	
+	export bool printStateTreeRecursively(pair(pair, int) stateTree) is
+		if stateTree == null then
+			return true 
+		else 
+			pair(pair, pair) front = fst stateTree ;
+			
+			pair(pair, pair) board = fst front ;
+			pair(pair, pair) pointers = snd front ;
+			int value = snd stateTree ;
+			
+			# Print the value
+			print 'v' ;
+			print '=' ;
+			println value ;
+			
+			bool _ = call printBoard(board) ;
+			_ = call printChildrenStateTree(pointers) ;
+			
+			println 'p' ;
+			return true
+		fi
+	end
+	
+	export bool printChildrenStateTree(pair(pair, pair) pointers) is
+		pair(pair, pair) front = fst pointers ;
+		
+		pair(pair, pair) row1 = fst front ;
+		pair(pair, pair) row2 = snd front ;
+		pair(pair, pair) row3 = snd pointers ;
+		
+		bool _ = call printChildrenStateTreeRow(row1) ;
+		_ = call printChildrenStateTreeRow(row2) ;
+		_ = call printChildrenStateTreeRow(row3) ;
+		return true
+	end
+	
+	export bool printChildrenStateTreeRow(pair(pair, pair) rowPointers) is
+		pair(pair, pair) front = fst rowPointers ;
+		
+		pair(pair, int) cell1 = fst front ;
+		pair(pair, int) cell2 = snd front ;
+		pair(pair, int) cell3 = snd rowPointers ;
+		
+		bool _ = call printStateTreeRecursively(cell1) ;
+		_ = call printStateTreeRecursively(cell2) ;
+		_ = call printStateTreeRecursively(cell3) ;
+		
+		return true
+	end
+end

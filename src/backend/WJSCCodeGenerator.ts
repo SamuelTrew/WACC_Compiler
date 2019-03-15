@@ -878,6 +878,10 @@ class WJSCCodeGenerator {
       } else {
         this.output.push(tabSpace + directive.ltorg)
       }
+    } else {
+      if (atx.funcType === 'define') {
+        console.log('Function expected body but none found')
+      }
     }
   }
 
@@ -1009,7 +1013,8 @@ class WJSCCodeGenerator {
           this.output.push(construct.singleDataTransfer(ARMOpcode.store, head, ['pre', this.sp, directive.immNum(-argsize)], undefined, undefined, argsize === 1, undefined, true))
           this.stackPointer += argsize
         })
-        this.output.push(construct.branch(`f_${atx.ident.replace(':', '_')}`, true))
+        const external = this.symbolTable.functionIsExternal(atx.ident)
+        this.output.push(construct.branch(`${external ? '' : 'f_'}${atx.ident.replace(':', '_')}`, true))
         if (argc > 0) {
           this.output.push(construct.arithmetic(ARMOpcode.add, this.sp, this.sp, directive.immNum(offsetctr)))
         }
