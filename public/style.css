@@ -15,6 +15,7 @@ h4 {
   white-space: normal;
   display: block;
   word-break: break-all;
+  border: 1px solid black;
 }
 
 .centerfold {
