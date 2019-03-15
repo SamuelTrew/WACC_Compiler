@@ -22,8 +22,15 @@
           <h4>Input WACC</h4>
           <form id="inputform">
             <fieldset>
-              <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
-                id="sourcecode"></textarea>
+              <div id = "inputDiv">
+                <span class = "wacc-form autoExpand" contenteditable="true" style="resize: none" id = "initialSpan" onkeyup="updateIfNeeded()">
+                  Enter your code here
+                </span>
+              </div>
+              <textarea id="sourcecode"></textarea>
+              <!--
+               <textarea class="wacc-form autoExpand" rows="20" placeholder="Input" style="resize: none;"
+                id="sourcecode" onkeyup="updateIDE()"> </textarea> -->
               <div class="flex-container flex-container-left">
                 <div>
                   Target Language
@@ -101,6 +108,96 @@
           document.getElementById('optimizebutton').classList.add('hidden')
         }
       })
+      let pastTime = new Date()
+      var updateIfNeeded = function(event) {
+        // If the user rests for > 2 seconds, then we update
+        const currTime = new Date()
+        if (currTime - pastTime > 2000) {
+          update()
+          pastTime = currTime
+        } else {
+          pastTime = currTime
+        }
+      }
+      var update = function (event) {
+        const inputBox = document.getElementById('inputDiv')
+        const debug = document.getElementById('sourcecode')
+        let spans = inputBox.getElementsByTagName('span'), text = [];
+        //debug.value = spans.length
+        //debug.value = spans[0].textContent
+        for (let i = 0; i < spans.length; i++) {
+          text.push(spans[i].textContent)
+        }
+        let index = 0
+        while (spans.length !== 0) {
+          const currSpan = spans[index]
+          inputBox.removeChild(currSpan)
+          index++
+        }
+        let currSpanLine = ''
+        let charsSinceLastLine = 0
+        let newSpans = []
+        let firstTime = true
+        text.forEach((child, index) => {
+          let br = child.indexOf('\\n')
+          if (br === -1) {
+            charsSinceLastLine += child.length
+            currSpanLine += child
+            debug.value = text[0]
+          } else {
+            // We need to find all line breaks in this child line
+            const splitChild = child.split('\\n')
+            for (let i = 0; i < splitChild.length - 1; i++) {
+              let newLine = ''
+              if (charsSinceLastLine + splitChild[i].length() > 80) {
+                // We highlight the whole line in red
+                if (!firstTime) {
+                  newLine = '<br>' + '<span style="color: #f00;" onkeyup="update()" contenteditable="true">' + currSpanLine + splitChild[i] + '</span>'
+                } else {
+                  newLine = '<span style="color: #f00;" onkeyup="update()" contenteditable="true">' + currSpanLine + splitChild[i] + '</span>'
+                  firstTime = false
+                }
+              } else {
+                // regular text color
+                if (!firstTime) {
+                  newLine = '<br>' + '<span style="color: #000;" onkeyup="update()" contenteditable="true">' + currSpanLine + splitChild[i] + '</span>'
+                } else {
+                  newLine = '<span style="color: #000;" onkeyup="update()" contenteditable="true">' + currSpanLine + splitChild[i] + '</span>'
+                  firstTime = false
+                }
+              }
+              newSpans.push(newLine)
+              charsSinceLastLine = 0
+              currSpanLine = ''
+            }
+            charsSinceLastLine = splitChild[splitChild.length()-1].length
+            currSpanLine = splitChild[splitChild.length()-1]
+          }
+        })
+        let lastLine = ''
+        if (charsSinceLastLine > 80) {
+          // We highlight the whole line in red
+          if (!firstTime) {
+            lastLine = '<br>' + '<span style="color: #f00;" onkeyup="update()" contenteditable="true">' + currSpanLine  + '</span>'
+          } else {
+            lastLine = '<span style="color: #f00;" onkeyup="update()" contenteditable="true">' + currSpanLine + '</span>'
+            firstTime = false
+          }
+        } else {
+          // regular text color
+          if (!firstTime) {
+            lastLine = '<br>' + '<span style="color: #000;" onkeyup="update()" contenteditable="true">' + currSpanLine  + '</span>'
+          } else {
+            lastLine = '<span style="color: #000;" onkeyup="update()" contenteditable="true">' + currSpanLine + '</span>'
+            firstTime = false
+          }
+        }
+        newSpans.push(lastLine)
+        // Now that we have collected the ideal spans, we post them out
+        newSpans.forEach((newSpan) => {
+          inputBox.innerHTML += newSpan
+        })
+      }
       var executeJs = function (event) {
         event.preventDefault()
         if (!isJs) return;
