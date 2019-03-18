@@ -23,6 +23,7 @@
       <form id="inputform">
         <fieldset>
           <div id = "inputDiv">
+                <label class = 'numbering' for="initialSpan">1</label>
                 <span class = "autoExpand one-per-line" contenteditable="true" style="resize: none" id = "initialSpan" onclick = "updateIndex()" onkeyup="updateIfNeeded()">Enter your code here</span>
           </div>
           <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
@@ -117,12 +118,16 @@
     const debug = document.getElementById('sourcecode')
     event = event || window.event;
     setTimeout(function () {
-      const currIndex = (window.getSelection().getRangeAt(0).startOffset);
+      const currIndex = (window.getSelection().getRangeAt(0).startOffset);  // currIndex = 0 means a new line
       const lineLength = event.target.textContent.length
       // debug.value = currIndex + event.target.id + 'lineLen' + lineLength
       if (currIndex === 0 && lineLength !== 0) {
-        const lastLineLength = lastIndex
-        const changedSpanId = event.target.id
+        const code = event.keyCode || event.which
+        let lastLineLength = lastIndex
+        if (code === 8) {
+          // If we are deleting, lastIndex needs to be compensated
+          lastLineLength = 0
+        }
         // debug.value = 'currInd:' + currIndex + 'len:' + lastLineLength + changedSpanId
         // We update the original span
         const fst = event.target.textContent.substring(0, lastLineLength)
@@ -136,7 +141,12 @@
         }
         newSpan.textContent = snd
         event.target.parentNode.insertBefore(newSpan, event.target.nextSibling);
+        // And then we conduct error checking
         update()
+        // If the user made a new line, we want to jump to that new line
+        if (newSpan !== undefined) {
+          newSpan.focus()
+        }
       } else if (lineLength === 0) {
         regenerate()
       }
@@ -147,7 +157,7 @@
     const inputDiv = document.getElementById('inputDiv')
     const debug = document.getElementById('sourcecode')
     let spans = inputDiv.getElementsByTagName('span')
-    for (let i = 0; i < spans.length ; i++) {
+    for (let i = 0; i < spans.length; i++) {
       if (spans[i].textContent.length === 0) {
         // delete all empty spans
         spans[i].remove()
