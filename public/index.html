@@ -23,7 +23,7 @@
       <form id="inputform">
         <fieldset>
           <div id = "inputDiv">
-                <span class = "autoExpand one-per-line" contenteditable="true" style="resize: none" id = "initialSpan" onclick = "updateIndex()" onkeyup="updateIfNeeded()">Enter your code here</span>
+                <span class = "autoExpand one-per-line" contenteditable="true" style="resize: none" id = "0" onclick = "updateIndex()" onkeyup="updateCheck()">Enter your code here</span>
           </div>
           <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
                     id="sourcecode"></textarea>
@@ -106,20 +106,84 @@
   })
   let lastIndex = 0
   var updateIndex = function(event) {
-    const debug = document.getElementById('sourcecode')
     setTimeout(function () {
       lastIndex= (window.getSelection().getRangeAt(0).startOffset);
-      //debug.value = lastIndex
     }, 0);
   }
+  let spanId = 0
+  var updateCheck = function(event) {
+    const debug = document.getElementById('sourcecode');
+    event = event || window.event;
+    setTimeout(function () {
+      const currIndex = (window.getSelection().getRangeAt(0).startOffset);
+      // currIndex == 0 means caret is now at start of new span
+      const currLength = event.target.textContent.length;
+      const keyPress = event.keyCode || event.which;
+      // debug.value = currIndex + ' ' + keyPress + ' ' + currLength;
+      if (currIndex === 0 && keyPress === 13) {  // <- If we pressed enter
+        // We split the line at the caret's index, and make them both into spans
+        let fstLineLength = lastIndex;
+        const fst = event.target.textContent.substring(0, fstLineLength);
+        const snd = event.target.textContent.substring(fstLineLength, currLength);
+        event.target.textContent = fst
+        const newSpan = document.createElement('span')
+        spanId = spanId + 1
+        const attrs = {"class": "autoExpand one-per-line", "contenteditable": "true", "style": "resize: none", "id": `${spanId}`, "onclick" : "updateIndex()", "onkeyup" : "updateCheck()"}
+        for(var key in attrs) {
+          newSpan.setAttribute(key, attrs[key]);
+        }
+        newSpan.textContent = snd
+        event.target.parentNode.insertBefore(newSpan, event.target.nextSibling);
+        // Then we update, checking and highlighting errors
+        updateError();
+        // If the user made a new line, we want to jump to that new line
+        if (newSpan !== undefined) {
+          newSpan.focus()
+        }
+      } else if (currIndex === 0 && keyPress === 8 && currLength === 0) {  // <- // If we want to delete a line
+        const inputDiv = document.getElementById('inputDiv');
+        let spans = inputDiv.getElementsByTagName('span');
+        if (spans.length > 1) { // <- We cannot delete the last possible line
+          let prevSpan = spans.length[0]
+          for (let i = 0; i < spans.length; i++) {
+            if (spans[i].id === event.target.id) {
+              break;
+            } else {
+              prevSpan = spans[i]
+            }
+          }
+          event.target.remove();
+          if (prevSpan !== undefined) {
+            prevSpan.focus()
+          }
+        }
+      }
+      lastIndex = currIndex
+    })
+  }
+  var updateError = function(event) {
+    /* Current scenarios to take care of:
+      1. Overly long length
+    */
+    const inputDiv = document.getElementById('inputDiv');
+    const debug = document.getElementById('sourcecode');
+    let spans = inputDiv.getElementsByTagName('span');
+    for (let i = 0; i < spans.length ; i++) {
+       if (spans[i].textContent.length > 80) {
+        spans[i].style.color = '#f00'
+      } else {
+        spans[i].style.color = '#000'
+      }
+    }
+  }
   var updateIfNeeded = function(event) {
-    event = (event ? event : window.event)
-    const debug = document.getElementById('sourcecode')
+    const debug = document.getElementById('sourcecode');
     event = event || window.event;
     setTimeout(function () {
       const currIndex = (window.getSelection().getRangeAt(0).startOffset);  // currIndex = 0 means a new line
       const lineLength = event.target.textContent.length
       // debug.value = currIndex + event.target.id + 'lineLen' + lineLength
+      debug.value = lineLength
       if (currIndex === 0 && lineLength !== 0) {
         const code = event.keyCode || event.which
         let lastLineLength = lastIndex
