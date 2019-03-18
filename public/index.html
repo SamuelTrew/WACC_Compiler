@@ -23,7 +23,6 @@
       <form id="inputform">
         <fieldset>
           <div id = "inputDiv">
-                <label class = 'numbering' for="initialSpan">1</label>
                 <span class = "autoExpand one-per-line" contenteditable="true" style="resize: none" id = "initialSpan" onclick = "updateIndex()" onkeyup="updateIfNeeded()">Enter your code here</span>
           </div>
           <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
@@ -231,7 +230,14 @@
     document.getElementById('submitbutton').disabled = true;
     document.getElementById('submitbutton').value = 'Loading';
     const targetlang = document.getElementById('targetlang').value;
-    const sourcecode = document.getElementById('sourcecode').value;
+    let sourcecode = document.getElementById('sourcecode').value;
+    if (sourcecode === '') {  // If the regular input is empty, we take the dynamic code
+      let spans = inputDiv.getElementsByTagName('span')
+      for (let i = 0; i < spans.length - 1; i++) {
+        sourcecode += spans[i].textContent + '\n'
+      }
+      sourcecode += spans[spans.length - 1].textContent
+    }
     const optimize = document.getElementById('optimize-button').checked;
     var request = new XMLHttpRequest();
     const payload = {
