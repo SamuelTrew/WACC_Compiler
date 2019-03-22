@@ -23,7 +23,7 @@
       <form id="inputform">
         <fieldset>
           <div id = "inputDiv">
-                <span class = "autoExpand one-per-line" contenteditable="true" style="resize: none" id = "0" onclick = "updateIndex()" onkeyup="updateCheck()">Enter your code here</span>
+                <span class = "autoExpand one-per-line placeholder" contenteditable="true" style="resize: none" id = "0" onclick = "updateIndex()" onkeyup="updateCheck()">Enter your code here</span>
           </div>
           <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
                     id="sourcecode"></textarea>
@@ -106,8 +106,13 @@
   })
   let lastIndex = 0
   var updateIndex = function(event) {
+    event = event || window.event;
     setTimeout(function () {
       lastIndex= (window.getSelection().getRangeAt(0).startOffset);
+      // Remove placeholder if this is the first element
+      if (event.target.classList.contains('placeholder')) {
+        event.target.textContent = ""
+      }
     }, 0);
   }
   let spanId = 0
@@ -175,99 +180,6 @@
         spans[i].style.color = '#000'
       }
     }
-  }
-  var updateIfNeeded = function(event) {
-    const debug = document.getElementById('sourcecode');
-    event = event || window.event;
-    setTimeout(function () {
-      const currIndex = (window.getSelection().getRangeAt(0).startOffset);  // currIndex = 0 means a new line
-      const lineLength = event.target.textContent.length
-      // debug.value = currIndex + event.target.id + 'lineLen' + lineLength
-      debug.value = lineLength
-      if (currIndex === 0 && lineLength !== 0) {
-        const code = event.keyCode || event.which
-        let lastLineLength = lastIndex
-        if (code === 8) {
-          // If we are deleting, lastIndex needs to be compensated
-          lastLineLength = 0
-        }
-        // debug.value = 'currInd:' + currIndex + 'len:' + lastLineLength + changedSpanId
-        // We update the original span
-        const fst = event.target.textContent.substring(0, lastLineLength)
-        const snd = event.target.textContent.substring(lastLineLength, lineLength)
-        event.target.textContent = fst
-        // We create a new span
-        const newSpan= document.createElement('span');
-        const attrs = {"class": "autoExpand one-per-line", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
-        for(var key in attrs) {
-          newSpan.setAttribute(key, attrs[key]);
-        }
-        newSpan.textContent = snd
-        event.target.parentNode.insertBefore(newSpan, event.target.nextSibling);
-        // And then we conduct error checking
-        update()
-        // If the user made a new line, we want to jump to that new line
-        if (newSpan !== undefined) {
-          newSpan.focus()
-        }
-      } else if (lineLength === 0) {
-        regenerate()
-      }
-      lastIndex = currIndex
-    }, 0);
-  }
-  var regenerate = function () {
-    const inputDiv = document.getElementById('inputDiv')
-    const debug = document.getElementById('sourcecode')
-    let spans = inputDiv.getElementsByTagName('span')
-    for (let i = 0; i < spans.length; i++) {
-      if (spans[i].textContent.length === 0) {
-        // delete all empty spans
-        spans[i].remove()
-      }
-    }
-    if (spans.length === 0) {
-      // ensure at least one span
-      const newSpan= document.createElement('span');
-      const attrs = {"class": "autoExpand one-per-line", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
-      for(var key in attrs) {
-        newSpan.setAttribute(key, attrs[key]);
-      }
-      newSpan.textContent = 'Enter your code here'
-      inputDiv.append(newSpan)
-    }
-  }
-  var update = function () {
-    /* Three scenarios to take care of:
-       1. Empty spans 2. Overly long spans 3. No spans left
-       Also we need to insert a break between spans
-     */
-    const inputDiv = document.getElementById('inputDiv')
-    const debug = document.getElementById('sourcecode')
-    let spans = inputDiv.getElementsByTagName('span')
-    let markedForDelete = []
-    for (let i = 0; i < spans.length ; i++) {
-      if (spans[i].textContent.length === 0 && i !== spans.length - 1) { // <- If last, assume user wants new line
-        markedForDelete.push(spans[i])
-      } else if (spans[i].textContent.length > 80) {
-        spans[i].style.color = '#f00'
-      } else {
-        spans[i].style.color = '#000'
-      }
-    }
-    markedForDelete.forEach((marked) => {
-      marked.remove()
-    })
-    /*
-  if (spans.length - markedForDelete.length <= 0){
-    // Create new span
-    const newSpan= document.createElement('span');
-    const attrs = {"class": "wacc-form autoExpand", "contenteditable": "true", "style": "resize: none", "id": "initialSpan", "onclick" : "updateIndex()", "onkeyup" : "updateIfNeeded()"}
-    for(var key in attrs) {
-      newSpan.setAttribute(key, attrs[key]);
-    }
-    inputDiv.append(newSpan)
-  } */
   }
   var executeJs = function (event) {
     event.preventDefault()
