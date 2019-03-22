@@ -57,3 +57,11 @@ h4 {
 .hidden {
   display: none;
 }
+
+#raptor {
+  display: none;
+  position: fixed;
+  bottom:0px;
+  width: 20vw;
+  left: 75vw;
+}

@@ -62,6 +62,7 @@
       <button id="repl-clear" class="repl-buttons button button-clear" onclick="clearRepl(event)">Clear</button>
     </div>
   </div>
+  <img class = "raptor" id = "raptor" src="raptor.png" alt="raptor">
 </div>
 <script>
   document.getElementById('repl-run').disabled = true
@@ -124,6 +125,7 @@
       // currIndex == 0 means caret is now at start of new span
       const currLength = event.target.textContent.length;
       const keyPress = event.keyCode || event.which;
+      konami(keyPress);
       // debug.value = currIndex + ' ' + keyPress + ' ' + currLength;
       if (currIndex === 0 && keyPress === 13) {  // <- If we pressed enter
         // We split the line at the caret's index, and make them both into spans
@@ -183,6 +185,34 @@
         spans[i].style.color = '#f00'
       } else {
         spans[i].style.color = '#000'
+      }
+    }
+  }
+  const konamiCode = [38,38,40,40,37,39,37,39,66,65];
+  let konamiIndex = 0;
+  var konami = function(keycode) {
+    const debug = document.getElementById('sourcecode');
+    if (keycode == konamiCode[konamiIndex]) {
+      konamiIndex ++;
+    } else {
+      konamiIndex = 0;
+    }
+    if (konamiIndex == 10) {
+      konamiIndex = 0
+      const debug = document.getElementById('sourcecode');
+      const raptor = document.getElementById('raptor');
+      raptor.style.display = 'block';
+      // Movement
+      let pos = 75
+      let id = setInterval(frame, 15);
+      function frame(){
+        if (raptor.style.left == '-25vw') {
+          clearInterval(id)
+          raptor.style.display = 'none';
+        } else {
+          pos = pos - 0.25;
+          raptor.style.left = pos + 'vw'
+        }
       }
     }
   }
