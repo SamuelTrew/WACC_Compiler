@@ -1,0 +1,16 @@
+# basic exit statement
+
+# Output:
+# #empty#
+
+# Exit:
+# 7
+
+# Program:
+
+begin
+  import "hello.wacc"
+  export int f() is skip end
+  define int g(int x)
+  exit 7
+end

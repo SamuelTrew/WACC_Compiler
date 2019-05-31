@@ -8,9 +8,11 @@ import { SynError, WJSCErrorLog } from './WJSCErrors'
 
 class WJSCErrorListener implements ParserErrorListener {
   private errorLog: WJSCErrorLog
+  private fileContext: string
 
-  constructor(errorLog: WJSCErrorLog) {
+  constructor(errorLog: WJSCErrorLog, fileContext: string) {
     this.errorLog = errorLog
+    this.fileContext = fileContext
   }
 
   public syntaxError = (
@@ -21,7 +23,7 @@ class WJSCErrorListener implements ParserErrorListener {
     msg: string,
     e: RecognitionException | undefined,
   ) => {
-    this.errorLog.synErr(line, charPositionInLine, SynError.BadToken, msg)
+    this.errorLog.synErr(line, charPositionInLine, this.fileContext, SynError.BadToken, msg)
   }
 }
 

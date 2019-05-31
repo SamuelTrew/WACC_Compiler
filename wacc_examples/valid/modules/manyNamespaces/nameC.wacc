@@ -1,0 +1,10 @@
+begin
+  export char hello(int x) is
+    for (any i = 0; i < 20; i = i + 2) do
+      print i;
+      print ": ";
+      println "Hello"
+    done;
+    return 'h'
+  end
+end

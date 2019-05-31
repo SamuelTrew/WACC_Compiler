@@ -10,6 +10,17 @@ h1 {
 h4 {
   font-weight: 500;
 }
+.numbering {
+  display: inline-block;
+  float: left;
+}
+
+.one-per-line {
+  white-space: normal;
+  display: block;
+  word-break: break-all;
+  border: 1px solid black;
+}
 
 .centerfold {
   text-align: center;
@@ -45,4 +56,12 @@ h4 {
 
 .hidden {
   display: none;
+}
+
+#raptor {
+  display: none;
+  position: fixed;
+  bottom:0px;
+  width: 20vw;
+  left: 75vw;
 }

@@ -1,0 +1,5 @@
+begin
+  export int f(int x) is
+    return x
+  end
+end

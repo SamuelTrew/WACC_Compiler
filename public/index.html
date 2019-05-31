@@ -1,175 +1,297 @@
 <!doctype html>
 <html>
 
-  <head>
-    <title>WJSC Web Compiler</title>
-    <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,500" rel="stylesheet">
-    <link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
-    <link href="style.css" rel="stylesheet">
-  </head>
+<head>
+  <title>WJSC Web Compiler</title>
+  <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,500" rel="stylesheet">
+  <link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
+  <link href="style.css" rel="stylesheet">
+</head>
 
-  <body>
-    <div class="centerfold">
-      <img src="wjsc_512.png" style="width:20vw;margin:30px">
-      <h1>
-        WJSC Web Compiler
-      </h1>
-      <p>
-        I heard you like WACC.
-      </p>
-      <div class="flex-container">
-        <div class="flex-items">
-          <h4>Input WACC</h4>
-          <form id="inputform">
-            <fieldset>
-              <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
-                id="sourcecode"></textarea>
-              <div class="flex-container flex-container-left">
-                <div>
-                  Target Language
-                  <select name="target" id="targetlang">
-                    <option value="arm">ARM7TDMI</option>
-                    <option value="js">ES5</option>
-                  </select>
-                </div>
-              </div>
-              <div class="optimize-checkbox hidden" id="optimizebutton">
-                <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimize-button">Optimize JS
-              </div>
-              <input class="button button-outline" type="submit" value="Submit" id="submitbutton">
-            </fieldset>
-          </form>
-        </div>
-        <div class="flex-items">
-          <h4>Output</h4>
-          <form>
-            <fieldset>
-              <textarea class="wacc-form autoExpand" id="output" rows="20" placeholder="Output" style="resize: none;"
-                disabled></textarea>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-      <div>
-        <h4>WJSC REPL</h4>
-        <p>Try compiled JS code!</p>
-        <textarea class="repl" id="repl" rows="20" cols="80" style="resize: none;" disabled></textarea>
-        <div class="flex-container">
-          <button id="repl-run" class="repl-buttons button button-outline" onclick="executeJs(event)">Run</button>
-          <button id="repl-clear" class="repl-buttons button button-clear" onclick="clearRepl(event)">Clear</button>
-        </div>
-      </div>
+<body>
+<div class="centerfold">
+  <img src="wjsc_512.png" style="width:20vw;margin:30px">
+  <h1>
+    WJSC Web Compiler
+  </h1>
+  <p>
+    I heard you like WACC.
+  </p>
+  <div class="flex-container">
+    <div class="flex-items">
+      <h4>Input WACC</h4>
+      <form id="inputform">
+        <fieldset>
+          <div id = "inputDiv">
+                <span class = "autoExpand one-per-line placeholder" contenteditable="true" style="resize: none" id = "0" onclick = "updateIndex()" onkeyup="updateCheck()">Enter your code here</span>
+          </div>
+          <textarea class="wacc-form autoExpand" rows="20" placeholder="Input WACC" style="resize: none;"
+                    id="sourcecode"></textarea>
+          <div class="flex-container flex-container-left">
+            <div>
+              Target Language
+              <select name="target" id="targetlang">
+                <option value="arm">ARM7TDMI</option>
+                <option value="js">ES5</option>
+              </select>
+            </div>
+          </div>
+          <div class="optimize-checkbox hidden" id="optimizebutton">
+            <input type="checkbox" name="optimize-js" value="Optimize JS" id="optimize-button">Optimize JS
+          </div>
+          <input class="button button-outline" type="submit" value="Submit" id="submitbutton">
+        </fieldset>
+      </form>
     </div>
-    <script>
-      document.getElementById('repl-run').disabled = true
-      document.getElementById('repl-clear').disabled = true
-      const repl = document.getElementById('repl')
-      repl.value += '> Generate JS code and run it.\n'
-      var isJs = false
-      var textareas = document.getElementsByTagName('textarea');
-      var count = textareas.length;
-      for (var i = 0; i < count; i++) {
-        textareas[i].onkeydown = function (e) {
-          if (e.keyCode == 9 || e.which == 9) {
-            e.preventDefault();
-            var s = this.selectionStart;
-            this.value = this.value.substring(0, this.selectionStart) + '  ' + this.value.substring(this.selectionEnd);
-            this.selectionEnd = s + 1;
+    <div class="flex-items">
+      <h4>Output</h4>
+      <form>
+        <fieldset>
+              <textarea class="wacc-form autoExpand" id="output" rows="20" placeholder="Output" style="resize: none;"
+                        disabled></textarea>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div>
+    <h4>WJSC REPL</h4>
+    <p>Try compiled JS code!</p>
+    <textarea class="repl" id="repl" rows="20" cols="80" style="resize: none;" disabled></textarea>
+    <div class="flex-container">
+      <button id="repl-run" class="repl-buttons button button-outline" onclick="executeJs(event)">Run</button>
+      <button id="repl-clear" class="repl-buttons button button-clear" onclick="clearRepl(event)">Clear</button>
+    </div>
+  </div>
+  <img class = "raptor" id = "raptor" src="raptor.png" alt="raptor">
+</div>
+<script>
+  document.getElementById('repl-run').disabled = true
+  document.getElementById('repl-clear').disabled = true
+  const repl = document.getElementById('repl')
+  repl.value += '> Generate JS code and run it.\n'
+  var isJs = false
+  var textareas = document.getElementsByTagName('textarea');
+  var count = textareas.length;
+  for (var i = 0; i < count; i++) {
+    textareas[i].onkeydown = function (e) {
+      if (e.keyCode == 9 || e.which == 9) {
+        e.preventDefault();
+        var s = this.selectionStart;
+        this.value = this.value.substring(0, this.selectionStart) + '  ' + this.value.substring(this.selectionEnd);
+        this.selectionEnd = s + 1;
+      }
+    }
+  }
+  var autoExpand = function (field) {
+    field.style.height = '120px';
+    var computed = window.getComputedStyle(field);
+    var height = parseInt(computed.getPropertyValue('border-top-width'), 10)
+            + parseInt(computed.getPropertyValue('padding-top'), 10)
+            + field.scrollHeight
+            + parseInt(computed.getPropertyValue('padding-bottom'), 10)
+            + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
+    field.style.height = height - 12 + 'px';
+  };
+  document.addEventListener('input', function (event) {
+    if (event.target.tagName.toLowerCase() !== 'textarea') return;
+    if (event.target.id === 'repl') return;
+    autoExpand(event.target);
+  }, false);
+  document.addEventListener('input', function (even) {
+    if (event.target.id !== 'targetlang') return;
+    if (event.target.value === 'js') {
+      document.getElementById('optimizebutton').classList.remove('hidden')
+    } else {
+      document.getElementById('optimizebutton').classList.add('hidden')
+    }
+  })
+  let lastIndex = 0
+  var updateIndex = function(event) {
+    event = event || window.event;
+    setTimeout(function () {
+      lastIndex= (window.getSelection().getRangeAt(0).startOffset);
+      // Remove placeholder if this is the first element
+      if (event.target.classList.contains('placeholder')) {
+        event.target.textContent = ""
+      }
+    }, 0);
+  }
+  let spanId = 0
+  var updateCheck = function(event) {
+    const debug = document.getElementById('sourcecode');
+    event = event || window.event;
+    setTimeout(function () {
+      const currIndex = (window.getSelection().getRangeAt(0).startOffset);
+      // currIndex == 0 means caret is now at start of new span
+      const currLength = event.target.textContent.length;
+      const keyPress = event.keyCode || event.which;
+      konami(keyPress);
+      // debug.value = currIndex + ' ' + keyPress + ' ' + currLength;
+      if (currIndex === 0 && keyPress === 13) {  // <- If we pressed enter
+        // We split the line at the caret's index, and make them both into spans
+        let fstLineLength = lastIndex;
+        const fst = event.target.textContent.substring(0, fstLineLength);
+        const snd = event.target.textContent.substring(fstLineLength, currLength);
+        event.target.textContent = fst
+        const newSpan = document.createElement('span')
+        spanId = spanId + 1
+        const attrs = {"class": "autoExpand one-per-line", "contenteditable": "true", "style": "resize: none", "id": `${spanId}`, "onclick" : "updateIndex()", "onkeyup" : "updateCheck()"}
+        for(var key in attrs) {
+          newSpan.setAttribute(key, attrs[key]);
+        }
+        newSpan.textContent = snd
+        event.target.parentNode.insertBefore(newSpan, event.target.nextSibling);
+        // Then we update, checking and highlighting errors
+        updateError();
+        // If the user made a new line, we want to jump to that new line
+        if (newSpan !== undefined) {
+          newSpan.focus()
+        }
+      } else if (currIndex === 0 && keyPress === 8 && currLength === 0) {  // <- // If we want to delete a line
+        const inputDiv = document.getElementById('inputDiv');
+        let spans = inputDiv.getElementsByTagName('span');
+        if (spans.length > 1) { // <- We cannot delete the last possible line
+          let prevSpan = spans.length[0]
+          for (let i = 0; i < spans.length; i++) {
+            if (spans[i].id === event.target.id) {
+              break;
+            } else {
+              prevSpan = spans[i]
+            }
+          }
+          event.target.remove();
+          if (prevSpan !== undefined) {
+            let range = document.createRange()
+            let sel = window.getSelection()
+            range.setStart(prevSpan.childNodes[0], prevSpan.textContent.length)
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
           }
         }
       }
-      var autoExpand = function (field) {
-        field.style.height = '120px';
-        var computed = window.getComputedStyle(field);
-        var height = parseInt(computed.getPropertyValue('border-top-width'), 10)
-          + parseInt(computed.getPropertyValue('padding-top'), 10)
-          + field.scrollHeight
-          + parseInt(computed.getPropertyValue('padding-bottom'), 10)
-          + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
-        field.style.height = height - 12 + 'px';
-      };
-      document.addEventListener('input', function (event) {
-        if (event.target.tagName.toLowerCase() !== 'textarea') return;
-        if (event.target.id === 'repl') return;
-        autoExpand(event.target);
-      }, false);
-      document.addEventListener('input', function (even) {
-        if (event.target.id !== 'targetlang') return;
-        if (event.target.value === 'js') {
-          document.getElementById('optimizebutton').classList.remove('hidden')
+      lastIndex = currIndex
+    })
+  }
+  var updateError = function(event) {
+    /* Current scenarios to take care of:
+      1. Overly long length
+    */
+    const inputDiv = document.getElementById('inputDiv');
+    const debug = document.getElementById('sourcecode');
+    let spans = inputDiv.getElementsByTagName('span');
+    for (let i = 0; i < spans.length ; i++) {
+       if (spans[i].textContent.length > 80) {
+        spans[i].style.color = '#f00'
+      } else {
+        spans[i].style.color = '#000'
+      }
+    }
+  }
+  const konamiCode = [38,38,40,40,37,39,37,39,66,65];
+  let konamiIndex = 0;
+  var konami = function(keycode) {
+    const debug = document.getElementById('sourcecode');
+    if (keycode == konamiCode[konamiIndex]) {
+      konamiIndex ++;
+    } else {
+      konamiIndex = 0;
+    }
+    if (konamiIndex == 10) {
+      konamiIndex = 0
+      const debug = document.getElementById('sourcecode');
+      const raptor = document.getElementById('raptor');
+      raptor.style.display = 'block';
+      // Movement
+      let pos = 75
+      let id = setInterval(frame, 15);
+      function frame(){
+        if (raptor.style.left == '-25vw') {
+          clearInterval(id)
+          raptor.style.display = 'none';
         } else {
-          document.getElementById('optimizebutton').classList.add('hidden')
-        }
-      })
-      var executeJs = function (event) {
-        event.preventDefault()
-        if (!isJs) return;
-        var oldlog = console.log
-        console.log = function (message) {
-          repl.value += message + '\n'
-          repl.scrollTop = repl.scrollHeight
-        }
-        try {
-          const exitCode = eval(document.getElementById('output').value)
-          console.log('> Exited with exit code ' + (exitCode === undefined ? 0 : exitCode))
-        } catch (runtimeError) {
-          console.log('Runtime Error: ' + runtimeError.message)
-          console.log('Please contact the maintainers with the code that generated this message.')
-        }
-        console.log = oldlog
-      }
-      var clearRepl = function (event) {
-        event.preventDefault()
-        repl.value = '> Generate JS code and run it.\n'
-      }
-      var getCode = function (code) {
-        document.getElementById('submitbutton').disabled = true;
-        document.getElementById('submitbutton').value = 'Loading';
-        const targetlang = document.getElementById('targetlang').value;
-        const sourcecode = document.getElementById('sourcecode').value;
-        const optimize = document.getElementById('optimize-button').checked;
-        var request = new XMLHttpRequest();
-        const payload = {
-          target: targetlang,
-          code: sourcecode,
-          optimize,
-        }
-        request.open('POST', '/compile', true)
-        request.setRequestHeader('Content-type', 'application/json');
-        request.send(JSON.stringify(payload))
-        request.onload = function () {
-          var data = JSON.parse(this.response)
-          var output
-          switch (this.status) {
-            case 200:
-              output = data.code
-              break
-            case 400:
-              output = 'Client Error: ' + data.error + '\nContact the maintainers for more info.'
-              break
-            case 500:
-              output = 'Compile Error:\n' + data.error
-              break
-          }
-          document.getElementById('output').value = output
-          autoExpand(document.getElementById('output'))
-          document.getElementById('submitbutton').disabled = false;
-          document.getElementById('submitbutton').value = 'Submit';
-          isJs = targetlang === 'js'
-          document.getElementById('repl-run').disabled = !isJs
-          document.getElementById('repl-clear').disabled = !isJs
-        }
-        request.onerror = function () {
-          document.getElementById('output').value = 'Error fetching from server!\nContact the maintainers for more info.'
-          document.getElementById('submitbutton').disabled = false;
-          document.getElementById('submitbutton').value = 'Submit';
+          pos = pos - 0.25;
+          raptor.style.left = pos + 'vw'
         }
       }
-      document.getElementById("inputform").addEventListener("submit", function (event) {
-        event.preventDefault()
-        getCode()
-      });
-    </script>
-  </body>
+    }
+  }
+  var executeJs = function (event) {
+    event.preventDefault()
+    if (!isJs) return;
+    var oldlog = console.log
+    console.log = function (message) {
+      repl.value += message + '\n'
+      repl.scrollTop = repl.scrollHeight
+    }
+    try {
+      const exitCode = eval(document.getElementById('output').value)
+      console.log('> Exited with exit code ' + (exitCode === undefined ? 0 : exitCode))
+    } catch (runtimeError) {
+      console.log('Runtime Error: ' + runtimeError.message)
+      console.log('Please contact the maintainers with the code that generated this message.')
+    }
+    console.log = oldlog
+  }
+  var clearRepl = function (event) {
+    event.preventDefault()
+    repl.value = '> Generate JS code and run it.\n'
+  }
+  var getCode = function (code) {
+    document.getElementById('submitbutton').disabled = true;
+    document.getElementById('submitbutton').value = 'Loading';
+    const targetlang = document.getElementById('targetlang').value;
+    let sourcecode = document.getElementById('sourcecode').value;
+    if (sourcecode === '') {  // If the regular input is empty, we take the dynamic code
+      let spans = inputDiv.getElementsByTagName('span')
+      for (let i = 0; i < spans.length - 1; i++) {
+        sourcecode += spans[i].textContent + '\n'
+      }
+      sourcecode += spans[spans.length - 1].textContent
+    }
+    const optimize = document.getElementById('optimize-button').checked;
+    var request = new XMLHttpRequest();
+    const payload = {
+      target: targetlang,
+      code: sourcecode,
+      optimize,
+    }
+    request.open('POST', '/compile', true)
+    request.setRequestHeader('Content-type', 'application/json');
+    request.send(JSON.stringify(payload))
+    request.onload = function () {
+      var data = JSON.parse(this.response)
+      var output
+      switch (this.status) {
+        case 200:
+          output = data.code
+          break
+        case 400:
+          output = 'Client Error: ' + data.error + '\nContact the maintainers for more info.'
+          break
+        case 500:
+          output = 'Compile Error:\n' + data.error
+          break
+      }
+      document.getElementById('output').value = output
+      autoExpand(document.getElementById('output'))
+      document.getElementById('submitbutton').disabled = false;
+      document.getElementById('submitbutton').value = 'Submit';
+      isJs = targetlang === 'js'
+      document.getElementById('repl-run').disabled = !isJs
+      document.getElementById('repl-clear').disabled = !isJs
+    }
+    request.onerror = function () {
+      document.getElementById('output').value = 'Error fetching from server!\nContact the maintainers for more info.'
+      document.getElementById('submitbutton').disabled = false;
+      document.getElementById('submitbutton').value = 'Submit';
+    }
+  }
+  document.getElementById("inputform").addEventListener("submit", function (event) {
+    event.preventDefault()
+    getCode()
+  });
+</script>
+</body>
 
 </html>

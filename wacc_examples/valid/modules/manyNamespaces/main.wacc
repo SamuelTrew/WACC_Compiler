@@ -1,0 +1,8 @@
+begin
+  import "./nameA.wacc" as A
+  import "./nameB.wacc" as B
+  import "./nameC.wacc" as C
+  any a = call A:hello(10);
+  any b = call B:max(1, 2);
+  any c = call C:hello(20)
+end
