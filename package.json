@@ -59,7 +59,7 @@
     "lodash": "^4.17.13",
     "mocha": "^5.2.0",
     "mochawesome": "^3.1.2",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "npm": "^6.13.4",
     "readline-sync": "^1.4.9",
     "recursive-readdir": "^2.2.2",
